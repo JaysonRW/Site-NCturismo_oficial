@@ -1,0 +1,6 @@
+{
+  "name": "NC Turismo",
+  "description": "Website corporativo da NC Turismo - Gestão Inteligente de Viagens Corporativas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

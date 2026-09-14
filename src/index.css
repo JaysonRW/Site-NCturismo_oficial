@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nc-orange: #DB8902;
+  --color-nc-graphite: #565759;
+  --color-nc-space: #111318;
+  --color-nc-surface: #181B22;
+  --color-nc-warm: #F4F2ED;
+  --font-display: "Plus Jakarta Sans", sans-serif;
+  --font-sans: "Inter", sans-serif;
+}
+
+body {
+  background-color: var(--color-nc-space);
+  color: var(--color-nc-warm);
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-display);
+}
+
