@@ -31,11 +31,11 @@ export const HumanSupport: React.FC = () => {
     gsap.set('#airplane', { opacity: 0 });
 
     // Setup SVG path drawings (strokeDasharray logic)
-    const path1 = document.getElementById('mask-path') as SVGPathElement;
+    const path1 = document.querySelector<SVGPathElement>('#mask-path');
     const length1 = path1?.getTotalLength() || 1000;
     if(path1) gsap.set(path1, { strokeDasharray: length1, strokeDashoffset: length1 });
 
-    const path2 = document.getElementById('new-mask-path') as SVGPathElement;
+    const path2 = document.querySelector<SVGPathElement>('#new-mask-path');
     const length2 = path2?.getTotalLength() || 1000;
     if(path2) gsap.set(path2, { strokeDasharray: length2, strokeDashoffset: length2 });
 

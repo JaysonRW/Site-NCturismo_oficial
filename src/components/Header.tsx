@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onHomeClick?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -27,7 +31,16 @@ export const Header: React.FC = () => {
       }`}
     >
       <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-3">
+        <a 
+          href="#" 
+          onClick={(e) => {
+            if (onHomeClick) {
+              e.preventDefault();
+              onHomeClick();
+            }
+          }}
+          className="flex items-center gap-3"
+        >
           <img src="/logo.png" alt="NC Turismo" className="w-[180px] md:w-[220px] h-auto object-contain transform origin-left -my-4" />
         </a>
         

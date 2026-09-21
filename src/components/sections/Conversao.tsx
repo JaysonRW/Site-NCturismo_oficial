@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 
-export const Conversao: React.FC = () => {
+interface ConversaoProps {
+  onOpenLegal?: (tab: 'privacidade' | 'beneficios' | 'termos') => void;
+}
+
+export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal }) => {
   const [formStatus, setFormStatus] = useState<'idle' | 'demo'>('idle');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -102,7 +106,21 @@ export const Conversao: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <input type="checkbox" id="consentimento" required className="mt-1 w-4 h-4 rounded bg-nc-surface border-white/10 text-nc-orange focus:ring-nc-orange/50" />
                     <label htmlFor="consentimento" className="text-sm text-nc-warm/60">
-                      Concordo em fornecer meus dados para que a equipe comercial da NC Turismo entre em contato. Meus dados não serão compartilhados com terceiros.
+                      Concordo em fornecer meus dados para que a equipe comercial da NC Turismo entre em contato, em conformidade com a{' '}
+                      <a 
+                        href="#privacidade"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (onOpenLegal) {
+                            onOpenLegal('privacidade');
+                          } else {
+                            window.location.hash = '#privacidade';
+                          }
+                        }}
+                        className="text-nc-orange hover:underline font-medium"
+                      >
+                        Política de Privacidade
+                      </a>.
                     </label>
                   </div>
 
@@ -151,15 +169,61 @@ export const Conversao: React.FC = () => {
             <div>
               <h4 className="text-white font-semibold mb-6">Legal</h4>
               <ul className="space-y-4 text-sm text-nc-warm/60">
-                <li><a href="#privacidade" className="hover:text-nc-orange transition-colors">Política de Privacidade</a></li>
-                <li><a href="#termos" className="hover:text-nc-orange transition-colors">Termos de Uso</a></li>
+                <li>
+                  <a 
+                    href="#privacidade" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (onOpenLegal) {
+                        onOpenLegal('privacidade');
+                      } else {
+                        window.location.hash = '#privacidade';
+                      }
+                    }}
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Política de Privacidade
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="#beneficios" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (onOpenLegal) {
+                        onOpenLegal('beneficios');
+                      } else {
+                        window.location.hash = '#beneficios';
+                      }
+                    }}
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Benefícios em Viagens
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="#termos" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (onOpenLegal) {
+                        onOpenLegal('termos');
+                      } else {
+                        window.location.hash = '#termos';
+                      }
+                    }}
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Termos de Uso
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
           
           <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-nc-warm/40">
             <p>&copy; {new Date().getFullYear()} NC Turismo. Todos os direitos reservados.</p>
-            <p>CNPJ pendente de verificação oficial.</p>
+            <p>N C TURISMO LTDA. • CNPJ 81.102.709/0001-08 • Curitiba/PR</p>
           </div>
         </div>
       </footer>
