@@ -14,14 +14,40 @@ import { HumanSupport } from './components/sections/HumanSupport';
 import { Conversao } from './components/sections/Conversao';
 import { SmoothScroll } from './components/SmoothScroll';
 import { LegalPage } from './components/LegalPage';
+import { AdminLogin } from './components/AdminLogin';
+import { AdminDashboard } from './components/AdminDashboard';
+import { BlogListingView } from './components/BlogListingView';
+import { BlogPostView } from './components/BlogPostView';
+import { QuemSomosView } from './components/QuemSomosView';
+import { supabase } from './lib/supabase';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'privacidade' | 'beneficios' | 'termos'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post'>('home');
+  const [session, setSession] = useState<any>(null);
+  const [activeSlug, setActiveSlug] = useState<string>('sla-suporte-viagens-corporativas-atendimento');
+
+  useEffect(() => {
+    // Check initial auth state
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.toLowerCase();
-      if (hash === '#privacidade') {
+      if (hash === '#quem-somos' || hash === '#quemsomos') {
+        setCurrentView('quem-somos');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash === '#privacidade') {
         setCurrentView('privacidade');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '#beneficios') {
@@ -29,6 +55,22 @@ export default function App() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '#termos') {
         setCurrentView('termos');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash.startsWith('#admin')) {
+        setCurrentView('admin');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash.startsWith('#artigo/')) {
+        const slug = window.location.hash.replace('#artigo/', '');
+        setActiveSlug(slug);
+        setCurrentView('blog-post');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash.startsWith('#blog/') || hash.startsWith('#conhecimento/')) {
+        const slug = window.location.hash.replace(/^#(blog|conhecimento)\//, '');
+        setActiveSlug(slug);
+        setCurrentView('blog-post');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash === '#conhecimento' || hash === '#blog') {
+        setCurrentView('blog');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '' || hash === '#') {
         setCurrentView('home');
@@ -52,6 +94,86 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleOpenBlog = () => {
+    window.location.hash = 'conhecimento';
+    setCurrentView('blog');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSelectPost = (slug: string) => {
+    window.location.hash = `artigo/${slug}`;
+    setActiveSlug(slug);
+    setCurrentView('blog-post');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  if (currentView === 'admin') {
+    if (!session) {
+      return (
+        <AdminLogin 
+          onLoginSuccess={() => {
+            // State will update via onAuthStateChange listener
+          }}
+          onBackToHome={handleBackToHome}
+        />
+      );
+    }
+    return (
+      <AdminDashboard 
+        onLogout={() => {
+          setSession(null);
+        }}
+        onBackToHome={handleBackToHome}
+      />
+    );
+  }
+
+  if (currentView === 'quem-somos') {
+    return (
+      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+        <SmoothScroll />
+        <Header onHomeClick={handleBackToHome} />
+        <QuemSomosView 
+          onBackToHome={handleBackToHome}
+          onOpenSolutions={() => {
+            window.location.hash = '#solucoes';
+            setCurrentView('home');
+            setTimeout(() => {
+              const el = document.getElementById('solucoes');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }}
+          onOpenLegal={handleOpenLegal}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'blog') {
+    return (
+      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+        <Header onHomeClick={handleBackToHome} />
+        <BlogListingView 
+          onSelectPost={handleSelectPost} 
+          onBackToHome={handleBackToHome} 
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'blog-post') {
+    return (
+      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+        <Header onHomeClick={handleBackToHome} />
+        <BlogPostView 
+          slug={activeSlug}
+          onBackToBlog={handleOpenBlog}
+          onBackToHome={handleBackToHome}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
       {currentView === 'home' ? (
@@ -72,7 +194,7 @@ export default function App() {
         <>
           <Header onHomeClick={handleBackToHome} />
           <LegalPage 
-            initialTab={currentView} 
+            initialTab={currentView as 'privacidade' | 'beneficios' | 'termos'} 
             onBackToHome={handleBackToHome} 
           />
         </>

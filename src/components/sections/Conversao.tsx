@@ -217,6 +217,15 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal }) => {
                     Termos de Uso
                   </a>
                 </li>
+                <li className="pt-1">
+                  <a 
+                    href="#admin" 
+                    className="text-nc-warm/30 hover:text-nc-orange text-xs transition-colors flex items-center gap-1.5"
+                  >
+                    <span>Área Administrativa</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80"></span>
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
