@@ -16,6 +16,7 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { supabase, Post } from '../lib/supabase';
+import { SocialShareBar } from './SocialShareBar';
 
 interface BlogPostViewProps {
   slug: string;
@@ -94,16 +95,19 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({
     : '21 de setembro de 2026';
 
   return (
-    <div className="min-h-screen bg-[#090b0e] text-nc-warm selection:bg-nc-orange selection:text-white">
+    <div className="min-h-screen bg-[#090b0e] text-nc-warm selection:bg-nc-orange selection:text-white relative">
       {/* Scroll Reading Progress Bar */}
       <div 
         className="fixed top-0 left-0 h-1 bg-gradient-to-r from-red-600 via-nc-orange to-amber-400 z-50 transition-all duration-150"
         style={{ width: `${scrollProgress}%` }}
       />
 
+      {/* Floating Vertical Social Share Dock on Desktop */}
+      <SocialShareBar title={title} summary={excerpt} variant="floating" />
+
       {/* Top Floating Bar */}
       <div className="max-w-[1240px] mx-auto px-6 md:px-12 pt-28 pb-6">
-        <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div className="flex items-center gap-3">
             <button
               onClick={onBackToHome}
@@ -122,22 +126,7 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleShare}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-nc-warm/80 hover:text-white transition-all"
-            >
-              {copied ? (
-                <>
-                  <Check size={14} className="text-emerald-400" />
-                  <span className="text-emerald-400">Link copiado!</span>
-                </>
-              ) : (
-                <>
-                  <Share2 size={14} className="text-nc-orange" />
-                  <span>Compartilhar</span>
-                </>
-              )}
-            </button>
+            <SocialShareBar title={title} summary={excerpt} variant="inline" />
           </div>
         </div>
       </div>
@@ -216,6 +205,9 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({
                 )}
                 <div className="whitespace-pre-line text-nc-warm/90 leading-relaxed space-y-4">
                   {post.content}
+                </div>
+                <div className="pt-6">
+                  <SocialShareBar title={title} summary={excerpt} variant="card" />
                 </div>
               </div>
             ) : (
@@ -603,6 +595,9 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({
                     </p>
                   </div>
                 </section>
+
+                {/* Social Share Box */}
+                <SocialShareBar title={title} summary={excerpt} variant="card" />
 
                 {/* Big CTA Banner (Identidade visual da referência: gradiente #bd0f0f to #f28c28) */}
                 <div 

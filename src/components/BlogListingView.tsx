@@ -12,6 +12,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { supabase, Post } from '../lib/supabase';
+import { SocialShareBar } from './SocialShareBar';
 
 interface BlogListingViewProps {
   onSelectPost: (slug: string) => void;
@@ -248,9 +249,24 @@ export const BlogListingView: React.FC<BlogListingViewProps> = ({
                 </span>
               </div>
 
-              <div className="inline-flex items-center gap-2 text-white font-bold text-xs uppercase tracking-wider group-hover:text-nc-orange transition-colors">
-                <span>Ler artigo completo</span>
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform text-nc-orange" />
+              <div className="flex items-center gap-4">
+                <div 
+                  onClick={(e) => e.stopPropagation()}
+                  className="hidden sm:flex items-center gap-2"
+                >
+                  <span className="text-[11px] font-mono text-nc-warm/40 uppercase">Compartilhar:</span>
+                  <SocialShareBar
+                    url={typeof window !== 'undefined' ? `${window.location.origin}/#blog/${featuredPost.slug}` : undefined}
+                    title={featuredPost.title}
+                    summary={featuredPost.excerpt}
+                    variant="compact"
+                  />
+                </div>
+
+                <div className="inline-flex items-center gap-2 text-white font-bold text-xs uppercase tracking-wider group-hover:text-nc-orange transition-colors">
+                  <span>Ler artigo</span>
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform text-nc-orange" />
+                </div>
               </div>
             </div>
           </div>
@@ -336,9 +352,22 @@ export const BlogListingView: React.FC<BlogListingViewProps> = ({
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs font-semibold text-nc-orange">
-                  <span>Acessar artigo</span>
-                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                <div className="pt-4 border-t border-white/5 flex items-center justify-between gap-2">
+                  <div 
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center"
+                  >
+                    <SocialShareBar
+                      url={typeof window !== 'undefined' ? `${window.location.origin}/#blog/${art.slug}` : undefined}
+                      title={art.title}
+                      summary={art.excerpt}
+                      variant="compact"
+                    />
+                  </div>
+                  <div className="inline-flex items-center gap-1 text-xs font-semibold text-nc-orange group-hover:text-amber-400 transition-colors shrink-0">
+                    <span>Ler</span>
+                    <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                  </div>
                 </div>
               </div>
             </div>

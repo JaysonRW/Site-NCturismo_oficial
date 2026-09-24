@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/sections/Hero';
+import { InfiniteMarquee } from './components/InfiniteMarquee';
 import { Structure } from './components/sections/Structure';
 import { Transformation } from './components/sections/Transformation';
 import { SolutionsAccordion } from './components/sections/SolutionsAccordion';
@@ -182,6 +183,7 @@ export default function App() {
           <Header />
           <main id="main-content" className="relative w-full overflow-hidden">
             <Hero />
+            <InfiniteMarquee />
             <Structure />
             <Transformation />
             <SolutionsAccordion />
