@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { HistoryTimeline } from './HistoryTimeline';
 import { 
   Building2, 
   Users, 
@@ -82,21 +83,6 @@ export const QuemSomosView: React.FC<QuemSomosViewProps> = ({
         { scale: 0.95, opacity: 0 }, 
         { scale: 1, opacity: 1, duration: 1.2 }, 
         0.6
-      );
-
-      // 2. Timeline and History Reveal
-      gsap.fromTo('.qs-history-content',
-        { y: 60, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1,
-          scrollTrigger: {
-            trigger: '.qs-history-section',
-            start: 'top 80%',
-            toggleActions: 'play none none reverse'
-          }
-        }
       );
 
       // 3. Manifesto / Quote
@@ -408,81 +394,9 @@ export const QuemSomosView: React.FC<QuemSomosViewProps> = ({
       </section>
 
       {/* =========================================================================
-          HISTÓRIA: DESDE 1989
+          HISTÓRIA: DESDE 1989 (INTERACTIVE GSAP SCROLLTRIGGER TIMELINE)
          ========================================================================= */}
-      <section className="qs-history-section relative py-20 md:py-28 border-y border-white/5 bg-gradient-to-b from-nc-space via-nc-surface/50 to-nc-space">
-        <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20">
-          <div className="qs-history-content grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-            
-            {/* Left Column: Historic Timeline Badge */}
-            <div className="lg:col-span-5 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-nc-orange/15 border border-nc-orange/30 text-nc-orange text-xs font-bold uppercase tracking-widest">
-                <Clock size={14} />
-                <span>Desde 1989</span>
-              </div>
-              
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white leading-tight">
-                Uma trajetória construída com credibilidade, relacionamento e visão de futuro.
-              </h2>
-
-              <p className="text-base text-nc-warm/70 leading-relaxed">
-                A NC Turismo nasceu em <strong className="text-white font-semibold">2 de janeiro de 1989</strong>, a partir do sonho de sua fundadora, <strong className="text-nc-orange font-semibold">Neusa Culpi</strong>, que decidiu transformar sua paixão por viagens em um projeto empresarial sólido.
-              </p>
-
-              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Award className="w-6 h-6 text-nc-orange" />
-                  <span className="font-display font-bold text-white text-sm">Fundada por Neusa Culpi</span>
-                </div>
-                <p className="text-xs text-nc-warm/70 leading-relaxed">
-                  Com determinação e olhar humano, Neusa construiu as bases de uma empresa reconhecida no Paraná e em todo o Brasil pela seriedade, ética impecável e comprometimento com cada passageiro.
-                </p>
-              </div>
-            </div>
-
-            {/* Right Column: Historical Narrative Box */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="p-8 md:p-10 rounded-3xl bg-nc-surface border border-white/10 relative overflow-hidden shadow-xl space-y-6">
-                
-                <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-amber-500/10 to-transparent blur-3xl pointer-events-none" />
-
-                <div className="space-y-4">
-                  <h3 className="text-xl md:text-2xl font-display font-bold text-white">
-                    Evolução contínua ao lado de nossos clientes
-                  </h3>
-                  <p className="text-nc-warm/80 leading-relaxed text-sm md:text-base">
-                    Ao longo da sua história, a empresa consolidou sua atuação em Curitiba e passou a atender diferentes necessidades de clientes corporativos, viajantes, famílias, grupos e empresas que buscam segurança, experiência e atendimento próximo.
-                  </p>
-                  <p className="text-nc-warm/80 leading-relaxed text-sm md:text-base">
-                    A nossa história combina <strong className="text-white">tradição, presença física, atendimento humano</strong> e <strong className="text-nc-orange">evolução constante em tecnologia e gestão</strong>.
-                  </p>
-                </div>
-
-                {/* Timeline Milestones */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/10">
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-2">
-                    <span className="text-xs font-mono text-nc-orange font-bold">1989</span>
-                    <h4 className="text-sm font-bold text-white">Fundação em Curitiba</h4>
-                    <p className="text-xs text-nc-warm/60">Início da operação com foco em atendimento personalizado e transparência.</p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-2">
-                    <span className="text-xs font-mono text-nc-orange font-bold">Anos 2000</span>
-                    <h4 className="text-sm font-bold text-white">Expansão Corporativa</h4>
-                    <p className="text-xs text-nc-warm/60">Implantação de gestão B2B especializada, compliance e consultoria de custos.</p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-2">
-                    <span className="text-xs font-mono text-nc-orange font-bold">Hoje & Futuro</span>
-                    <h4 className="text-sm font-bold text-white">We Are Travel</h4>
-                    <p className="text-xs text-nc-warm/60">Ecossistema completo integrando T&E, mobilidade, IA e atendimento humano.</p>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
+      <HistoryTimeline onContactClick={() => window.open(whatsappUrl, '_blank')} />
 
       {/* =========================================================================
           MANIFESTO: WE ARE TRAVEL BY NC TURISMO
