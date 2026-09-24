@@ -32,7 +32,6 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -63,16 +62,6 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({
     };
 
     fetchPost();
-
-    const handleScroll = () => {
-      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-      if (totalHeight > 0) {
-        setScrollProgress((window.scrollY / totalHeight) * 100);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, [slug]);
 
   const handleShare = () => {
@@ -96,12 +85,6 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({
 
   return (
     <div className="min-h-screen bg-[#090b0e] text-nc-warm selection:bg-nc-orange selection:text-white relative">
-      {/* Scroll Reading Progress Bar */}
-      <div 
-        className="fixed top-0 left-0 h-1 bg-gradient-to-r from-red-600 via-nc-orange to-amber-400 z-50 transition-all duration-150"
-        style={{ width: `${scrollProgress}%` }}
-      />
-
       {/* Floating Vertical Social Share Dock on Desktop */}
       <SocialShareBar title={title} summary={excerpt} variant="floating" />
 

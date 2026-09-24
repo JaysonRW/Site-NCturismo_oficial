@@ -151,10 +151,23 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal }) => {
             <div>
               <h4 className="text-white font-semibold mb-6">Acesso Rápido</h4>
               <ul className="space-y-4 text-sm text-nc-warm/60">
-                <li><a href="#quem-somos" className="hover:text-nc-orange transition-colors">Quem Somos</a></li>
-                <li><a href="#solucoes" className="hover:text-nc-orange transition-colors">Soluções Corporativas</a></li>
+                <li><a href="#viagens-corporativas" className="hover:text-nc-orange transition-colors">Corporativo</a></li>
+                <li>
+                  <a 
+                    href="#beneficios" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (onOpenLegal) onOpenLegal('beneficios');
+                      else window.location.hash = '#beneficios';
+                    }} 
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Benefícios e Parcerias
+                  </a>
+                </li>
                 <li><a href="#lazer" className="hover:text-nc-orange transition-colors">Lazer</a></li>
                 <li><a href="#conhecimento" className="hover:text-nc-orange transition-colors">Conhecimento NC</a></li>
+                <li><a href="#quem-somos" className="hover:text-nc-orange transition-colors">Quem Somos</a></li>
               </ul>
             </div>
             

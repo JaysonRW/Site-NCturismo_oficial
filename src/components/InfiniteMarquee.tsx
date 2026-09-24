@@ -10,15 +10,17 @@ export const InfiniteMarquee: React.FC<InfiniteMarqueeProps> = ({
   variant = 'dual',
   className = ''
 }) => {
-  // Primary message specified by user
+  // Primary message specified by user: WE ARE TRAVEL ✦ CORPORATIVO ✦ BENEFÍCIOS ✦ MICE ✦ LAZER ✦ TECNOLOGIA ✦ GESTÃO ✦ EXPERIÊNCIA ✦
   const primaryItems = [
-    { text: 'VIAGENS CORPORATIVAS', highlight: false },
-    { text: 'GESTÃO DE VIAGENS', highlight: false },
-    { text: 'ATENDIMENTO 24H', highlight: true, badge: 'SLA' },
+    { text: 'WE ARE TRAVEL', highlight: true, brand: true },
+    { text: 'CORPORATIVO', highlight: true, badge: 'B2B' },
     { text: 'BENEFÍCIOS', highlight: false },
-    { text: 'MICE & EVENTOS', highlight: false },
-    { text: 'LAZER EXCLUSIVO', highlight: false },
-    { text: 'WE ARE TRAVEL', highlight: true, brand: true }
+    { text: 'MICE', highlight: false },
+    { text: 'LAZER', highlight: false },
+    { text: 'TECNOLOGIA', highlight: true, badge: 'T&E' },
+    { text: 'GESTÃO', highlight: false },
+    { text: 'EXPERIÊNCIA', highlight: false },
+    { text: 'ATENDIMENTO 24H', highlight: true, badge: 'SLA < 15s' }
   ];
 
   // Secondary reverse message for brand positioning
