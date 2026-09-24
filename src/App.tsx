@@ -23,6 +23,7 @@ import { BlogPostView } from './components/BlogPostView';
 import { QuemSomosView } from './components/QuemSomosView';
 import { ViagensCorporativasView } from './components/ViagensCorporativasView';
 import { LazerView } from './components/LazerView';
+import { BeneficiosViagensView } from './components/BeneficiosViagensView';
 import { supabase } from './lib/supabase';
 
 export default function App() {
@@ -60,10 +61,19 @@ export default function App() {
       } else if (hash === '#privacidade') {
         setCurrentView('privacidade');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash === '#beneficios') {
+      } else if (
+        hash === '#beneficios' || 
+        hash === '#beneficios-viagens' || 
+        hash === '#beneficios-em-viagens' || 
+        hash === '#beneficios-e-parcerias' ||
+        hash === '#beneficios-e-viagens'
+      ) {
         setCurrentView('beneficios');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '#termos') {
+        setCurrentView('termos');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash === '#legal-beneficios') {
         setCurrentView('termos');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash.startsWith('#admin')) {
@@ -229,6 +239,19 @@ export default function App() {
           slug={activeSlug}
           onBackToBlog={handleOpenBlog}
           onBackToHome={handleBackToHome}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'beneficios') {
+    return (
+      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+        <ScrollProgressBar />
+        <Header onHomeClick={handleBackToHome} currentView="beneficios" />
+        <BeneficiosViagensView 
+          onBackToHome={handleBackToHome}
+          onOpenLegalTab={handleOpenLegal}
         />
       </div>
     );

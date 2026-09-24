@@ -379,8 +379,12 @@ export const Header: React.FC<HeaderProps> = ({
             onMouseEnter={() => handleMouseEnter('beneficios')}
             onMouseLeave={handleMouseLeave}
           >
-            <button
-              onClick={() => setActiveDropdown(activeDropdown === 'beneficios' ? null : 'beneficios')}
+            <a
+              href="#beneficios"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('#beneficios', 'beneficios');
+              }}
               className={`inline-flex items-center gap-1.5 text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 focus:outline-none ${
                 activeDropdown === 'beneficios' || currentView === 'beneficios'
                   ? 'text-nc-orange font-semibold'
@@ -394,7 +398,7 @@ export const Header: React.FC<HeaderProps> = ({
                 size={14} 
                 className={`transition-transform duration-200 ${activeDropdown === 'beneficios' ? 'rotate-180 text-nc-orange' : 'opacity-70'}`} 
               />
-            </button>
+            </a>
 
             {/* Submenu Dropdown */}
             {activeDropdown === 'beneficios' && (
@@ -404,9 +408,20 @@ export const Header: React.FC<HeaderProps> = ({
                 onMouseLeave={handleMouseLeave}
                 role="menu"
               >
-                <div className="text-[11px] font-mono uppercase tracking-wider text-nc-orange font-bold mb-3">
-                  Benefícios em Viagens
-                </div>
+                <a 
+                  href="#beneficios"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigateTo('#beneficios', 'beneficios');
+                  }}
+                  className="group flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-nc-orange hover:text-white font-bold mb-3 transition-colors"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-nc-orange animate-pulse" />
+                    Benefícios em Viagens
+                  </span>
+                  <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+                </a>
                 <ul className="space-y-2.5 text-xs text-nc-warm/80 mb-5">
                   <li>
                     <a 
@@ -702,6 +717,14 @@ export const Header: React.FC<HeaderProps> = ({
 
               {mobileExpanded.beneficios && (
                 <div className="pt-2 pl-3 space-y-2 text-xs text-nc-warm/80 animate-in fade-in duration-200">
+                  <a 
+                    href="#beneficios" 
+                    onClick={() => navigateTo('#beneficios', 'beneficios')} 
+                    className="block py-1.5 px-2.5 rounded-lg bg-nc-orange/10 border border-nc-orange/30 text-nc-orange font-bold flex items-center justify-between"
+                  >
+                    <span>Benefícios em Viagens (Ambiente de Viagens)</span>
+                    <ArrowRight size={13} />
+                  </a>
                   <a href="#beneficios" onClick={() => navigateTo('#beneficios', 'beneficios')} className="block py-1">Para Empresas</a>
                   <a href="#beneficios" onClick={() => navigateTo('#beneficios', 'beneficios')} className="block py-1">Para Associações e Entidades</a>
                   <a href="#beneficios" onClick={() => navigateTo('#beneficios', 'beneficios')} className="block py-1 text-nc-orange font-semibold">Conheça a solução &rarr;</a>

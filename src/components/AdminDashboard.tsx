@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase, Post, Category, Author } from '../lib/supabase';
+import { supabase, Post, Category, Author, TermsAcceptance, getTermsAcceptances } from '../lib/supabase';
 import { 
   Building2, 
   LogOut, 
@@ -21,7 +21,10 @@ import {
   FolderOpen,
   Copy,
   Database,
-  ExternalLink
+  ExternalLink,
+  ShieldCheck,
+  Download,
+  Lock
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -30,6 +33,8 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onBackToHome }) => {
+  const [activeAdminTab, setActiveAdminTab] = useState<'posts' | 'terms'>('posts');
+  const [termsAcceptances, setTermsAcceptances] = useState<TermsAcceptance[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
@@ -93,6 +98,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onBack
         setTableMissing(false);
         setPosts(postList);
       }
+
+      // 4. Fetch terms acceptances for LGPD compliance tracking
+      const acceptances = await getTermsAcceptances();
+      setTermsAcceptances(acceptances);
     } catch (err: any) {
       console.error('Falha geral ao buscar dados do Supabase:', err);
     } finally {
@@ -246,6 +255,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onBack
   const totalPublished = posts.filter(p => p.status === 'published').length;
   const totalDrafts = posts.filter(p => p.status === 'draft').length;
 
+  const handleExportTermsCsv = () => {
+    if (termsAcceptances.length === 0) {
+      notify('Nenhum aceite registrado para exportar no momento.', 'error');
+      return;
+    }
+    const headers = ['ID', 'Data/Hora (ISO)', 'Versão do Documento', 'URL Destino', 'Origem', 'Navegador/User Agent'];
+    const rows = termsAcceptances.map(acc => [
+      acc.id,
+      acc.accepted_at,
+      `"${acc.document_version.replace(/"/g, '""')}"`,
+      acc.target_url,
+      acc.source,
+      `"${(acc.user_agent || '').replace(/"/g, '""')}"`
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `nc_aceites_termos_lgpd_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    notify('Relatório CSV de auditoria LGPD exportado com sucesso!', 'success');
+  };
+
   return (
     <div className="min-h-screen bg-[#090b0e] text-nc-warm selection:bg-nc-orange selection:text-white">
       {/* Top Header */}
@@ -382,7 +416,22 @@ CREATE POLICY "Admin controle total posts" ON public.posts
   FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 CREATE POLICY "Admin controle total categorias" ON public.categories
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);`;
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- 7. Tabela de Aceites de Termos (LGPD & Beneficios)
+CREATE TABLE IF NOT EXISTS public.terms_acceptances (
+  id TEXT PRIMARY KEY,
+  document_version TEXT NOT NULL,
+  accepted_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  user_agent TEXT,
+  ip_address TEXT,
+  target_url TEXT,
+  source TEXT
+);
+
+ALTER TABLE public.terms_acceptances ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Permitir insercao anonima de aceites" ON public.terms_acceptances FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "Permitir leitura de aceites para autenticados" ON public.terms_acceptances FOR SELECT TO authenticated USING (true);`;
                     navigator.clipboard.writeText(sql);
                     setCopiedSql(true);
                     setTimeout(() => setCopiedSql(false), 3000);
@@ -656,8 +705,144 @@ CREATE POLICY "Admin controle total categorias" ON public.categories
             )}
           </div>
         ) : (
-          /* ==================== LISTAGEM DE ARTIGOS ==================== */
           <div className="space-y-6">
+            {/* Top Navigation Tabs: Posts vs Terms */}
+            <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+              <button
+                onClick={() => setActiveAdminTab('posts')}
+                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
+                  activeAdminTab === 'posts'
+                    ? 'bg-nc-orange text-nc-space shadow-md'
+                    : 'bg-white/5 text-nc-warm/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <FileText size={16} />
+                Artigos do Blog ({posts.length})
+              </button>
+
+              <button
+                onClick={() => setActiveAdminTab('terms')}
+                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
+                  activeAdminTab === 'terms'
+                    ? 'bg-nc-orange text-nc-space shadow-md'
+                    : 'bg-white/5 text-nc-warm/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <ShieldCheck size={16} />
+                Aceites de Termos & LGPD ({termsAcceptances.length})
+              </button>
+            </div>
+
+            {activeAdminTab === 'terms' ? (
+              /* TAB: ACEITES DE TERMOS & LGPD */
+              <div className="space-y-6">
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-[#0c0e12] border border-white/10 p-5 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <span className="text-xs uppercase tracking-wider text-nc-warm/50 font-semibold block mb-1">
+                        Total de Aceites Registrados
+                      </span>
+                      <span className="text-2xl font-bold text-white">{termsAcceptances.length}</span>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                      <ShieldCheck size={20} />
+                    </div>
+                  </div>
+
+                  <div className="bg-[#0c0e12] border border-white/10 p-5 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <span className="text-xs uppercase tracking-wider text-nc-warm/50 font-semibold block mb-1">
+                        Versão Vigente Aceita
+                      </span>
+                      <span className="text-sm font-bold text-nc-orange">v1.1 (Conformidade LGPD)</span>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-nc-orange/10 border border-nc-orange/20 text-nc-orange flex items-center justify-center">
+                      <Lock size={18} />
+                    </div>
+                  </div>
+
+                  <div className="bg-[#0c0e12] border border-white/10 p-5 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <span className="text-xs uppercase tracking-wider text-nc-warm/50 font-semibold block mb-1">
+                        Destino Piloto Homologado
+                      </span>
+                      <span className="text-xs font-mono text-white font-bold">beneficios.ncturismo.com.br</span>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
+                      <ExternalLink size={18} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions Bar */}
+                <div className="flex flex-col sm:flex-row justify-between gap-4 items-stretch sm:items-center bg-[#0c0e12] border border-white/10 p-4 rounded-2xl">
+                  <div className="text-xs text-nc-warm/80">
+                    Trilha de auditoria em tempo real com carimbo de data/hora, versão dos termos e agente do usuário.
+                  </div>
+
+                  <button
+                    onClick={handleExportTermsCsv}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-bold transition-colors"
+                  >
+                    <Download size={14} />
+                    Exportar Relatório CSV (Auditoria LGPD)
+                  </button>
+                </div>
+
+                {/* Table */}
+                <div className="bg-[#0c0e12] border border-white/10 rounded-2xl overflow-hidden">
+                  {termsAcceptances.length === 0 ? (
+                    <div className="p-12 text-center text-nc-warm/50 text-xs">
+                      Nenhum registro de aceite ainda. Acesse o menu "Benefícios e Parcerias" para simular ou homologar o primeiro aceite do piloto!
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-white/5 border-b border-white/10 text-nc-warm/60 uppercase font-mono text-[10px] tracking-wider">
+                          <tr>
+                            <th className="py-3 px-4">ID de Auditoria</th>
+                            <th className="py-3 px-4">Data e Hora (BR)</th>
+                            <th className="py-3 px-4">Versão do Documento</th>
+                            <th className="py-3 px-4">Subdomínio Destino</th>
+                            <th className="py-3 px-4">Origem</th>
+                            <th className="py-3 px-4">User Agent / Dispositivo</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {termsAcceptances.map((acc) => (
+                            <tr key={acc.id} className="hover:bg-white/[0.02] transition-colors">
+                              <td className="py-3.5 px-4 font-mono text-[11px] text-nc-orange font-semibold">
+                                {acc.id}
+                              </td>
+                              <td className="py-3.5 px-4 text-white font-medium">
+                                {new Date(acc.accepted_at).toLocaleString('pt-BR')}
+                              </td>
+                              <td className="py-3.5 px-4 text-nc-warm/90">
+                                <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[11px]">
+                                  {acc.document_version}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4 font-mono text-[11px] text-emerald-400">
+                                {acc.target_url}
+                              </td>
+                              <td className="py-3.5 px-4 text-nc-warm/60">
+                                {acc.source}
+                              </td>
+                              <td className="py-3.5 px-4 text-nc-warm/50 max-w-xs truncate" title={acc.user_agent}>
+                                {acc.user_agent}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* ==================== LISTAGEM DE ARTIGOS ==================== */
+              <div className="space-y-6">
             {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-[#0c0e12] border border-white/10 p-5 rounded-2xl flex items-center justify-between">
@@ -842,6 +1027,8 @@ CREATE POLICY "Admin controle total categorias" ON public.categories
                     </tbody>
                   </table>
                 </div>
+              </div>
+            )}
               </div>
             )}
           </div>

@@ -39,3 +39,66 @@ export interface Post {
   category?: Category;
   author?: Author;
 }
+
+export interface TermsAcceptance {
+  id: string;
+  document_version: string;
+  accepted_at: string;
+  user_agent: string;
+  ip_address?: string;
+  target_url: string;
+  source: string;
+}
+
+export const recordTermsAcceptance = async (acceptance: Omit<TermsAcceptance, 'id'>): Promise<TermsAcceptance> => {
+  const localRecord: TermsAcceptance = {
+    id: `acc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+    ...acceptance,
+  };
+
+  // 1. Always save to localStorage for client-side audit durability
+  try {
+    const existing = JSON.parse(localStorage.getItem('nc_terms_acceptances') || '[]');
+    localStorage.setItem('nc_terms_acceptances', JSON.stringify([localRecord, ...existing]));
+    localStorage.setItem('nc_current_accepted_version', acceptance.document_version);
+    localStorage.setItem('nc_last_accepted_at', acceptance.accepted_at);
+  } catch (e) {
+    console.error('Erro ao salvar aceite em localStorage:', e);
+  }
+
+  // 2. Also try to persist in Supabase if table exists
+  try {
+    const { error } = await supabase
+      .from('terms_acceptances')
+      .insert([localRecord]);
+    if (error) {
+      console.warn('Registro no Supabase (aviso de tabela/schema):', error.message);
+    }
+  } catch (err) {
+    console.warn('Erro ao persistir no Supabase:', err);
+  }
+
+  return localRecord;
+};
+
+export const getTermsAcceptances = async (): Promise<TermsAcceptance[]> => {
+  // Try Supabase first
+  try {
+    const { data, error } = await supabase
+      .from('terms_acceptances')
+      .select('*')
+      .order('accepted_at', { ascending: false });
+    if (!error && data && data.length > 0) {
+      return data;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // Fallback to localStorage
+  try {
+    return JSON.parse(localStorage.getItem('nc_terms_acceptances') || '[]');
+  } catch {
+    return [];
+  }
+};
