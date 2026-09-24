@@ -739,6 +739,14 @@ export const QuemSomosView: React.FC<QuemSomosViewProps> = ({
 
           <div className="flex items-center gap-6 text-xs text-nc-warm/60">
             <button 
+              onClick={() => {
+                window.location.hash = '#area-cliente';
+              }}
+              className="hover:text-nc-orange transition-colors text-nc-orange/90 font-medium"
+            >
+              Área do Cliente
+            </button>
+            <button 
               onClick={() => onOpenLegal && onOpenLegal('privacidade')}
               className="hover:text-nc-orange transition-colors"
             >

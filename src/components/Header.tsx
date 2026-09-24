@@ -798,6 +798,21 @@ export const Header: React.FC<HeaderProps> = ({
               </a>
             </div>
 
+            {/* 7. Direct: Área do Cliente */}
+            <div className="border-b border-white/10 py-2">
+              <a 
+                href="#area-cliente" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigateTo('#area-cliente', 'area-cliente');
+                }}
+                className="flex items-center justify-between text-sm uppercase tracking-[0.08em] font-bold text-nc-orange py-1"
+              >
+                <span>Área do Cliente</span>
+                <span className="text-[10px] font-mono bg-nc-orange/20 text-nc-orange px-2 py-0.5 rounded">Portal</span>
+              </a>
+            </div>
+
           </div>
 
           {/* Mobile Bottom CTA */}

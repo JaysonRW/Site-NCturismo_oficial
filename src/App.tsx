@@ -24,10 +24,11 @@ import { QuemSomosView } from './components/QuemSomosView';
 import { ViagensCorporativasView } from './components/ViagensCorporativasView';
 import { LazerView } from './components/LazerView';
 import { BeneficiosViagensView } from './components/BeneficiosViagensView';
+import { AreaDoClienteView } from './components/AreaDoClienteView';
 import { supabase } from './lib/supabase';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post' | 'viagens-corporativas' | 'lazer'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post' | 'viagens-corporativas' | 'lazer' | 'area-cliente'>('home');
   const [session, setSession] = useState<any>(null);
   const [activeSlug, setActiveSlug] = useState<string>('sla-suporte-viagens-corporativas-atendimento');
 
@@ -92,6 +93,21 @@ export default function App() {
       } else if (hash === '#conhecimento' || hash === '#blog') {
         setCurrentView('blog');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (
+        hash === '#area-cliente' || 
+        hash === '#areadocliente' || 
+        hash === '#portal-cliente' || 
+        hash === '#portal' || 
+        hash === '#cliente'
+      ) {
+        setCurrentView('area-cliente');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash === '#plantao' || hash === '#suporte') {
+        setCurrentView('home');
+        setTimeout(() => {
+          const el = document.getElementById('plantao') || document.getElementById('suporte') || document.getElementById('diagnostico');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
       } else if (hash === '#solucoes' || hash === '#diagnostico' || hash === '#estrutura' || hash === '#transformacao') {
         setCurrentView('home');
         setTimeout(() => {
@@ -257,6 +273,24 @@ export default function App() {
     );
   }
 
+  if (currentView === 'area-cliente') {
+    return (
+      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+        <ScrollProgressBar />
+        <Header onHomeClick={handleBackToHome} currentView="area-cliente" />
+        <AreaDoClienteView 
+          onBackToHome={handleBackToHome}
+          onOpenLegalTab={handleOpenLegal}
+          onOpenBeneficios={() => {
+            window.location.hash = 'beneficios';
+            setCurrentView('beneficios');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
       <ScrollProgressBar />
@@ -272,7 +306,14 @@ export default function App() {
             <SolutionsAccordion />
             <ClientsCarousel />
             <HumanSupport />
-            <Conversao onOpenLegal={handleOpenLegal} />
+            <Conversao 
+              onOpenLegal={handleOpenLegal} 
+              onOpenAreaCliente={() => {
+                window.location.hash = 'area-cliente';
+                setCurrentView('area-cliente');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
           </main>
         </>
       ) : (

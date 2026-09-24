@@ -208,7 +208,7 @@ export const HumanSupport: React.FC = () => {
   }, { scope: containerRef });
 
   return (
-    <section ref={containerRef} className="relative w-full h-screen overflow-hidden bg-[#050505]">
+    <section ref={containerRef} id="plantao" className="relative w-full h-screen overflow-hidden bg-[#050505]">
       
       {/* BACKGROUND - LAYER 1: PHOTOGRAPHY */}
       <div className="absolute inset-0 z-0">

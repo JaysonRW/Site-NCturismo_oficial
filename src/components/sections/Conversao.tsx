@@ -3,9 +3,10 @@ import { MessageCircle } from 'lucide-react';
 
 interface ConversaoProps {
   onOpenLegal?: (tab: 'privacidade' | 'beneficios' | 'termos') => void;
+  onOpenAreaCliente?: () => void;
 }
 
-export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal }) => {
+export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCliente }) => {
   const [formStatus, setFormStatus] = useState<'idle' | 'demo'>('idle');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -174,8 +175,36 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal }) => {
             <div>
               <h4 className="text-white font-semibold mb-6">Serviços</h4>
               <ul className="space-y-4 text-sm text-nc-warm/60">
-                <li><a href="#area-cliente" className="hover:text-nc-orange transition-colors">Área do Cliente</a></li>
-                <li><a href="#plantao" className="hover:text-nc-orange transition-colors">Plantão Emergencial</a></li>
+                <li>
+                  <a 
+                    href="#area-cliente" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (onOpenAreaCliente) {
+                        onOpenAreaCliente();
+                      } else {
+                        window.location.hash = '#area-cliente';
+                      }
+                    }}
+                    className="hover:text-nc-orange transition-colors flex items-center gap-1.5"
+                  >
+                    <span>Área do Cliente</span>
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="#plantao" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.hash = '#plantao';
+                      const el = document.getElementById('plantao');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Plantão Emergencial
+                  </a>
+                </li>
               </ul>
             </div>
             
