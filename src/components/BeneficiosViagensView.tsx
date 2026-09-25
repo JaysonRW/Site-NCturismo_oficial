@@ -42,7 +42,9 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
   const [modalDocument, setModalDocument] = useState<'termos' | 'privacidade' | null>(null);
 
   const DOCUMENT_VERSION = 'Termos de Uso v1.1 e Política de Privacidade v1.1';
-  const TARGET_SUBDOMAIN = 'https://beneficios.ncturismo.com.br';
+  const TARGET_URL = 'http://beneficios.ncturismo.com.br/b2c/';
+
+  const [consentWarning, setConsentWarning] = useState(false);
 
   useEffect(() => {
     // Check if user has already accepted in this browser session/storage
@@ -58,8 +60,13 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
   }, []);
 
   const handleAccess = async () => {
-    if (!accepted || isSubmitting) return;
+    if (!accepted) {
+      setConsentWarning(true);
+      return;
+    }
+    if (isSubmitting) return;
 
+    setConsentWarning(false);
     setIsSubmitting(true);
     const nowIso = new Date().toISOString();
     const formattedDate = new Date().toLocaleString('pt-BR', {
@@ -69,11 +76,18 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
     });
 
     try {
+      localStorage.setItem('nc_last_accepted_at', nowIso);
+      localStorage.setItem('nc_current_accepted_version', DOCUMENT_VERSION);
+    } catch {
+      // ignore localStorage errors
+    }
+
+    try {
       const record = await recordTermsAcceptance({
         document_version: DOCUMENT_VERSION,
         accepted_at: nowIso,
         user_agent: navigator.userAgent || 'unknown',
-        target_url: TARGET_SUBDOMAIN,
+        target_url: TARGET_URL,
         source: 'menu_beneficios_e_viagens'
       });
 
@@ -86,14 +100,14 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
 
       // Short delay so the user sees the confirmation and audit receipt
       setTimeout(() => {
-        window.location.href = TARGET_SUBDOMAIN;
-      }, 1200);
+        window.location.href = TARGET_URL;
+      }, 1000);
     } catch (err) {
       console.error('Erro ao registrar aceite:', err);
       // Even if background logging has an exception, redirect the user
       setTimeout(() => {
-        window.location.href = TARGET_SUBDOMAIN;
-      }, 1000);
+        window.location.href = TARGET_URL;
+      }, 800);
     }
   };
 
@@ -235,17 +249,26 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
 
               {/* Checkbox Acceptance (Exactly as requested by user) */}
               <div className="pt-2">
-                <label className="flex items-start gap-3.5 cursor-pointer p-3.5 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5 select-none">
+                <label className={`flex items-start gap-3.5 cursor-pointer p-3.5 rounded-xl transition-all border select-none ${
+                  consentWarning && !accepted
+                    ? 'bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/40'
+                    : 'hover:bg-white/5 border-transparent hover:border-white/5'
+                }`}>
                   <div className="relative flex items-center justify-center mt-0.5 shrink-0">
                     <input
                       type="checkbox"
                       checked={accepted}
-                      onChange={(e) => setAccepted(e.target.checked)}
+                      onChange={(e) => {
+                        setAccepted(e.target.checked);
+                        if (e.target.checked) setConsentWarning(false);
+                      }}
                       className="sr-only"
                     />
                     <div className={`w-6 h-6 rounded-md border transition-all flex items-center justify-center ${
                       accepted 
                         ? 'bg-nc-orange border-nc-orange shadow-lg shadow-nc-orange/30' 
+                        : consentWarning
+                        ? 'border-amber-400 bg-amber-500/10 animate-pulse'
                         : 'border-white/30 bg-white/5 hover:border-white/50'
                     }`}>
                       {accepted && <Check size={16} className="text-nc-space stroke-[3]" />}
@@ -255,18 +278,27 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                     Li e aceito os <span className="text-white underline decoration-white/30 hover:decoration-nc-orange cursor-pointer" onClick={(e) => { e.stopPropagation(); setModalDocument('termos'); }}>Termos de Uso</span> e estou ciente da <span className="text-white underline decoration-white/30 hover:decoration-nc-orange cursor-pointer" onClick={(e) => { e.stopPropagation(); setModalDocument('privacidade'); }}>Política de Privacidade</span>.
                   </div>
                 </label>
+
+                {consentWarning && !accepted && (
+                  <div className="mt-2 flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs animate-in fade-in">
+                    <AlertCircle size={15} className="shrink-0 text-amber-400" />
+                    <span>Por favor, marque a caixa acima confirmando o aceite para prosseguir para o portal de benefícios.</span>
+                  </div>
+                )}
               </div>
 
               {/* CTA Button and Confirmation Feedback */}
               <div className="pt-2 space-y-3">
                 <button
                   type="button"
-                  disabled={!accepted || isSubmitting}
+                  disabled={isSubmitting}
                   onClick={handleAccess}
                   className={`w-full py-4 md:py-5 px-8 rounded-full font-bold text-xs md:text-sm uppercase tracking-wider flex items-center justify-center gap-3 transition-all duration-300 shadow-xl ${
                     accepted && !isSubmitting
                       ? 'bg-nc-orange text-nc-space hover:bg-white hover:shadow-nc-orange/30 cursor-pointer scale-100 hover:scale-[1.01]'
-                      : 'bg-white/10 text-nc-warm/40 cursor-not-allowed border border-white/5'
+                      : isSubmitting
+                      ? 'bg-white/10 text-nc-warm/40 cursor-wait border border-white/5'
+                      : 'bg-nc-orange/80 hover:bg-nc-orange text-nc-space cursor-pointer border border-nc-orange/50 hover:shadow-lg hover:shadow-nc-orange/20'
                   }`}
                 >
                   {isSubmitting ? (
@@ -291,7 +323,7 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                 <div className="flex items-center justify-between text-[11px] text-nc-warm/60 px-2 flex-wrap gap-2">
                   <span className="flex items-center gap-1.5 font-mono">
                     <Lock size={12} className="text-nc-orange" />
-                    Destino: <strong className="text-white">beneficios.ncturismo.com.br</strong>
+                    Destino: <strong className="text-white">beneficios.ncturismo.com.br/b2c/</strong>
                   </span>
 
                   <span className="text-nc-warm/50">

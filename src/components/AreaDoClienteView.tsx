@@ -408,8 +408,8 @@ export const AreaDoClienteView: React.FC<AreaDoClienteViewProps> = ({
 
                   <div className="space-y-2 text-xs text-nc-warm/60 mb-6 font-mono">
                     <div className="flex justify-between border-b border-white/5 pb-1">
-                      <span>Subdomínio:</span>
-                      <span className="text-nc-orange">beneficios.ncturismo.com.br</span>
+                      <span>Ambiente:</span>
+                      <span className="text-nc-orange">beneficios.ncturismo.com.br/b2c/</span>
                     </div>
                     <div className="flex justify-between border-b border-white/5 pb-1">
                       <span>Tarifas:</span>

@@ -767,7 +767,7 @@ CREATE POLICY "Permitir leitura de aceites para autenticados" ON public.terms_ac
                       <span className="text-xs uppercase tracking-wider text-nc-warm/50 font-semibold block mb-1">
                         Destino Piloto Homologado
                       </span>
-                      <span className="text-xs font-mono text-white font-bold">beneficios.ncturismo.com.br</span>
+                      <span className="text-xs font-mono text-white font-bold">beneficios.ncturismo.com.br/b2c/</span>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
                       <ExternalLink size={18} />
