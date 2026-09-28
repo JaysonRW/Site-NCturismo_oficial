@@ -186,7 +186,7 @@ export const FAQSection: React.FC = () => {
   return (
     <section 
       id="faq" 
-      className="relative w-full py-24 md:py-32 bg-[#0B0D13] text-nc-warm border-t border-b border-white/10 overflow-hidden"
+      className="relative w-full py-24 md:py-32 bg-[#F8FAFC] text-[#0F172A] border-t border-b border-slate-200/90 overflow-hidden"
       aria-label="Perguntas Frequentes (FAQ)"
     >
       {/* Schema.org FAQPage Structured Data for Google Rich Snippets */}
@@ -195,25 +195,25 @@ export const FAQSection: React.FC = () => {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      {/* Background Ambience */}
-      <div className="absolute top-1/4 left-0 -translate-x-1/2 w-96 h-96 bg-nc-orange/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-0 translate-x-1/3 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px] pointer-events-none" />
+      {/* Background Ambience: Soft, luminous atmospheric glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[350px] bg-gradient-to-b from-red-100/30 via-orange-50/20 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-to-l from-amber-100/25 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute inset-0 opacity-[0.25] bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:28px_28px] pointer-events-none" />
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-12 lg:px-16">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-nc-orange/10 border border-nc-orange/30 text-nc-orange text-xs font-mono uppercase tracking-[0.14em] font-bold mb-4">
-            <HelpCircle size={14} className="text-nc-orange" />
-            Central de Dúvidas & Perguntas Frequentes
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-red-50 via-orange-50 to-amber-50 border border-red-200/90 text-[#C8102E] text-xs font-bold uppercase tracking-wider shadow-2xs mb-4">
+            <HelpCircle size={14} className="text-[#DB8902]" />
+            Central de Dúvidas &amp; Perguntas Frequentes
           </div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-extrabold text-white tracking-tight leading-[1.15] mb-4">
-            Tudo o que você precisa saber sobre a gestão NC Turismo.
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-extrabold text-[#0F172A] tracking-tight leading-[1.15] mb-4">
+            Tudo o que você precisa saber sobre a gestão <span className="bg-gradient-to-r from-[#C8102E] via-[#D32F2F] to-[#DB8902] bg-clip-text text-transparent">NC Turismo</span>.
           </h2>
 
-          <p className="text-sm sm:text-base md:text-lg text-nc-warm/75 font-normal leading-relaxed">
+          <p className="text-sm sm:text-base md:text-lg text-slate-600 font-normal leading-relaxed">
             Respostas transparentes e detalhadas sobre governança de políticas, integrações ERP, suporte emergencial 24h e geração de savings para sua empresa.
           </p>
         </div>
@@ -222,19 +222,19 @@ export const FAQSection: React.FC = () => {
         <div className="max-w-4xl mx-auto mb-10 space-y-4">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-nc-warm/40" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Digite sua dúvida (ex: aprovação, ERP, plantão 24h, savings, LGPD)..."
-              className="w-full bg-[#121622] text-white placeholder-nc-warm/40 text-sm md:text-base pl-12 pr-10 py-3.5 rounded-2xl border border-white/10 focus:border-nc-orange focus:outline-none focus:ring-2 focus:ring-nc-orange/20 transition-all shadow-lg"
+              className="w-full bg-white text-[#0F172A] placeholder-slate-400 text-sm md:text-base pl-12 pr-10 py-3.5 rounded-2xl border border-slate-200 focus:border-[#C8102E] focus:outline-none focus:ring-2 focus:ring-red-100 transition-all shadow-sm"
               aria-label="Buscar dúvida frequente"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 text-nc-warm/70 hover:text-white flex items-center justify-center transition-colors text-xs"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors text-xs cursor-pointer"
                 title="Limpar busca"
               >
                 <X size={14} />
@@ -257,15 +257,15 @@ export const FAQSection: React.FC = () => {
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                     isSelected
-                      ? 'bg-nc-orange text-nc-space shadow-md shadow-nc-orange/25 font-bold scale-[1.02]'
-                      : 'bg-white/5 hover:bg-white/10 text-nc-warm/75 hover:text-white border border-white/5 hover:border-white/15'
+                      ? 'bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white shadow-md shadow-red-500/20 font-bold scale-[1.02] border border-transparent'
+                      : 'bg-white hover:bg-red-50/50 text-slate-600 hover:text-[#C8102E] border border-slate-200/90 hover:border-red-200 shadow-2xs'
                   }`}
                 >
                   <span>{cat.label}</span>
                   <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
                     isSelected 
-                      ? 'bg-nc-space/30 text-nc-space font-bold' 
-                      : 'bg-white/10 text-nc-warm/60'
+                      ? 'bg-white/25 text-white font-bold' 
+                      : 'bg-slate-100 text-slate-500'
                   }`}>
                     {count}
                   </span>
@@ -278,21 +278,21 @@ export const FAQSection: React.FC = () => {
         {/* Accordion Questions List */}
         <div className="max-w-4xl mx-auto space-y-3.5">
           {filteredFaqs.length === 0 ? (
-            <div className="p-10 rounded-2xl bg-white/[0.02] border border-white/10 text-center space-y-3">
-              <FileQuestion className="w-10 h-10 text-nc-orange/60 mx-auto" />
-              <h4 className="text-base font-bold text-white">Nenhuma pergunta encontrada para sua busca</h4>
-              <p className="text-xs text-nc-warm/60 max-w-md mx-auto">
+            <div className="p-10 rounded-2xl bg-white border border-slate-200 text-center space-y-3 shadow-xs">
+              <FileQuestion className="w-10 h-10 text-[#DB8902] mx-auto" />
+              <h4 className="text-base font-bold text-[#0F172A]">Nenhuma pergunta encontrada para sua busca</h4>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
                 Tente outros termos ou fale diretamente com um de nossos consultores corporativos.
               </p>
               <button
                 onClick={() => { setSearchQuery(''); setSelectedCategory('todas'); }}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-nc-orange hover:underline pt-1"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#C8102E] hover:underline pt-1 cursor-pointer"
               >
                 Limpar filtros e ver todas as dúvidas &rarr;
               </button>
             </div>
           ) : (
-            filteredFaqs.map((item, idx) => {
+            filteredFaqs.map((item) => {
               const isExpanded = expandedId === item.id;
               const ItemIcon = item.icon;
 
@@ -301,8 +301,8 @@ export const FAQSection: React.FC = () => {
                   key={item.id}
                   className={`rounded-2xl transition-all duration-300 border overflow-hidden ${
                     isExpanded
-                      ? 'bg-[#121622] border-nc-orange/40 shadow-xl shadow-black/40'
-                      : 'bg-[#0f121a]/80 hover:bg-[#121622]/90 border-white/10 hover:border-white/20'
+                      ? 'bg-white border-2 border-[#C8102E]/70 shadow-xl shadow-red-500/5'
+                      : 'bg-white hover:bg-slate-50/80 border-slate-200/90 hover:border-red-300 shadow-2xs hover:shadow-md'
                   }`}
                 >
                   {/* Accordion Trigger Button */}
@@ -314,20 +314,20 @@ export const FAQSection: React.FC = () => {
                     className="w-full p-5 md:p-6 text-left flex items-start justify-between gap-4 cursor-pointer select-none group"
                   >
                     <div className="flex items-start gap-3.5 min-w-0">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors shadow-2xs ${
                         isExpanded
-                          ? 'bg-nc-orange text-nc-space'
-                          : 'bg-white/5 text-nc-orange group-hover:bg-nc-orange/20'
+                          ? 'bg-gradient-to-br from-[#C8102E] to-[#DB8902] text-white'
+                          : 'bg-red-50 text-[#C8102E] border border-red-100 group-hover:bg-red-100/70'
                       }`}>
                         <ItemIcon size={18} />
                       </div>
 
                       <div>
-                        <span className="text-[11px] font-mono uppercase tracking-wider text-nc-orange/80 font-bold block mb-1">
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-[#DB8902] font-bold block mb-1">
                           {item.categoryLabel}
                         </span>
                         <h3 className={`text-sm sm:text-base md:text-lg font-bold transition-colors leading-snug ${
-                          isExpanded ? 'text-white' : 'text-nc-warm/90 group-hover:text-white'
+                          isExpanded ? 'text-[#0F172A]' : 'text-slate-800 group-hover:text-[#C8102E]'
                         }`}>
                           {item.question}
                         </h3>
@@ -336,8 +336,8 @@ export const FAQSection: React.FC = () => {
 
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 mt-0.5 ${
                       isExpanded
-                        ? 'rotate-180 bg-nc-orange/20 text-nc-orange'
-                        : 'bg-white/5 text-nc-warm/50 group-hover:text-white group-hover:bg-white/10'
+                        ? 'rotate-180 bg-red-50 text-[#C8102E]'
+                        : 'bg-slate-100 text-slate-400 group-hover:text-[#0F172A] group-hover:bg-slate-200'
                     }`}>
                       <ChevronDown size={18} />
                     </div>
@@ -352,20 +352,25 @@ export const FAQSection: React.FC = () => {
                       isExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
                     }`}
                   >
-                    <div className="px-5 pb-6 md:px-6 md:pb-7 pt-1 border-t border-white/5 space-y-4">
-                      <p className="text-xs sm:text-sm text-nc-warm/85 leading-relaxed">
+                    <div className="px-5 pb-6 md:px-6 md:pb-7 pt-1 border-t border-slate-100 space-y-4">
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
                         {item.answer}
                       </p>
 
                       {item.highlights && item.highlights.length > 0 && (
-                        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
-                          <span className="text-[11px] font-mono uppercase tracking-wider text-nc-orange font-bold block">
+                        <div 
+                          className="p-4 rounded-xl space-y-2 border border-amber-200/80 shadow-2xs"
+                          style={{
+                            background: 'linear-gradient(135deg, #FFFDFB 0%, #FFF7EE 100%)'
+                          }}
+                        >
+                          <span className="text-[11px] font-mono uppercase tracking-wider text-[#C8102E] font-bold block">
                             Destaques da Solução:
                           </span>
                           <ul className="space-y-1.5">
                             {item.highlights.map((hl, hIdx) => (
-                              <li key={hIdx} className="flex items-start gap-2 text-xs text-nc-warm/80">
-                                <CheckCircle2 size={14} className="text-nc-orange shrink-0 mt-0.5" />
+                              <li key={hIdx} className="flex items-start gap-2 text-xs text-slate-700 font-medium">
+                                <CheckCircle2 size={14} className="text-[#DB8902] shrink-0 mt-0.5" />
                                 <span>{hl}</span>
                               </li>
                             ))}
@@ -382,25 +387,30 @@ export const FAQSection: React.FC = () => {
         </div>
 
         {/* Direct Contact / Still Have Questions Footer Card */}
-        <div className="max-w-4xl mx-auto mt-14 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#141926] via-[#101420] to-[#141926] border border-white/10 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-1.5 text-center md:text-left">
-            <span className="text-xs font-mono uppercase tracking-wider text-nc-orange font-bold">
+        <div 
+          className="max-w-4xl mx-auto mt-14 p-6 sm:p-8 rounded-3xl border border-red-200/90 shadow-xl shadow-red-500/5 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF9F6 50%, #FFF4E8 100%)'
+          }}
+        >
+          <div className="space-y-1.5 text-center md:text-left relative z-10">
+            <span className="text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold">
               Atendimento Especializado NC
             </span>
-            <h4 className="text-lg sm:text-xl font-bold text-white">
+            <h4 className="text-lg sm:text-xl font-bold text-[#0F172A]">
               Sua dúvida é específica ou necessita de proposta personalizada?
             </h4>
-            <p className="text-xs sm:text-sm text-nc-warm/70">
+            <p className="text-xs sm:text-sm text-slate-600">
               Nossa equipe consultiva está pronta para estruturar a política e o acordo corporativo ideal para sua empresa.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0 flex-wrap justify-center">
+          <div className="flex items-center gap-3 shrink-0 flex-wrap justify-center relative z-10">
             <a
               href="https://wa.me/554132811167?text=Ol%C3%A1%2C%20gostaria%20de%20tirar%20d%C3%BAvidas%20sobre%20as%20solu%C3%A7%C3%B5es%20corporativas%20da%20NC%20Turismo."
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-nc-orange text-nc-space font-bold text-xs uppercase tracking-wider hover:bg-white hover:shadow-lg hover:shadow-nc-orange/20 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-gradient-to-r from-[#C8102E] via-[#D32F2F] to-[#DB8902] text-white font-bold text-xs uppercase tracking-wider hover:brightness-105 shadow-md shadow-red-500/20 transition-all cursor-pointer"
             >
               <MessageSquare size={16} />
               <span>Falar no WhatsApp</span>
@@ -408,9 +418,9 @@ export const FAQSection: React.FC = () => {
 
             <a
               href="tel:4132811167"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/5 hover:bg-white/10 text-white font-semibold text-xs tracking-wider border border-white/10 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-white hover:bg-red-50 text-slate-700 hover:text-[#C8102E] font-semibold text-xs tracking-wider border border-slate-200 hover:border-red-200 shadow-2xs transition-colors cursor-pointer"
             >
-              <Phone size={14} className="text-nc-orange" />
+              <Phone size={14} className="text-[#DB8902]" />
               <span>(41) 3281-1167</span>
             </a>
           </div>
