@@ -12,8 +12,7 @@ import {
   Sparkles,
   CheckCircle2,
   ArrowUpRight,
-  HelpCircle,
-  X
+  HelpCircle
 } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -29,8 +28,6 @@ interface SolutionItem {
   badgeSub: string;
   image: string;
   icon: React.ElementType;
-  faqQuestion: string;
-  faqAnswer: string;
 }
 
 const solutions: SolutionItem[] = [
@@ -48,9 +45,7 @@ const solutions: SolutionItem[] = [
     badge: '100% Governança',
     badgeSub: 'Auditoria pré-emissão em tempo real',
     image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-    icon: ShieldCheck,
-    faqQuestion: 'Como funciona o planejamento e a parametrização de políticas de viagens corporativas na NC Turismo?',
-    faqAnswer: 'Parametrizamos as regras da sua empresa no sistema com aprovações multiníveis, tetos de gastos e restrições validados automaticamente, garantindo conformidade antes do orçamento ser comprometido, com validação de alçadas e bloqueio preventivo de desvios.'
+    icon: ShieldCheck
   },
   {
     id: 'tecnologia',
@@ -66,9 +61,7 @@ const solutions: SolutionItem[] = [
     badge: 'Integração em Tempo Real',
     badgeSub: 'APIs abertas e sincronização contínua',
     image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-    icon: Cpu,
-    faqQuestion: 'Como a NC Turismo integra a gestão de viagens corporativas aos sistemas ERP e RH corporativos?',
-    faqAnswer: 'Conectamos a gestão de viagens diretamente aos principais ERPs e sistemas de RH do mercado (como SAP, TOTVS, Senior e Workday), com self-booking intuitivo via Web e App Mobile, autenticação corporativa Single Sign-On (SSO) e sincronização contínua de despesas e solicitações em tempo real.'
+    icon: Cpu
   },
   {
     id: 'atendimento',
@@ -84,9 +77,7 @@ const solutions: SolutionItem[] = [
     badge: 'SLA < 15 segundos',
     badgeSub: 'Especialistas seniores sem filas',
     image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-    icon: Headphones,
-    faqQuestion: 'Como funciona o atendimento consultivo 24 horas humanizado da NC Turismo para viagens corporativas?',
-    faqAnswer: 'A NC Turismo disponibiliza consultores seniores dedicados com plantão executivo bilíngue ininterrupto 365 dias por ano, com tempo médio de resposta humana inferior a 15 segundos para remarcações, cancelamentos emergenciais e assistência imediata sem filas ou robôs.'
+    icon: Headphones
   },
   {
     id: 'compliance',
@@ -102,9 +93,7 @@ const solutions: SolutionItem[] = [
     badge: 'ESG & LGPD Certificado',
     badgeSub: 'Rastreabilidade e dados sustentáveis',
     image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-    icon: Leaf,
-    faqQuestion: 'Quais práticas de compliance, LGPD e sustentabilidade ESG são atendidas nas viagens com a NC Turismo?',
-    faqAnswer: 'Oferecemos rastreabilidade total de passageiros em tempo real (duty of care), conformidade rigorosa com a LGPD e relatórios periódicos de pegada de carbono (emissão de CO₂ por rota aérea e rodoviária) para relatórios corporativos ESG.'
+    icon: Leaf
   },
   {
     id: 'bi',
@@ -120,25 +109,9 @@ const solutions: SolutionItem[] = [
     badge: 'Média de 22% em Savings',
     badgeSub: 'Inteligência para negociações de volume',
     image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-    icon: BarChart3,
-    faqQuestion: 'Como o BI analítico e relatórios estratégicos da NC Turismo geram economia de custos (savings)?',
-    faqAnswer: 'Através de dashboards executivos dinâmicos que mapeiam hábitos de compra, rotas frequentes e padrões de hospedagem para subsidiar negociações de tarifas-acordo corporativas de alto volume, proporcionando uma média de 22% em savings comprovados.'
+    icon: BarChart3
   }
 ];
-
-// Schema.org FAQPage Structured Data (JSON-LD) for Search Engine Rich Snippets
-const solutionsFaqStructuredData = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  'mainEntity': solutions.map((item) => ({
-    '@type': 'Question',
-    'name': item.faqQuestion,
-    'acceptedAnswer': {
-      '@type': 'Answer',
-      'text': item.faqAnswer
-    }
-  }))
-};
 
 export const SolutionsAccordion: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -149,35 +122,11 @@ export const SolutionsAccordion: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [itemProgress, setItemProgress] = useState(0);
   const [isDesktop, setIsDesktop] = useState(true);
-  const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
 
   // Accordion items element refs for GSAP hover interactions
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const numberRefs = useRef<(HTMLDivElement | null)[]>([]);
   const arrowRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  // SEO: Inject Schema.org FAQPage JSON-LD into document.head
-  useEffect(() => {
-    const scriptId = 'solutions-faq-jsonld';
-    let script = document.getElementById(scriptId) as HTMLScriptElement | null;
-    
-    if (!script) {
-      script = document.createElement('script');
-      script.id = scriptId;
-      script.type = 'application/ld+json';
-      script.text = JSON.stringify(solutionsFaqStructuredData);
-      document.head.appendChild(script);
-    } else {
-      script.text = JSON.stringify(solutionsFaqStructuredData);
-    }
-
-    return () => {
-      const existingScript = document.getElementById(scriptId);
-      if (existingScript) {
-        existingScript.remove();
-      }
-    };
-  }, []);
 
   useEffect(() => {
     const checkViewport = () => {
@@ -450,12 +399,6 @@ export const SolutionsAccordion: React.FC = () => {
       className="relative w-full min-h-screen lg:h-screen overflow-hidden bg-white text-[#0F172A]"
       aria-label="Soluções Corporativas NC Turismo"
     >
-      {/* Schema.org FAQPage Structured Data (JSON-LD) for Search Engine Rich Snippets */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(solutionsFaqStructuredData) }}
-      />
-
       {/* Background Soft Transition Gradient */}
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#F8F9FA] via-white to-white pointer-events-none" />
 
@@ -468,22 +411,26 @@ export const SolutionsAccordion: React.FC = () => {
         {/* LEFT COLUMN: Header & Interactive Accordion Items */}
         <div className="w-full lg:w-[52%] flex flex-col justify-center lg:pr-8 mb-10 lg:mb-0">
           
-          {/* Eyebrow Kicker & FAQ Trigger */}
+          {/* Eyebrow Kicker & Link to Dedicated FAQ */}
           <div className="sa-reveal-kicker mb-3 flex flex-wrap items-center gap-2.5">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-semibold tracking-wider uppercase">
               <Sparkles className="w-3.5 h-3.5 text-nc-orange animate-pulse" />
               Soluções Integradas B2B
             </span>
 
-            <button
-              onClick={() => setIsFaqModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 hover:bg-amber-100/70 border border-slate-200/80 hover:border-amber-300 text-slate-700 hover:text-amber-900 text-xs font-medium transition-all duration-200 cursor-pointer shadow-xs"
-              title="Abrir Perguntas Frequentes (FAQ Estruturado com dados JSON-LD)"
+            <a
+              href="#faq"
+              onClick={(e) => {
+                e.preventDefault();
+                const el = document.getElementById('faq');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 hover:bg-amber-100/70 border border-slate-200/80 hover:border-amber-300 text-slate-700 hover:text-amber-900 text-xs font-medium transition-all duration-200 cursor-pointer shadow-xs group"
+              title="Acessar sessão de Perguntas Frequentes (FAQ)"
             >
               <HelpCircle className="w-3.5 h-3.5 text-[#DB8902]" />
-              <span>Dúvidas Frequentes (FAQ)</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-200/80 text-amber-950 font-bold ml-0.5">5</span>
-            </button>
+              <span>Dúvidas Frequentes (FAQ) &darr;</span>
+            </a>
           </div>
 
           {/* Section Main Title */}
@@ -591,19 +538,6 @@ export const SolutionsAccordion: React.FC = () => {
                     }`}
                   >
                     <div className="border-t border-amber-200/60 pt-3">
-                      {/* Visible FAQ Prompt for Google SEO Rich Snippets & Human User Clarity */}
-                      <div className="mb-2.5 flex items-start gap-2 bg-white/95 p-2 rounded-xl border border-amber-200/70 shadow-xs">
-                        <HelpCircle className="w-3.5 h-3.5 text-[#DB8902] shrink-0 mt-0.5" />
-                        <div className="min-w-0">
-                          <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wide block">
-                            Dúvida Frequente (FAQ)
-                          </span>
-                          <p className="text-xs font-semibold text-slate-800 leading-snug">
-                            {item.faqQuestion}
-                          </p>
-                        </div>
-                      </div>
-
                       <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-3">
                         {item.content}
                       </p>
@@ -731,85 +665,6 @@ export const SolutionsAccordion: React.FC = () => {
         </div>
 
       </div>
-
-      {/* FAQ Modal Overlay (Accessible and SEO-Synchronized) */}
-      {isFaqModalOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="faq-modal-title"
-        >
-          <div className="relative w-full max-w-2xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[88vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4 mb-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-semibold">
-                    Schema.org FAQPage • SEO Validado
-                  </span>
-                  <span className="text-xs text-slate-400">Google Rich Snippets Ready</span>
-                </div>
-                <h3 id="faq-modal-title" className="text-xl sm:text-2xl font-bold text-[#0F172A]">
-                  Perguntas Frequentes sobre as Soluções
-                </h3>
-                <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-                  Principais respostas estruturadas para gestores de viagens e lideranças corporativas.
-                </p>
-              </div>
-              <button
-                onClick={() => setIsFaqModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors shrink-0"
-                aria-label="Fechar FAQ"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Modal Scrollable Content */}
-            <div className="overflow-y-auto space-y-3.5 pr-1 flex-1">
-              {solutions.map((item, idx) => (
-                <div 
-                  key={`faq-modal-${item.id}`} 
-                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-amber-300 transition-colors"
-                >
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-[11px] font-bold text-[#DB8902] uppercase tracking-wider">
-                      Solução {item.number} • {item.category}
-                    </span>
-                    <button
-                      onClick={() => {
-                        setIsFaqModalOpen(false);
-                        handleSelectSolution(idx);
-                      }}
-                      className="text-xs font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2 cursor-pointer"
-                    >
-                      Ver no painel →
-                    </button>
-                  </div>
-                  <h4 className="text-sm font-semibold text-slate-900 mb-1">
-                    {item.faqQuestion}
-                  </h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {item.faqAnswer}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="border-t border-slate-100 pt-4 mt-4 flex items-center justify-between text-xs text-slate-500">
-              <span className="hidden sm:inline">Indexação em conformidade com as diretrizes do Google Search.</span>
-              <button
-                onClick={() => setIsFaqModalOpen(false)}
-                className="px-5 py-2 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-medium transition-colors ml-auto cursor-pointer"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 };

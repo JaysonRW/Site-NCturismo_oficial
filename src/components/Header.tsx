@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled || activeDropdown || mobileMenuOpen
+        scrolled || activeDropdown || mobileMenuOpen || currentView !== 'home'
           ? 'bg-nc-space/95 backdrop-blur-md py-4 shadow-lg border-b border-white/5' 
           : 'bg-transparent py-6 md:py-8'
       }`}
@@ -307,6 +307,18 @@ export const Header: React.FC<HeaderProps> = ({
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
                           Compliance e ESG
+                        </a>
+                      </li>
+                      <li>
+                        <a 
+                          href="#faq"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            navigateTo('#faq');
+                          }}
+                          className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium text-amber-400/90"
+                        >
+                          Dúvidas Frequentes (FAQ)
                         </a>
                       </li>
                     </ul>
@@ -810,6 +822,21 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <span>Área do Cliente</span>
                 <span className="text-[10px] font-mono bg-nc-orange/20 text-nc-orange px-2 py-0.5 rounded">Portal</span>
+              </a>
+            </div>
+
+            {/* 8. Direct: Dúvidas Frequentes (FAQ) */}
+            <div className="border-b border-white/10 py-2">
+              <a 
+                href="#faq" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigateTo('#faq');
+                }}
+                className="flex items-center justify-between text-sm uppercase tracking-[0.08em] font-bold text-white hover:text-nc-orange py-1"
+              >
+                <span>Dúvidas Frequentes (FAQ)</span>
+                <span className="text-[10px] font-mono bg-white/10 text-nc-warm/80 px-2 py-0.5 rounded">Ajuda</span>
               </a>
             </div>
 

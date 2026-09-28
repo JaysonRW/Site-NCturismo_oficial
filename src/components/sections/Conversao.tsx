@@ -205,6 +205,20 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCli
                     Plantão Emergencial
                   </a>
                 </li>
+                <li>
+                  <a 
+                    href="#faq" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.hash = '#faq';
+                      const el = document.getElementById('faq');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Dúvidas Frequentes (FAQ)
+                  </a>
+                </li>
               </ul>
             </div>
             

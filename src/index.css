@@ -2,10 +2,20 @@
 
 @theme {
   --color-nc-orange: #DB8902;
+  --color-nc-orange-dark: #B87200;
+  --color-nc-orange-light: #FEF3C7;
+  --color-nc-red: #C8102E;
+  --color-nc-red-dark: #9E0A22;
+  --color-nc-red-light: #FEE2E2;
   --color-nc-graphite: #565759;
   --color-nc-space: #111318;
   --color-nc-surface: #181B22;
   --color-nc-warm: #F4F2ED;
+  --color-nc-light-bg: #F8FAFC;
+  --color-nc-card-light: #FFFFFF;
+  --color-nc-border-light: #E2E8F0;
+  --color-nc-text-dark: #0F172A;
+  --color-nc-text-muted: #475569;
   --font-display: "Plus Jakarta Sans", sans-serif;
   --font-sans: "Inter", sans-serif;
 }
@@ -64,5 +74,73 @@ h1, h2, h3, h4, h5, h6, .font-display {
 .pause-on-hover:hover .animate-marquee-slow,
 .pause-on-hover:hover .animate-marquee-reverse {
   animation-play-state: paused;
+}
+
+/* =========================================================================
+   Modern Minimalist Custom Scrollbar (Zero Windows 95 Chunky Bars)
+   ========================================================================= */
+
+/* Global WebKit scrollbar styling */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0B0D13;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(219, 137, 2, 0.4);
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #DB8902;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(219, 137, 2, 0.45) #0B0D13;
+}
+
+/* Utility to completely hide scrollbar while preserving scrolling */
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* High-finish custom container scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(219, 137, 2, 0.35) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #DB8902;
 }
 

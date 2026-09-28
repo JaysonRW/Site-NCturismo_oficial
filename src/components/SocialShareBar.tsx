@@ -113,7 +113,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
       <div className={`relative flex items-center gap-1.5 ${className}`}>
         {/* Toast */}
         {toastMessage && (
-          <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 px-3 py-1 bg-black/90 text-nc-orange text-[11px] font-medium rounded-lg whitespace-nowrap shadow-xl border border-nc-orange/30">
+          <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 px-3 py-1 bg-white text-[#C8102E] text-[11px] font-bold rounded-lg whitespace-nowrap shadow-xl border border-red-200 animate-fadeIn">
             {toastMessage}
           </div>
         )}
@@ -121,7 +121,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <button
           onClick={handleLinkedIn}
           title="Compartilhar no LinkedIn"
-          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-[#0077b5] text-nc-warm/70 hover:text-white flex items-center justify-center transition-all"
+          className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-[#0077b5] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all cursor-pointer"
         >
           <LinkedInIcon />
         </button>
@@ -129,7 +129,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <button
           onClick={handleX}
           title="Compartilhar no X (Twitter)"
-          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-black text-nc-warm/70 hover:text-white flex items-center justify-center transition-all border border-transparent hover:border-white/20"
+          className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-[#0F172A] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all cursor-pointer"
         >
           <XIcon />
         </button>
@@ -137,7 +137,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <button
           onClick={handleFacebook}
           title="Compartilhar no Facebook"
-          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-[#1877f2] text-nc-warm/70 hover:text-white flex items-center justify-center transition-all"
+          className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-[#1877f2] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all cursor-pointer"
         >
           <FacebookIcon />
         </button>
@@ -145,7 +145,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <button
           onClick={handleInstagram}
           title="Compartilhar no Instagram"
-          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] text-nc-warm/70 hover:text-white flex items-center justify-center transition-all"
+          className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all cursor-pointer"
         >
           <InstagramIcon />
         </button>
@@ -153,7 +153,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <button
           onClick={handleWhatsApp}
           title="Compartilhar no WhatsApp"
-          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-[#25D366] text-nc-warm/70 hover:text-white flex items-center justify-center transition-all"
+          className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-[#25D366] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all cursor-pointer"
         >
           <WhatsAppIcon />
         </button>
@@ -161,9 +161,9 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <button
           onClick={handleCopyLink}
           title="Copiar Link"
-          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-nc-orange text-nc-warm/70 hover:text-nc-space flex items-center justify-center transition-all"
+          className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-[#DB8902] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all cursor-pointer"
         >
-          {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+          {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
         </button>
       </div>
     );
@@ -172,15 +172,15 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
   // Variant: FLOATING (dock on desktop screen)
   if (variant === 'floating') {
     return (
-      <div className={`hidden xl:flex fixed left-6 top-1/2 -translate-y-1/2 z-40 flex-col items-center gap-2 p-2.5 rounded-2xl bg-[#14151b]/95 border border-white/10 shadow-2xl backdrop-blur-md ${className}`}>
+      <div className={`hidden xl:flex fixed left-6 top-1/2 -translate-y-1/2 z-40 flex-col items-center gap-2 p-2.5 rounded-2xl bg-white/95 border border-slate-200/90 shadow-2xl shadow-slate-300/40 backdrop-blur-md ${className}`}>
         
         {toastMessage && (
-          <div className="absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-black/95 text-nc-orange text-xs font-medium rounded-xl whitespace-nowrap shadow-2xl border border-nc-orange/40 animate-fadeIn">
+          <div className="absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-white text-[#C8102E] text-xs font-bold rounded-xl whitespace-nowrap shadow-2xl border border-red-200 animate-fadeIn">
             {toastMessage}
           </div>
         )}
 
-        <span className="text-[10px] font-mono uppercase tracking-widest text-nc-warm/40 mb-1">
+        <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold mb-1">
           Share
         </span>
 
@@ -188,10 +188,10 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <button
           onClick={handleLinkedIn}
           title="Compartilhar no LinkedIn"
-          className="w-10 h-10 rounded-xl bg-white/5 hover:bg-[#0077b5] text-nc-warm/80 hover:text-white flex items-center justify-center transition-all group relative"
+          className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-[#0077b5] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all group relative cursor-pointer"
         >
           <LinkedInIcon />
-          <span className="absolute left-12 px-2 py-1 rounded bg-black text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+          <span className="absolute left-12 px-2.5 py-1 rounded-md bg-[#0F172A] text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-lg">
             LinkedIn
           </span>
         </button>
@@ -200,10 +200,10 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <button
           onClick={handleX}
           title="Compartilhar no X"
-          className="w-10 h-10 rounded-xl bg-white/5 hover:bg-black text-nc-warm/80 hover:text-white flex items-center justify-center transition-all group relative border border-transparent hover:border-white/20"
+          className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-[#0F172A] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all group relative cursor-pointer"
         >
           <XIcon />
-          <span className="absolute left-12 px-2 py-1 rounded bg-black text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+          <span className="absolute left-12 px-2.5 py-1 rounded-md bg-[#0F172A] text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-lg">
             X (Twitter)
           </span>
         </button>
@@ -212,10 +212,10 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <button
           onClick={handleFacebook}
           title="Compartilhar no Facebook"
-          className="w-10 h-10 rounded-xl bg-white/5 hover:bg-[#1877f2] text-nc-warm/80 hover:text-white flex items-center justify-center transition-all group relative"
+          className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-[#1877f2] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all group relative cursor-pointer"
         >
           <FacebookIcon />
-          <span className="absolute left-12 px-2 py-1 rounded bg-black text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+          <span className="absolute left-12 px-2.5 py-1 rounded-md bg-[#0F172A] text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-lg">
             Facebook
           </span>
         </button>
@@ -224,10 +224,10 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <button
           onClick={handleInstagram}
           title="Compartilhar no Instagram"
-          className="w-10 h-10 rounded-xl bg-white/5 hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] text-nc-warm/80 hover:text-white flex items-center justify-center transition-all group relative"
+          className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all group relative cursor-pointer"
         >
           <InstagramIcon />
-          <span className="absolute left-12 px-2 py-1 rounded bg-black text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+          <span className="absolute left-12 px-2.5 py-1 rounded-md bg-[#0F172A] text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-lg">
             Instagram
           </span>
         </button>
@@ -236,24 +236,24 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <button
           onClick={handleWhatsApp}
           title="Compartilhar no WhatsApp"
-          className="w-10 h-10 rounded-xl bg-white/5 hover:bg-[#25D366] text-nc-warm/80 hover:text-white flex items-center justify-center transition-all group relative"
+          className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-[#25D366] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all group relative cursor-pointer"
         >
           <WhatsAppIcon />
-          <span className="absolute left-12 px-2 py-1 rounded bg-black text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+          <span className="absolute left-12 px-2.5 py-1 rounded-md bg-[#0F172A] text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-lg">
             WhatsApp
           </span>
         </button>
 
-        <div className="w-6 h-px bg-white/10 my-1" />
+        <div className="w-6 h-px bg-slate-200 my-1" />
 
         {/* Copy Link */}
         <button
           onClick={handleCopyLink}
           title="Copiar Link"
-          className="w-10 h-10 rounded-xl bg-white/5 hover:bg-nc-orange text-nc-warm/80 hover:text-nc-space flex items-center justify-center transition-all group relative"
+          className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-[#DB8902] text-slate-600 hover:text-white border border-slate-200/60 hover:border-transparent flex items-center justify-center transition-all group relative cursor-pointer"
         >
-          {copied ? <Check size={16} className="text-emerald-400" /> : <LinkIcon size={16} />}
-          <span className="absolute left-12 px-2 py-1 rounded bg-black text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+          {copied ? <Check size={16} className="text-emerald-500" /> : <LinkIcon size={16} />}
+          <span className="absolute left-12 px-2.5 py-1 rounded-md bg-[#0F172A] text-[10px] text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-lg">
             {copied ? 'Copiado!' : 'Copiar Link'}
           </span>
         </button>
@@ -265,15 +265,19 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
   // Variant: CARD / BANNER (for end of article)
   if (variant === 'card') {
     return (
-      <div className={`p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#171922] via-[#201815] to-[#171922] border border-white/10 shadow-2xl relative overflow-hidden ${className}`}>
-        
-        {/* Glow */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-nc-orange/10 rounded-full blur-3xl pointer-events-none" />
+      <div 
+        className={`p-6 sm:p-8 rounded-3xl border border-red-200/80 shadow-xl shadow-red-500/5 relative overflow-hidden ${className}`}
+        style={{
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF8F5 50%, #FFF4E8 100%)'
+        }}
+      >
+        {/* Subtle decorative glow */}
+        <div className="absolute top-0 right-0 w-56 h-56 bg-gradient-to-br from-red-100/40 to-amber-100/30 rounded-full blur-3xl pointer-events-none" />
 
         {/* Floating Toast Notification */}
         {toastMessage && (
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-nc-space/95 text-white text-xs sm:text-sm font-semibold rounded-2xl shadow-2xl border border-nc-orange/50 flex items-center gap-2 backdrop-blur-xl animate-bounce">
-            <Check size={16} className="text-emerald-400" />
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-white text-[#0F172A] text-xs sm:text-sm font-semibold rounded-2xl shadow-2xl border border-red-200 flex items-center gap-2 backdrop-blur-xl animate-bounce">
+            <Check size={16} className="text-emerald-500" />
             <span>{toastMessage}</span>
           </div>
         )}
@@ -281,14 +285,14 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
           
           <div className="space-y-1.5 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 text-nc-orange text-xs font-mono uppercase tracking-wider font-bold">
+            <div className="inline-flex items-center gap-2 text-[#C8102E] text-xs font-mono uppercase tracking-wider font-bold">
               <Share2 size={14} />
               <span>Compartilhe o Conhecimento</span>
             </div>
-            <h4 className="text-lg sm:text-xl font-display font-bold text-white">
+            <h4 className="text-lg sm:text-xl font-display font-bold text-[#0F172A]">
               Este conteúdo gerou valor para você?
             </h4>
-            <p className="text-xs sm:text-sm text-nc-warm/70 max-w-md">
+            <p className="text-xs sm:text-sm text-slate-600 max-w-md">
               Compartilhe com sua diretoria, gestores de viagens e lideranças que buscam otimizar SLA e governança.
             </p>
           </div>
@@ -299,7 +303,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
             {/* LinkedIn */}
             <button
               onClick={handleLinkedIn}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-[#0077b5] text-nc-warm/90 hover:text-white border border-white/10 text-xs font-medium transition-all hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#0077b5] text-slate-700 hover:text-white border border-slate-200 hover:border-transparent text-xs font-semibold transition-all hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
             >
               <LinkedInIcon />
               <span>LinkedIn</span>
@@ -308,7 +312,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
             {/* X (Twitter) */}
             <button
               onClick={handleX}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-black text-nc-warm/90 hover:text-white border border-white/10 text-xs font-medium transition-all hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#0F172A] text-slate-700 hover:text-white border border-slate-200 hover:border-transparent text-xs font-semibold transition-all hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
             >
               <XIcon />
               <span>X</span>
@@ -317,7 +321,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
             {/* Facebook */}
             <button
               onClick={handleFacebook}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-[#1877f2] text-nc-warm/90 hover:text-white border border-white/10 text-xs font-medium transition-all hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#1877f2] text-slate-700 hover:text-white border border-slate-200 hover:border-transparent text-xs font-semibold transition-all hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
             >
               <FacebookIcon />
               <span>Facebook</span>
@@ -326,7 +330,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
             {/* Instagram */}
             <button
               onClick={handleInstagram}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] text-nc-warm/90 hover:text-white border border-white/10 text-xs font-medium transition-all hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] text-slate-700 hover:text-white border border-slate-200 hover:border-transparent text-xs font-semibold transition-all hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
             >
               <InstagramIcon />
               <span>Instagram</span>
@@ -335,7 +339,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
             {/* WhatsApp */}
             <button
               onClick={handleWhatsApp}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-[#25D366] text-nc-warm/90 hover:text-white border border-white/10 text-xs font-medium transition-all hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#25D366] text-slate-700 hover:text-white border border-slate-200 hover:border-transparent text-xs font-semibold transition-all hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
             >
               <WhatsAppIcon />
               <span>WhatsApp</span>
@@ -344,11 +348,11 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
             {/* Copy Link Button */}
             <button
               onClick={handleCopyLink}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-nc-orange text-nc-space font-bold text-xs hover:bg-amber-400 transition-all hover:scale-105 active:scale-95 shadow-md"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white font-bold text-xs hover:brightness-105 transition-all hover:scale-105 active:scale-95 shadow-md shadow-red-500/20 cursor-pointer"
             >
               {copied ? (
                 <>
-                  <Check size={14} className="text-nc-space" />
+                  <Check size={14} className="text-white" />
                   <span>Copiado!</span>
                 </>
               ) : (
@@ -372,12 +376,12 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
     <div className={`relative flex items-center gap-2 ${className}`}>
       
       {toastMessage && (
-        <div className="absolute -bottom-10 right-0 z-50 px-3 py-1.5 bg-black/95 text-nc-orange text-xs font-medium rounded-xl whitespace-nowrap shadow-2xl border border-nc-orange/40">
+        <div className="absolute -bottom-10 right-0 z-50 px-3 py-1.5 bg-white text-[#C8102E] text-xs font-bold rounded-xl whitespace-nowrap shadow-xl border border-red-200 animate-fadeIn">
           {toastMessage}
         </div>
       )}
 
-      <span className="hidden sm:inline text-xs font-mono uppercase tracking-wider text-nc-warm/60 mr-1">
+      <span className="hidden sm:inline text-xs font-mono uppercase tracking-wider text-slate-500 font-semibold mr-1">
         Compartilhar:
       </span>
 
@@ -385,7 +389,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
       <button
         onClick={handleLinkedIn}
         title="Compartilhar no LinkedIn"
-        className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#0077b5] text-nc-warm/75 hover:text-white flex items-center justify-center transition-all border border-white/10 hover:border-transparent"
+        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-[#0077b5] text-slate-600 hover:text-white flex items-center justify-center transition-all border border-slate-200/80 hover:border-transparent cursor-pointer shadow-2xs"
       >
         <LinkedInIcon />
       </button>
@@ -394,7 +398,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
       <button
         onClick={handleX}
         title="Compartilhar no X (Twitter)"
-        className="w-8 h-8 rounded-full bg-white/5 hover:bg-black text-nc-warm/75 hover:text-white flex items-center justify-center transition-all border border-white/10 hover:border-white/20"
+        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-[#0F172A] text-slate-600 hover:text-white flex items-center justify-center transition-all border border-slate-200/80 hover:border-transparent cursor-pointer shadow-2xs"
       >
         <XIcon />
       </button>
@@ -403,7 +407,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
       <button
         onClick={handleFacebook}
         title="Compartilhar no Facebook"
-        className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#1877f2] text-nc-warm/75 hover:text-white flex items-center justify-center transition-all border border-white/10 hover:border-transparent"
+        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-[#1877f2] text-slate-600 hover:text-white flex items-center justify-center transition-all border border-slate-200/80 hover:border-transparent cursor-pointer shadow-2xs"
       >
         <FacebookIcon />
       </button>
@@ -412,7 +416,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
       <button
         onClick={handleInstagram}
         title="Compartilhar no Instagram"
-        className="w-8 h-8 rounded-full bg-white/5 hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] text-nc-warm/75 hover:text-white flex items-center justify-center transition-all border border-white/10 hover:border-transparent"
+        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] text-slate-600 hover:text-white flex items-center justify-center transition-all border border-slate-200/80 hover:border-transparent cursor-pointer shadow-2xs"
       >
         <InstagramIcon />
       </button>
@@ -421,7 +425,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
       <button
         onClick={handleWhatsApp}
         title="Compartilhar no WhatsApp"
-        className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#25D366] text-nc-warm/75 hover:text-white flex items-center justify-center transition-all border border-white/10 hover:border-transparent"
+        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-[#25D366] text-slate-600 hover:text-white flex items-center justify-center transition-all border border-slate-200/80 hover:border-transparent cursor-pointer shadow-2xs"
       >
         <WhatsAppIcon />
       </button>
@@ -430,16 +434,16 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
       <button
         onClick={handleCopyLink}
         title="Copiar Link do Artigo"
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-nc-warm/80 hover:text-white border border-white/10 text-xs font-semibold transition-all"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-[#C8102E] border border-slate-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
       >
         {copied ? (
           <>
-            <Check size={13} className="text-emerald-400" />
-            <span className="text-emerald-400 text-xs">Copiado!</span>
+            <Check size={13} className="text-emerald-500" />
+            <span className="text-emerald-600 text-xs font-bold">Copiado!</span>
           </>
         ) : (
           <>
-            <LinkIcon size={13} className="text-nc-orange" />
+            <LinkIcon size={13} className="text-[#DB8902]" />
             <span className="hidden sm:inline">Copiar Link</span>
           </>
         )}

@@ -13,6 +13,7 @@ import { Transformation } from './components/sections/Transformation';
 import { SolutionsAccordion } from './components/sections/SolutionsAccordion';
 import { ClientsCarousel } from './components/sections/ClientsCarousel';
 import { HumanSupport } from './components/sections/HumanSupport';
+import { FAQSection } from './components/sections/FAQSection';
 import { Conversao } from './components/sections/Conversao';
 import { SmoothScroll } from './components/SmoothScroll';
 import { LegalPage } from './components/LegalPage';
@@ -108,10 +109,19 @@ export default function App() {
           const el = document.getElementById('plantao') || document.getElementById('suporte') || document.getElementById('diagnostico');
           if (el) el.scrollIntoView({ behavior: 'smooth' });
         }, 100);
-      } else if (hash === '#solucoes' || hash === '#diagnostico' || hash === '#estrutura' || hash === '#transformacao') {
+      } else if (
+        hash === '#solucoes' || 
+        hash === '#diagnostico' || 
+        hash === '#estrutura' || 
+        hash === '#transformacao' ||
+        hash === '#faq' ||
+        hash === '#duvidas' ||
+        hash === '#perguntas-frequentes'
+      ) {
         setCurrentView('home');
         setTimeout(() => {
-          const el = document.getElementById(hash.replace('#', ''));
+          const targetId = (hash === '#duvidas' || hash === '#perguntas-frequentes') ? 'faq' : hash.replace('#', '');
+          const el = document.getElementById(targetId);
           if (el) el.scrollIntoView({ behavior: 'smooth' });
         }, 100);
       } else if (hash === '' || hash === '#') {
@@ -172,7 +182,7 @@ export default function App() {
 
   if (currentView === 'viagens-corporativas') {
     return (
-      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
         <Header onHomeClick={handleBackToHome} currentView="corporativo" />
         <ViagensCorporativasView 
@@ -200,7 +210,7 @@ export default function App() {
 
   if (currentView === 'lazer') {
     return (
-      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
         <Header onHomeClick={handleBackToHome} currentView="lazer" />
         <LazerView 
@@ -213,7 +223,7 @@ export default function App() {
 
   if (currentView === 'quem-somos') {
     return (
-      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
         <SmoothScroll />
         <Header onHomeClick={handleBackToHome} />
@@ -235,9 +245,9 @@ export default function App() {
 
   if (currentView === 'blog') {
     return (
-      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
-        <Header onHomeClick={handleBackToHome} />
+        <Header onHomeClick={handleBackToHome} currentView="conhecimento" />
         <BlogListingView 
           onSelectPost={handleSelectPost} 
           onBackToHome={handleBackToHome} 
@@ -248,9 +258,9 @@ export default function App() {
 
   if (currentView === 'blog-post') {
     return (
-      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
-        <Header onHomeClick={handleBackToHome} />
+        <Header onHomeClick={handleBackToHome} currentView="conhecimento" />
         <BlogPostView 
           slug={activeSlug}
           onBackToBlog={handleOpenBlog}
@@ -262,7 +272,7 @@ export default function App() {
 
   if (currentView === 'beneficios') {
     return (
-      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
         <Header onHomeClick={handleBackToHome} currentView="beneficios" />
         <BeneficiosViagensView 
@@ -275,7 +285,7 @@ export default function App() {
 
   if (currentView === 'area-cliente') {
     return (
-      <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
         <Header onHomeClick={handleBackToHome} currentView="area-cliente" />
         <AreaDoClienteView 
@@ -291,40 +301,42 @@ export default function App() {
     );
   }
 
+  if (currentView !== 'home') {
+    return (
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
+        <ScrollProgressBar />
+        <Header onHomeClick={handleBackToHome} />
+        <LegalPage 
+          initialTab={currentView as 'privacidade' | 'beneficios' | 'termos'} 
+          onBackToHome={handleBackToHome} 
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
       <ScrollProgressBar />
-      {currentView === 'home' ? (
-        <>
-          <SmoothScroll />
-          <Header />
-          <main id="main-content" className="relative w-full overflow-hidden">
-            <Hero />
-            <InfiniteMarquee />
-            <Structure />
-            <Transformation />
-            <SolutionsAccordion />
-            <ClientsCarousel />
-            <HumanSupport />
-            <Conversao 
-              onOpenLegal={handleOpenLegal} 
-              onOpenAreaCliente={() => {
-                window.location.hash = 'area-cliente';
-                setCurrentView('area-cliente');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
-          </main>
-        </>
-      ) : (
-        <>
-          <Header onHomeClick={handleBackToHome} />
-          <LegalPage 
-            initialTab={currentView as 'privacidade' | 'beneficios' | 'termos'} 
-            onBackToHome={handleBackToHome} 
-          />
-        </>
-      )}
+      <SmoothScroll />
+      <Header />
+      <main id="main-content" className="relative w-full overflow-hidden">
+        <Hero />
+        <InfiniteMarquee />
+        <Structure />
+        <Transformation />
+        <SolutionsAccordion />
+        <ClientsCarousel />
+        <HumanSupport />
+        <FAQSection />
+        <Conversao 
+          onOpenLegal={handleOpenLegal} 
+          onOpenAreaCliente={() => {
+            window.location.hash = 'area-cliente';
+            setCurrentView('area-cliente');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
+      </main>
     </div>
   );
 }

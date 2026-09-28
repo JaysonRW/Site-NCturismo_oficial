@@ -925,26 +925,26 @@ export const LegalPage: React.FC<LegalPageProps> = ({
       );
 
   return (
-    <div className="min-h-screen bg-[#0c0e12] text-nc-warm pt-28 pb-20 selection:bg-nc-orange selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pt-28 pb-20 selection:bg-[#C8102E] selection:text-white">
       {/* Top Floating / Navigation Bar */}
       <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 mb-8">
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-white/10">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-200">
           <button 
             onClick={onBackToHome}
-            className="group flex items-center gap-2.5 text-nc-warm/70 hover:text-white text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors py-2 px-3 rounded-full hover:bg-white/5"
+            className="group flex items-center gap-2.5 text-slate-600 hover:text-[#C8102E] text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors py-2 px-4 rounded-full bg-white hover:bg-red-50/40 border border-slate-200 shadow-xs"
           >
-            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform text-nc-orange" />
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform text-[#C8102E]" />
             Voltar para o site principal
           </button>
 
           {/* Quick Tab Switcher */}
-          <div className="flex flex-wrap items-center bg-nc-surface border border-white/10 p-1.5 rounded-2xl md:rounded-full gap-1">
+          <div className="flex flex-wrap items-center bg-white border border-slate-200 p-1.5 rounded-2xl md:rounded-full gap-1 shadow-xs">
             <button
               onClick={() => { setActiveTab('privacidade'); setSearchQuery(''); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl md:rounded-full text-xs md:text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl md:rounded-full text-xs md:text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'privacidade' 
-                  ? 'bg-nc-orange text-nc-space shadow-md font-bold' 
-                  : 'text-nc-warm/70 hover:text-white'
+                  ? 'bg-[#C8102E] text-white shadow-md font-bold' 
+                  : 'text-slate-600 hover:text-[#0F172A] hover:bg-slate-50'
               }`}
             >
               <ShieldCheck size={16} />
@@ -952,10 +952,10 @@ export const LegalPage: React.FC<LegalPageProps> = ({
             </button>
             <button
               onClick={() => { setActiveTab('beneficios'); setSearchQuery(''); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl md:rounded-full text-xs md:text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl md:rounded-full text-xs md:text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'beneficios' 
-                  ? 'bg-nc-orange text-nc-space shadow-md font-bold' 
-                  : 'text-nc-warm/70 hover:text-white'
+                  ? 'bg-[#C8102E] text-white shadow-md font-bold' 
+                  : 'text-slate-600 hover:text-[#0F172A] hover:bg-slate-50'
               }`}
             >
               <Sparkles size={16} />
@@ -963,10 +963,10 @@ export const LegalPage: React.FC<LegalPageProps> = ({
             </button>
             <button
               onClick={() => { setActiveTab('termos'); setSearchQuery(''); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl md:rounded-full text-xs md:text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl md:rounded-full text-xs md:text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === 'termos' 
-                  ? 'bg-nc-orange text-nc-space shadow-md font-bold' 
-                  : 'text-nc-warm/70 hover:text-white'
+                  ? 'bg-[#C8102E] text-white shadow-md font-bold' 
+                  : 'text-slate-600 hover:text-[#0F172A] hover:bg-slate-50'
               }`}
             >
               <FileText size={16} />
@@ -976,7 +976,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({
 
           <button 
             onClick={() => window.print()}
-            className="hidden sm:flex items-center gap-2 text-xs uppercase tracking-wider text-nc-warm/50 hover:text-white transition-colors py-2 px-4 rounded-full border border-white/5 hover:border-white/20"
+            className="hidden sm:flex items-center gap-2 text-xs uppercase tracking-wider text-slate-600 hover:text-[#0F172A] transition-colors py-2 px-4 rounded-full bg-white border border-slate-200 hover:border-slate-300 shadow-xs cursor-pointer"
             title="Imprimir ou salvar PDF desta versão"
           >
             <Printer size={15} />
@@ -987,31 +987,31 @@ export const LegalPage: React.FC<LegalPageProps> = ({
 
       {/* Hero Header */}
       <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 mb-12">
-        <div className="bg-gradient-to-b from-nc-surface to-nc-space border border-white/10 rounded-3xl p-8 md:p-14 relative overflow-hidden shadow-2xl">
+        <div className="bg-white border border-slate-200/90 rounded-3xl p-8 md:p-14 relative overflow-hidden shadow-xl shadow-slate-200/50">
           {/* Subtle glow */}
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-nc-orange/5 blur-[100px] pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-red-500/5 blur-[100px] pointer-events-none"></div>
 
           <div className="relative z-10 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-nc-orange text-xs font-semibold uppercase tracking-[0.15em] mb-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 border border-red-200 text-[#C8102E] text-xs font-semibold uppercase tracking-[0.15em] mb-6">
               <Building2 size={14} />
               {activeTab === 'beneficios' 
                 ? 'NC Benefícios / Portal InfoTravel (Infotera)' 
                 : 'NC / Jurídico, Privacidade & Compliance'}
             </div>
 
-            <h1 className="text-3xl md:text-5xl lg:text-[52px] font-bold text-white tracking-tight leading-[1.1] mb-6">
+            <h1 className="text-3xl md:text-5xl lg:text-[52px] font-bold text-[#0F172A] tracking-tight leading-[1.1] mb-6">
               {activeTab === 'privacidade' && (
-                <>Política de Privacidade e <span className="text-nc-orange">Proteção de Dados</span></>
+                <>Política de Privacidade e <span className="text-[#C8102E]">Proteção de Dados</span></>
               )}
               {activeTab === 'beneficios' && (
-                <>Privacidade no ambiente <span className="text-nc-orange">NC Benefícios em Viagens</span></>
+                <>Privacidade no ambiente <span className="text-[#C8102E]">NC Benefícios em Viagens</span></>
               )}
               {activeTab === 'termos' && (
-                <>Termos e Condições <span className="text-nc-orange">de Uso</span></>
+                <>Termos e Condições <span className="text-[#C8102E]">de Uso</span></>
               )}
             </h1>
 
-            <p className="text-nc-warm/80 text-base md:text-lg leading-relaxed mb-6 font-light">
+            <p className="text-slate-600 text-base md:text-lg leading-relaxed mb-6 font-normal">
               {activeTab === 'privacidade' && (
                 'A NC Turismo valoriza a privacidade e a proteção dos dados pessoais de seus clientes, parceiros, viajantes e usuários de nossas plataformas e canais de atendimento corporativo.'
               )}
@@ -1023,10 +1023,10 @@ export const LegalPage: React.FC<LegalPageProps> = ({
               )}
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-nc-warm/60">
-              <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-white font-medium">
+            <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-slate-500">
+              <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[#0F172A] font-medium">
                   {activeTab === 'beneficios' ? 'Ambiente benefícios.ncturismo.com.br' : 'Versão 1.1 Vigente'}
                 </span>
               </div>
@@ -1047,33 +1047,33 @@ export const LegalPage: React.FC<LegalPageProps> = ({
             <div className="sticky top-28 space-y-6">
               {/* Search filter */}
               <div className="relative">
-                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-nc-warm/40" />
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   type="text"
                   placeholder="Pesquisar tópico ou artigo..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-nc-surface border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-nc-orange/50 transition-colors"
+                  className="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-[#0F172A] placeholder:text-slate-400 focus:outline-none focus:border-[#C8102E] shadow-2xs transition-colors"
                 />
               </div>
 
               {/* Navigation tree */}
-              <div className="bg-nc-surface/60 border border-white/5 rounded-2xl p-5 max-h-[calc(100vh-280px)] overflow-y-auto space-y-1 text-sm custom-scrollbar">
-                <p className="text-[11px] uppercase tracking-widest text-nc-warm/40 font-bold mb-3 px-2">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 max-h-[calc(100vh-280px)] overflow-y-auto space-y-1 text-sm shadow-xs custom-scrollbar">
+                <p className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-3 px-2">
                   Índice das seções ({filteredSections.length})
                 </p>
                 {filteredSections.map((sec) => (
                   <button
                     key={sec.id}
                     onClick={() => scrollToSection(sec.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs md:text-[13px] flex items-center justify-between transition-all ${
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs md:text-[13px] flex items-center justify-between transition-all cursor-pointer ${
                       activeSection === sec.id 
-                        ? 'bg-nc-orange/15 text-nc-orange font-semibold border-l-2 border-nc-orange pl-3' 
-                        : 'text-nc-warm/70 hover:text-white hover:bg-white/5'
+                        ? 'bg-red-50 text-[#C8102E] font-semibold border-l-3 border-[#C8102E] pl-3' 
+                        : 'text-slate-600 hover:text-[#0F172A] hover:bg-slate-50'
                     }`}
                   >
                     <span className="truncate pr-2">
-                      <span className="opacity-50 mr-1.5 font-mono">{sec.number}.</span>
+                      <span className="opacity-60 mr-1.5 font-mono">{sec.number}.</span>
                       {sec.title}
                     </span>
                     <ChevronRight size={13} className="shrink-0 opacity-40" />
@@ -1082,17 +1082,17 @@ export const LegalPage: React.FC<LegalPageProps> = ({
               </div>
 
               {/* Quick Contact Card */}
-              <div className="bg-nc-surface border border-white/10 p-5 rounded-2xl">
-                <h4 className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                  <Mail size={16} className="text-nc-orange" />
+              <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
+                <h4 className="text-[#0F172A] text-sm font-semibold mb-2 flex items-center gap-2">
+                  <Mail size={16} className="text-[#C8102E]" />
                   Dúvidas sobre seus dados?
                 </h4>
-                <p className="text-xs text-nc-warm/60 leading-relaxed mb-3">
+                <p className="text-xs text-slate-500 leading-relaxed mb-3">
                   Nossa equipe de privacidade e governança está à disposição para esclarecimentos.
                 </p>
                 <a 
                   href="mailto:atendimento@ncturismo.com.br"
-                  className="text-xs text-nc-orange hover:underline font-semibold block"
+                  className="text-xs text-[#C8102E] hover:underline font-semibold block"
                 >
                   atendimento@ncturismo.com.br &rarr;
                 </a>
@@ -1104,11 +1104,11 @@ export const LegalPage: React.FC<LegalPageProps> = ({
           <div className="lg:col-span-8 space-y-8">
             {/* Search query feedback */}
             {searchQuery && (
-              <div className="bg-white/5 border border-white/10 px-4 py-3 rounded-xl flex items-center justify-between text-xs text-nc-warm/80">
-                <span>Filtrando por: <strong className="text-white">"{searchQuery}"</strong> ({filteredSections.length} resultado(s))</span>
+              <div className="bg-white border border-slate-200 px-4 py-3 rounded-xl flex items-center justify-between text-xs text-slate-700 shadow-2xs">
+                <span>Filtrando por: <strong className="text-[#0F172A]">"{searchQuery}"</strong> ({filteredSections.length} resultado(s))</span>
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="text-nc-orange hover:underline font-semibold"
+                  className="text-[#C8102E] hover:underline font-semibold cursor-pointer"
                 >
                   Limpar filtro
                 </button>
@@ -1116,12 +1116,12 @@ export const LegalPage: React.FC<LegalPageProps> = ({
             )}
 
             {filteredSections.length === 0 ? (
-              <div className="bg-nc-surface border border-white/10 rounded-2xl p-12 text-center">
-                <p className="text-lg font-semibold text-white mb-2">Nenhum tópico encontrado</p>
-                <p className="text-sm text-nc-warm/60 mb-6">Tente pesquisar por outro termo ou limpe o campo de busca.</p>
+              <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-xs">
+                <p className="text-lg font-semibold text-[#0F172A] mb-2">Nenhum tópico encontrado</p>
+                <p className="text-sm text-slate-500 mb-6">Tente pesquisar por outro termo ou limpe o campo de busca.</p>
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="px-6 py-2.5 bg-nc-orange text-nc-space font-bold text-xs uppercase tracking-wider rounded-full hover:bg-opacity-90"
+                  className="px-6 py-2.5 bg-[#C8102E] text-white font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#9E0A22] shadow-sm cursor-pointer"
                 >
                   Ver todas as seções
                 </button>
@@ -1131,18 +1131,18 @@ export const LegalPage: React.FC<LegalPageProps> = ({
                 <section 
                   key={section.id} 
                   id={section.id}
-                  className="bg-nc-surface/40 hover:bg-nc-surface/60 transition-colors border border-white/10 rounded-2xl md:rounded-3xl p-6 md:p-10 scroll-mt-28"
+                  className="bg-white hover:border-slate-300 transition-colors border border-slate-200/90 rounded-2xl md:rounded-3xl p-6 md:p-10 shadow-xs scroll-mt-28"
                 >
-                  <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
-                    <span className="text-xs font-mono font-bold text-nc-orange bg-nc-orange/10 px-2.5 py-1 rounded-md border border-nc-orange/20">
+                  <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                    <span className="text-xs font-mono font-bold text-[#C8102E] bg-red-50 px-2.5 py-1 rounded-md border border-red-200">
                       {section.number}
                     </span>
-                    <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+                    <h2 className="text-xl md:text-2xl font-bold text-[#0F172A] tracking-tight">
                       {section.title}
                     </h2>
                   </div>
 
-                  <div className="text-nc-warm/80 text-sm md:text-base">
+                  <div className="text-slate-600 text-sm md:text-base leading-relaxed">
                     {section.content}
                   </div>
                 </section>
@@ -1150,18 +1150,18 @@ export const LegalPage: React.FC<LegalPageProps> = ({
             )}
 
             {/* End of Document Footer Notice */}
-            <div className="bg-nc-space border border-white/10 rounded-2xl p-6 md:p-8 text-center space-y-4">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-nc-orange/10 text-nc-orange mx-auto">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 text-center space-y-4 shadow-xs">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50 text-[#C8102E] mx-auto">
                 <CheckCircle2 size={24} />
               </div>
-              <h3 className="text-white font-bold text-lg">Documentação Oficial da NC Turismo</h3>
-              <p className="text-xs md:text-sm text-nc-warm/60 max-w-xl mx-auto leading-relaxed">
+              <h3 className="text-[#0F172A] font-bold text-lg">Documentação Oficial da NC Turismo</h3>
+              <p className="text-xs md:text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">
                 Nossos termos e políticas foram elaborados em estrita conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018), o Marco Civil da Internet (Lei nº 12.965/2014) e as normas regulamentadoras do setor de turismo.
               </p>
               <div className="pt-2">
                 <button 
                   onClick={onBackToHome}
-                  className="inline-flex items-center gap-2 px-8 py-3.5 bg-nc-orange text-nc-space rounded-full font-bold text-xs uppercase tracking-wider hover:bg-opacity-90 transition-all shadow-lg"
+                  className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white rounded-full font-bold text-xs uppercase tracking-wider hover:brightness-105 transition-all shadow-md shadow-red-500/20 cursor-pointer"
                 >
                   <ArrowLeft size={16} />
                   Retornar ao início do site
