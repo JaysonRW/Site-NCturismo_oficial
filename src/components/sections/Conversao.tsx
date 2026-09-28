@@ -177,6 +177,14 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCli
               <ul className="space-y-4 text-sm text-nc-warm/60">
                 <li>
                   <a 
+                    href="#gestao-de-viagens"
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Gestão de Viagens
+                  </a>
+                </li>
+                <li>
+                  <a 
                     href="#area-cliente" 
                     onClick={(e) => {
                       e.preventDefault();

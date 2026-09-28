@@ -23,13 +23,16 @@ import { BlogListingView } from './components/BlogListingView';
 import { BlogPostView } from './components/BlogPostView';
 import { QuemSomosView } from './components/QuemSomosView';
 import { ViagensCorporativasView } from './components/ViagensCorporativasView';
+import { GestaoViagensView } from './components/GestaoViagensView';
+import { GestaoDespesasView } from './components/GestaoDespesasView';
+import { TecnologiaObtView } from './components/TecnologiaObtView';
 import { LazerView } from './components/LazerView';
 import { BeneficiosViagensView } from './components/BeneficiosViagensView';
 import { AreaDoClienteView } from './components/AreaDoClienteView';
 import { supabase } from './lib/supabase';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post' | 'viagens-corporativas' | 'lazer' | 'area-cliente'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post' | 'viagens-corporativas' | 'gestao-de-viagens' | 'gestao-de-despesas' | 'tecnologia-obt' | 'lazer' | 'area-cliente'>('home');
   const [session, setSession] = useState<any>(null);
   const [activeSlug, setActiveSlug] = useState<string>('sla-suporte-viagens-corporativas-atendimento');
 
@@ -56,6 +59,33 @@ export default function App() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '#viagens-corporativas' || hash === '#corporativo') {
         setCurrentView('viagens-corporativas');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (
+        hash === '#gestao-de-viagens' || 
+        hash === '#gestao-viagens' || 
+        hash === '#gestaoviagens' || 
+        hash === '#gestao'
+      ) {
+        setCurrentView('gestao-de-viagens');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (
+        hash === '#gestao-de-despesas' || 
+        hash === '#gestao-despesas' || 
+        hash === '#despesas' || 
+        hash === '#despesas-corporativas' ||
+        hash === '#gestaodespesas'
+      ) {
+        setCurrentView('gestao-de-despesas');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (
+        hash === '#tecnologia-obt' || 
+        hash === '#tecnologia-e-obt' || 
+        hash === '#tecnologia' || 
+        hash === '#tecnologia-e-integracoes' || 
+        hash === '#tecnologia-integracoes' || 
+        hash === '#obt'
+      ) {
+        setCurrentView('tecnologia-obt');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '#lazer') {
         setCurrentView('lazer');
@@ -159,6 +189,105 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleNavigate = (target: string) => {
+    const cleanTarget = target.startsWith('#') ? target.slice(1) : target;
+    const lower = cleanTarget.toLowerCase();
+
+    if (lower === 'quem-somos' || lower === 'quemsomos') {
+      window.location.hash = '#quem-somos';
+      setCurrentView('quem-somos');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (lower === 'viagens-corporativas' || lower === 'corporativo') {
+      window.location.hash = '#viagens-corporativas';
+      setCurrentView('viagens-corporativas');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (
+      lower === 'gestao-de-viagens' || 
+      lower === 'gestao-viagens' || 
+      lower === 'gestaoviagens' || 
+      lower === 'gestao'
+    ) {
+      window.location.hash = '#gestao-de-viagens';
+      setCurrentView('gestao-de-viagens');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (
+      lower === 'gestao-de-despesas' || 
+      lower === 'gestao-despesas' || 
+      lower === 'despesas' || 
+      lower === 'despesas-corporativas' || 
+      lower === 'gestaodespesas'
+    ) {
+      window.location.hash = '#gestao-de-despesas';
+      setCurrentView('gestao-de-despesas');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (
+      lower === 'tecnologia-obt' || 
+      lower === 'tecnologia-e-obt' || 
+      lower === 'tecnologia' || 
+      lower === 'tecnologia-e-integracoes' || 
+      lower === 'tecnologia-integracoes' || 
+      lower === 'obt'
+    ) {
+      window.location.hash = '#tecnologia-obt';
+      setCurrentView('tecnologia-obt');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (lower === 'lazer') {
+      window.location.hash = '#lazer';
+      setCurrentView('lazer');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (
+      lower === 'beneficios' || 
+      lower === 'beneficios-viagens' || 
+      lower === 'beneficios-em-viagens' || 
+      lower === 'beneficios-e-parcerias'
+    ) {
+      window.location.hash = '#beneficios';
+      setCurrentView('beneficios');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (lower === 'conhecimento' || lower === 'blog') {
+      window.location.hash = '#conhecimento';
+      setCurrentView('blog');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (
+      lower === 'area-cliente' || 
+      lower === 'areadocliente' || 
+      lower === 'portal-cliente' || 
+      lower === 'portal' || 
+      lower === 'cliente'
+    ) {
+      window.location.hash = '#area-cliente';
+      setCurrentView('area-cliente');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (lower === 'privacidade' || lower === 'termos') {
+      window.location.hash = `#${lower}`;
+      setCurrentView(lower as any);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (lower.startsWith('artigo/')) {
+      const slug = lower.replace('artigo/', '');
+      setActiveSlug(slug);
+      window.location.hash = `#artigo/${slug}`;
+      setCurrentView('blog-post');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (lower === '' || lower === 'home') {
+      handleBackToHome();
+    } else {
+      // Target is an anchor section on the home page
+      window.location.hash = `#${cleanTarget}`;
+      setCurrentView('home');
+      setTimeout(() => {
+        const targetId = (cleanTarget === 'duvidas' || cleanTarget === 'perguntas-frequentes') 
+          ? 'faq' 
+          : (cleanTarget === 'suporte' ? 'plantao' : cleanTarget);
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 120);
+    }
+  };
+
   if (currentView === 'admin') {
     if (!session) {
       return (
@@ -184,25 +313,64 @@ export default function App() {
     return (
       <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
-        <Header onHomeClick={handleBackToHome} currentView="corporativo" />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="corporativo" />
         <ViagensCorporativasView 
           onBackToHome={handleBackToHome}
           onOpenDiagnosis={() => {
-            window.location.hash = 'diagnostico';
-            setCurrentView('home');
-            setTimeout(() => {
-              const el = document.getElementById('diagnostico');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
+            handleNavigate('#diagnostico');
           }}
           onSelectSolutionSection={(solutionId) => {
-            window.location.hash = 'solucoes';
-            setCurrentView('home');
-            setTimeout(() => {
-              const el = document.getElementById('solucoes');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
+            handleNavigate('#solucoes');
           }}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'gestao-de-viagens') {
+    return (
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
+        <ScrollProgressBar />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="gestao-de-viagens" />
+        <GestaoViagensView 
+          onBackToHome={handleBackToHome}
+          onOpenDiagnosis={() => {
+            handleNavigate('#diagnostico');
+          }}
+          onOpenLegalTab={handleOpenLegal}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'gestao-de-despesas') {
+    return (
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
+        <ScrollProgressBar />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="gestao-de-despesas" />
+        <GestaoDespesasView 
+          onBackToHome={handleBackToHome}
+          onOpenDiagnosis={() => {
+            handleNavigate('#diagnostico');
+          }}
+          onOpenLegalTab={handleOpenLegal}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'tecnologia-obt') {
+    return (
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
+        <ScrollProgressBar />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="tecnologia-obt" />
+        <TecnologiaObtView 
+          onBackToHome={handleBackToHome}
+          onOpenDiagnosis={() => {
+            handleNavigate('#diagnostico');
+          }}
+          onOpenLegalTab={handleOpenLegal}
+          onNavigateToSection={handleNavigate}
         />
       </div>
     );
@@ -212,7 +380,7 @@ export default function App() {
     return (
       <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
-        <Header onHomeClick={handleBackToHome} currentView="lazer" />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="lazer" />
         <LazerView 
           onBackToHome={handleBackToHome}
           onOpenLegal={handleOpenLegal}
@@ -226,16 +394,11 @@ export default function App() {
       <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
         <SmoothScroll />
-        <Header onHomeClick={handleBackToHome} />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="quem-somos" />
         <QuemSomosView 
           onBackToHome={handleBackToHome}
           onOpenSolutions={() => {
-            window.location.hash = '#solucoes';
-            setCurrentView('home');
-            setTimeout(() => {
-              const el = document.getElementById('solucoes');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
+            handleNavigate('#solucoes');
           }}
           onOpenLegal={handleOpenLegal}
         />
@@ -247,7 +410,7 @@ export default function App() {
     return (
       <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
-        <Header onHomeClick={handleBackToHome} currentView="conhecimento" />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="conhecimento" />
         <BlogListingView 
           onSelectPost={handleSelectPost} 
           onBackToHome={handleBackToHome} 
@@ -260,7 +423,7 @@ export default function App() {
     return (
       <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
-        <Header onHomeClick={handleBackToHome} currentView="conhecimento" />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="conhecimento" />
         <BlogPostView 
           slug={activeSlug}
           onBackToBlog={handleOpenBlog}
@@ -274,7 +437,7 @@ export default function App() {
     return (
       <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
-        <Header onHomeClick={handleBackToHome} currentView="beneficios" />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="beneficios" />
         <BeneficiosViagensView 
           onBackToHome={handleBackToHome}
           onOpenLegalTab={handleOpenLegal}
@@ -287,14 +450,12 @@ export default function App() {
     return (
       <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
-        <Header onHomeClick={handleBackToHome} currentView="area-cliente" />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="area-cliente" />
         <AreaDoClienteView 
           onBackToHome={handleBackToHome}
           onOpenLegalTab={handleOpenLegal}
           onOpenBeneficios={() => {
-            window.location.hash = 'beneficios';
-            setCurrentView('beneficios');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            handleNavigate('beneficios');
           }}
         />
       </div>
@@ -305,7 +466,7 @@ export default function App() {
     return (
       <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
         <ScrollProgressBar />
-        <Header onHomeClick={handleBackToHome} />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView={currentView} />
         <LegalPage 
           initialTab={currentView as 'privacidade' | 'beneficios' | 'termos'} 
           onBackToHome={handleBackToHome} 
@@ -318,7 +479,7 @@ export default function App() {
     <div className="bg-nc-space text-nc-warm min-h-screen font-sans selection:bg-nc-orange selection:text-white">
       <ScrollProgressBar />
       <SmoothScroll />
-      <Header />
+      <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="home" />
       <main id="main-content" className="relative w-full overflow-hidden">
         <Hero />
         <InfiniteMarquee />

@@ -15,7 +15,9 @@ import {
   Sparkles,
   BookOpen,
   HelpCircle,
-  FileCheck
+  FileCheck,
+  Phone,
+  MessageSquare
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -68,6 +70,17 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Lock background scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [mobileMenuOpen]);
+
   const handleMouseEnter = (menu: 'corporativo' | 'beneficios' | 'mice') => {
     if (leaveTimeoutRef.current) {
       clearTimeout(leaveTimeoutRef.current);
@@ -86,29 +99,28 @@ export const Header: React.FC<HeaderProps> = ({
     setActiveDropdown(null);
     setMobileMenuOpen(false);
     
-    if (viewName && onNavigate) {
-      onNavigate(viewName);
-    }
-    
-    window.location.hash = hash;
-    
-    // If it's an anchor on the current page, scroll into view
-    if (hash.startsWith('#')) {
-      const elementId = hash.replace('#', '');
-      const element = document.getElementById(elementId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+    if (onNavigate) {
+      onNavigate(viewName || hash);
+    } else {
+      window.location.hash = hash;
+      // If it's an anchor on the current page, scroll into view
+      if (hash.startsWith('#')) {
+        const elementId = hash.replace('#', '');
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
       }
     }
   };
 
   // Dynamic header CTA label based on context
-  const isCorporativoView = currentView === 'corporativo' || currentView === 'viagens-corporativas';
+  const isCorporativoView = currentView === 'corporativo' || currentView === 'viagens-corporativas' || currentView === 'gestao-de-viagens';
   const ctaLabel = isCorporativoView ? 'Solicitar Diagnóstico' : 'Fale com a NC';
 
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 h-[70px] lg:h-auto flex items-center lg:block transition-all duration-300 ${
         scrolled || activeDropdown || mobileMenuOpen || currentView !== 'home'
           ? 'bg-nc-space/95 backdrop-blur-md py-4 shadow-lg border-b border-white/5' 
           : 'bg-transparent py-6 md:py-8'
@@ -205,10 +217,10 @@ export const Header: React.FC<HeaderProps> = ({
                     <ul className="space-y-2.5 text-xs text-nc-warm/75">
                       <li>
                         <a 
-                          href="#solucoes"
+                          href="#gestao-de-viagens"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#solucoes');
+                            navigateTo('#gestao-de-viagens', 'gestao-de-viagens');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
@@ -217,10 +229,10 @@ export const Header: React.FC<HeaderProps> = ({
                       </li>
                       <li>
                         <a 
-                          href="#solucoes"
+                          href="#gestao-de-despesas"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#solucoes');
+                            navigateTo('#gestao-de-despesas', 'gestao-de-despesas');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
@@ -252,14 +264,14 @@ export const Header: React.FC<HeaderProps> = ({
                     <ul className="space-y-2.5 text-xs text-nc-warm/75">
                       <li>
                         <a 
-                          href="#solucoes"
+                          href="#tecnologia-obt"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#solucoes');
+                            navigateTo('#tecnologia-obt', 'tecnologia-obt');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
-                          Tecnologia e Integrações
+                          Tecnologia e Integrações (OBT)
                         </a>
                       </li>
                       <li>
@@ -641,218 +653,366 @@ export const Header: React.FC<HeaderProps> = ({
             MOBILE NAV TOGGLE
            ========================================================================= */}
         <button 
-          className="lg:hidden text-white p-2 focus:outline-none focus:ring-2 focus:ring-nc-orange/50 rounded-lg"
+          className="lg:hidden text-white p-2.5 rounded-xl border border-white/10 hover:border-nc-orange/50 bg-white/5 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-nc-orange/50 flex items-center justify-center cursor-pointer"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label={mobileMenuOpen ? 'Fechar Menu' : 'Abrir Menu'}
           aria-expanded={mobileMenuOpen}
         >
-          {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+          {mobileMenuOpen ? <X size={24} className="text-nc-orange" /> : <Menu size={24} />}
         </button>
       </div>
 
       {/* =========================================================================
-          MOBILE MENU DRAWER
+          MOBILE MENU DRAWER - ROBUST & FULLY SCROLLABLE (100dvh)
          ========================================================================= */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[72px] bottom-0 bg-nc-space/98 backdrop-blur-2xl border-t border-white/10 p-6 overflow-y-auto flex flex-col justify-between">
-          <div className="space-y-4">
-            
-            {/* 1. Mobile Accordion: Corporativo */}
-            <div className="border-b border-white/10 pb-3">
+        <div 
+          className="lg:hidden fixed inset-x-0 top-[70px] bottom-0 h-[calc(100dvh-70px)] z-50 bg-[#0B0D13]/98 backdrop-blur-2xl border-t border-white/10 flex flex-col shadow-2xl"
+          data-lenis-prevent="true"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          {/* Scrollable Navigation Items */}
+          <div 
+            className="flex-1 overflow-y-auto overscroll-contain px-4 py-5 space-y-3 pb-8"
+            data-lenis-prevent="true"
+          >
+            {/* 1. SEÇÃO: CORPORATIVO (ACCORDION EXPANSÍVEL OU LISTA DESTACADA) */}
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3.5 space-y-3">
               <button
                 onClick={() => setMobileExpanded(prev => ({ ...prev, corporativo: !prev.corporativo }))}
-                className="w-full flex items-center justify-between text-left text-sm uppercase tracking-[0.08em] font-bold text-white py-2"
+                className="w-full flex items-center justify-between text-left group cursor-pointer"
               >
-                <span>Corporativo</span>
-                <ChevronDown 
-                  size={16} 
-                  className={`transition-transform duration-200 ${mobileExpanded.corporativo ? 'rotate-180 text-nc-orange' : 'text-white/60'}`} 
-                />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#C8102E]/20 to-[#DB8902]/20 border border-red-500/30 flex items-center justify-center text-nc-orange">
+                    <Building2 size={18} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white tracking-wide">Corporativo</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/20 text-[#FF6B6B] border border-red-500/30">B2B</span>
+                    </div>
+                    <p className="text-[11px] text-nc-warm/60">Gestão, Plataformas e Governança</p>
+                  </div>
+                </div>
+                <div className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 group-hover:text-nc-orange transition-colors">
+                  <ChevronDown 
+                    size={16} 
+                    className={`transition-transform duration-200 ${mobileExpanded.corporativo ? 'rotate-180 text-nc-orange' : ''}`} 
+                  />
+                </div>
               </button>
 
+              {/* Accordion Content */}
               {mobileExpanded.corporativo && (
-                <div className="pt-3 pl-3 space-y-4 animate-in fade-in duration-200">
+                <div className="pt-2 space-y-2 border-t border-white/5 animate-in fade-in duration-200">
+                  {/* Destaque 1: Gestão de Viagens */}
+                  <a
+                    href="#gestao-de-viagens"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigateTo('#gestao-de-viagens', 'gestao-de-viagens');
+                    }}
+                    className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-red-500/15 via-orange-500/10 to-transparent border border-red-500/40 hover:border-red-500/70 transition-all text-white group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Sparkles size={16} className="text-[#DB8902] shrink-0" />
+                      <div>
+                        <div className="text-xs font-bold text-white flex items-center gap-2">
+                          Gestão de Viagens Corporativas
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#C8102E] text-white">Novo</span>
+                        </div>
+                        <p className="text-[10px] text-nc-warm/70">Solução de ponta a ponta para empresas exigentes</p>
+                      </div>
+                    </div>
+                    <ArrowRight size={14} className="text-nc-orange group-hover:translate-x-1 transition-transform shrink-0" />
+                  </a>
+
+                  {/* Destaque 2: Viagens Corporativas Visão Geral */}
                   <a
                     href="#viagens-corporativas"
                     onClick={(e) => {
                       e.preventDefault();
                       navigateTo('#viagens-corporativas', 'viagens-corporativas');
                     }}
-                    className="block text-xs font-bold text-nc-orange bg-nc-orange/10 p-2.5 rounded-lg border border-nc-orange/30"
+                    className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-nc-orange/40 transition-all text-white group cursor-pointer"
                   >
-                    Viagens Corporativas (Visão Geral) &rarr;
+                    <div>
+                      <div className="text-xs font-bold text-white">Viagens Corporativas (Visão Geral)</div>
+                      <p className="text-[10px] text-nc-warm/60">Pilares: Gestão, BI, Tecnologia e Suporte</p>
+                    </div>
+                    <ArrowRight size={14} className="text-white/40 group-hover:text-nc-orange group-hover:translate-x-1 transition-transform shrink-0" />
                   </a>
 
-                  {/* Gestão */}
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] font-mono uppercase text-nc-warm/50 font-bold">Gestão</span>
-                    <div className="flex flex-col space-y-1 pl-2 text-xs text-nc-warm/80">
-                      <a href="#solucoes" onClick={() => navigateTo('#solucoes')} className="py-1">Gestão de Viagens</a>
-                      <a href="#solucoes" onClick={() => navigateTo('#solucoes')} className="py-1">Gestão de Despesas</a>
-                      <a href="#solucoes" onClick={() => navigateTo('#solucoes')} className="py-1">Política de Viagens</a>
-                    </div>
-                  </div>
-
-                  {/* Tecnologia e Dados */}
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] font-mono uppercase text-nc-warm/50 font-bold">Tecnologia e Dados</span>
-                    <div className="flex flex-col space-y-1 pl-2 text-xs text-nc-warm/80">
-                      <a href="#solucoes" onClick={() => navigateTo('#solucoes')} className="py-1">Tecnologia e Integrações</a>
-                      <a href="#solucoes" onClick={() => navigateTo('#solucoes')} className="py-1">BI e Relatórios</a>
-                    </div>
-                  </div>
-
-                  {/* Segurança e Suporte */}
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] font-mono uppercase text-nc-warm/50 font-bold">Segurança e Suporte</span>
-                    <div className="flex flex-col space-y-1 pl-2 text-xs text-nc-warm/80">
-                      <a href="#solucoes" onClick={() => navigateTo('#solucoes')} className="py-1">Atendimento 24h</a>
-                      <a href="#solucoes" onClick={() => navigateTo('#solucoes')} className="py-1">Compliance e ESG</a>
-                    </div>
+                  {/* Sub-grid with direct anchors */}
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <a
+                      href="#gestao-de-despesas"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigateTo('#gestao-de-despesas', 'gestao-de-despesas');
+                      }}
+                      className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
+                    >
+                      <span className="text-[11px] font-semibold text-white/90 block">Gestão de Despesas</span>
+                      <span className="text-[9px] text-nc-warm/50">Controle financeiro</span>
+                    </a>
+                    <a
+                      href="#solucoes"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigateTo('#solucoes');
+                      }}
+                      className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
+                    >
+                      <span className="text-[11px] font-semibold text-white/90 block">Política de Viagens</span>
+                      <span className="text-[9px] text-nc-warm/50">Compliance e regras</span>
+                    </a>
+                    <a
+                      href="#tecnologia-obt"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigateTo('#tecnologia-obt', 'tecnologia-obt');
+                      }}
+                      className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
+                    >
+                      <span className="text-[11px] font-semibold text-white/90 block">Tecnologia & OBT</span>
+                      <span className="text-[9px] text-nc-warm/50">Plataformas ágeis</span>
+                    </a>
+                    <a
+                      href="#solucoes"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigateTo('#solucoes');
+                      }}
+                      className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
+                    >
+                      <span className="text-[11px] font-semibold text-white/90 block">BI & Relatórios</span>
+                      <span className="text-[9px] text-nc-warm/50">Métricas de saving</span>
+                    </a>
+                    <a
+                      href="#plantao"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigateTo('#plantao');
+                      }}
+                      className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
+                    >
+                      <span className="text-[11px] font-semibold text-white/90 block">Atendimento 24h</span>
+                      <span className="text-[9px] text-emerald-400">Plantão próprio</span>
+                    </a>
+                    <a
+                      href="#solucoes"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigateTo('#solucoes');
+                      }}
+                      className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
+                    >
+                      <span className="text-[11px] font-semibold text-white/90 block">Compliance e ESG</span>
+                      <span className="text-[9px] text-nc-warm/50">Sustentabilidade</span>
+                    </a>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* 2. Mobile Accordion: Benefícios e Parcerias */}
-            <div className="border-b border-white/10 pb-3">
-              <button
-                onClick={() => setMobileExpanded(prev => ({ ...prev, beneficios: !prev.beneficios }))}
-                className="w-full flex items-center justify-between text-left text-sm uppercase tracking-[0.08em] font-bold text-white py-2"
-              >
-                <span>Benefícios e Parcerias</span>
-                <ChevronDown 
-                  size={16} 
-                  className={`transition-transform duration-200 ${mobileExpanded.beneficios ? 'rotate-180 text-nc-orange' : 'text-white/60'}`} 
-                />
-              </button>
-
-              {mobileExpanded.beneficios && (
-                <div className="pt-2 pl-3 space-y-2 text-xs text-nc-warm/80 animate-in fade-in duration-200">
-                  <a 
-                    href="#beneficios" 
-                    onClick={() => navigateTo('#beneficios', 'beneficios')} 
-                    className="block py-1.5 px-2.5 rounded-lg bg-nc-orange/10 border border-nc-orange/30 text-nc-orange font-bold flex items-center justify-between"
-                  >
-                    <span>Benefícios em Viagens (Ambiente de Viagens)</span>
-                    <ArrowRight size={13} />
-                  </a>
-                  <a href="#beneficios" onClick={() => navigateTo('#beneficios', 'beneficios')} className="block py-1">Para Empresas</a>
-                  <a href="#beneficios" onClick={() => navigateTo('#beneficios', 'beneficios')} className="block py-1">Para Associações e Entidades</a>
-                  <a href="#beneficios" onClick={() => navigateTo('#beneficios', 'beneficios')} className="block py-1 text-nc-orange font-semibold">Conheça a solução &rarr;</a>
-                </div>
-              )}
-            </div>
-
-            {/* 3. Mobile Accordion: MICE */}
-            <div className="border-b border-white/10 pb-3">
-              <button
-                onClick={() => setMobileExpanded(prev => ({ ...prev, mice: !prev.mice }))}
-                className="w-full flex items-center justify-between text-left text-sm uppercase tracking-[0.08em] font-bold text-white py-2"
-              >
-                <span>MICE</span>
-                <ChevronDown 
-                  size={16} 
-                  className={`transition-transform duration-200 ${mobileExpanded.mice ? 'rotate-180 text-nc-orange' : 'text-white/60'}`} 
-                />
-              </button>
-
-              {mobileExpanded.mice && (
-                <div className="pt-2 pl-3 space-y-2 text-xs text-nc-warm/80 animate-in fade-in duration-200">
-                  <a href="#diagnostico" onClick={() => navigateTo('#diagnostico')} className="block py-1">Eventos Corporativos</a>
-                  <a href="#diagnostico" onClick={() => navigateTo('#diagnostico')} className="block py-1">Grupos</a>
-                  <a href="#diagnostico" onClick={() => navigateTo('#diagnostico')} className="block py-1">Incentivos</a>
-                  <a href="#diagnostico" onClick={() => navigateTo('#diagnostico')} className="block py-1">Congressos e Convenções</a>
-                  <a href="#diagnostico" onClick={() => navigateTo('#diagnostico')} className="block py-1 text-nc-orange font-semibold">Planeje seu evento com a NC &rarr;</a>
-                </div>
-              )}
-            </div>
-
-            {/* 4. Direct: Lazer */}
-            <div className="border-b border-white/10 py-2">
-              <a 
-                href="#lazer" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigateTo('#lazer', 'lazer');
-                }}
-                className="block text-sm uppercase tracking-[0.08em] font-bold text-white py-1"
-              >
-                Lazer
-              </a>
-            </div>
-
-            {/* 5. Direct: Conhecimento NC */}
-            <div className="border-b border-white/10 py-2">
-              <a 
-                href="#conhecimento" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigateTo('#conhecimento', 'blog');
-                }}
-                className="block text-sm uppercase tracking-[0.08em] font-bold text-white py-1"
-              >
-                Conhecimento NC
-              </a>
-            </div>
-
-            {/* 6. Direct: Quem Somos */}
-            <div className="border-b border-white/10 py-2">
-              <a 
-                href="#quem-somos" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigateTo('#quem-somos', 'quem-somos');
-                }}
-                className="block text-sm uppercase tracking-[0.08em] font-bold text-white py-1"
-              >
-                Quem Somos
-              </a>
-            </div>
-
-            {/* 7. Direct: Área do Cliente */}
-            <div className="border-b border-white/10 py-2">
-              <a 
-                href="#area-cliente" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigateTo('#area-cliente', 'area-cliente');
-                }}
-                className="flex items-center justify-between text-sm uppercase tracking-[0.08em] font-bold text-nc-orange py-1"
-              >
-                <span>Área do Cliente</span>
-                <span className="text-[10px] font-mono bg-nc-orange/20 text-nc-orange px-2 py-0.5 rounded">Portal</span>
-              </a>
-            </div>
-
-            {/* 8. Direct: Dúvidas Frequentes (FAQ) */}
-            <div className="border-b border-white/10 py-2">
-              <a 
-                href="#faq" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigateTo('#faq');
-                }}
-                className="flex items-center justify-between text-sm uppercase tracking-[0.08em] font-bold text-white hover:text-nc-orange py-1"
-              >
-                <span>Dúvidas Frequentes (FAQ)</span>
-                <span className="text-[10px] font-mono bg-white/10 text-nc-warm/80 px-2 py-0.5 rounded">Ajuda</span>
-              </a>
-            </div>
-
-          </div>
-
-          {/* Mobile Bottom CTA */}
-          <div className="pt-6">
-            <a 
-              href="#diagnostico" 
-              onClick={() => navigateTo('#diagnostico')}
-              className="w-full inline-flex justify-center items-center gap-2 px-6 py-4 bg-nc-orange text-nc-space rounded-full text-xs font-bold uppercase tracking-[0.1em] shadow-lg"
+            {/* 2. BENEFÍCIOS E PARCERIAS */}
+            <a
+              href="#beneficios"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('#beneficios', 'beneficios');
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-amber-400/40 transition-all text-white group cursor-pointer"
             >
-              {ctaLabel}
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <CreditCard size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white tracking-wide">Benefícios & Parcerias</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Ambiente Exclusivo</span>
+                  </div>
+                  <p className="text-[11px] text-nc-warm/60">Vantagens corporativas para colaboradores e entidades</p>
+                </div>
+              </div>
+              <ArrowRight size={15} className="text-white/40 group-hover:text-amber-400 group-hover:translate-x-1 transition-all shrink-0" />
+            </a>
+
+            {/* 3. MICE (EVENTOS, GRUPOS & CONGRESSOS) */}
+            <a
+              href="#diagnostico"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('#diagnostico');
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-purple-400/40 transition-all text-white group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                  <CalendarDays size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white tracking-wide">MICE & Eventos</span>
+                  </div>
+                  <p className="text-[11px] text-nc-warm/60">Convenções, feiras, grupos e incentivos empresariais</p>
+                </div>
+              </div>
+              <ArrowRight size={15} className="text-white/40 group-hover:text-purple-400 group-hover:translate-x-1 transition-all shrink-0" />
+            </a>
+
+            {/* 4. LAZER & TURISMO EXCLUSIVO */}
+            <a
+              href="#lazer"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('#lazer', 'lazer');
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-nc-orange/40 transition-all text-white group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-nc-orange">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white tracking-wide">Lazer & Roteiros Sob Medida</span>
+                  </div>
+                  <p className="text-[11px] text-nc-warm/60">Curadoria exclusiva e viagens personalizadas</p>
+                </div>
+              </div>
+              <ArrowRight size={15} className="text-white/40 group-hover:text-nc-orange group-hover:translate-x-1 transition-all shrink-0" />
+            </a>
+
+            {/* 5. CONHECIMENTO NC (BLOG) */}
+            <a
+              href="#conhecimento"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('#conhecimento', 'blog');
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-blue-400/40 transition-all text-white group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <BookOpen size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white tracking-wide">Conhecimento NC</span>
+                    <span className="text-[10px] font-mono bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded">Hub Editorial</span>
+                  </div>
+                  <p className="text-[11px] text-nc-warm/60">Artigos, inteligência corporativa e melhores práticas</p>
+                </div>
+              </div>
+              <ArrowRight size={15} className="text-white/40 group-hover:text-blue-400 group-hover:translate-x-1 transition-all shrink-0" />
+            </a>
+
+            {/* 6. QUEM SOMOS */}
+            <a
+              href="#quem-somos"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('#quem-somos', 'quem-somos');
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-slate-400/40 transition-all text-white group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-slate-500/15 border border-slate-500/30 flex items-center justify-center text-slate-300">
+                  <Building2 size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white tracking-wide">Quem Somos</span>
+                  </div>
+                  <p className="text-[11px] text-nc-warm/60">História, liderança e estrutura própria em Curitiba</p>
+                </div>
+              </div>
+              <ArrowRight size={15} className="text-white/40 group-hover:text-slate-300 group-hover:translate-x-1 transition-all shrink-0" />
+            </a>
+
+            {/* 7. DÚVIDAS FREQUENTES (FAQ) */}
+            <a
+              href="#faq"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('#faq');
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-emerald-400/40 transition-all text-white group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <HelpCircle size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white tracking-wide">Dúvidas Frequentes (FAQ)</span>
+                  </div>
+                  <p className="text-[11px] text-nc-warm/60">Respostas sobre SLA, implantação e ferramentas</p>
+                </div>
+              </div>
+              <ArrowRight size={15} className="text-white/40 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all shrink-0" />
+            </a>
+
+            {/* 8. ÁREA DO CLIENTE */}
+            <a
+              href="#area-cliente"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('#area-cliente', 'area-cliente');
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-nc-orange/30 bg-gradient-to-r from-nc-orange/15 to-transparent hover:border-nc-orange/60 transition-all text-white group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-nc-orange/20 border border-nc-orange/40 flex items-center justify-center text-nc-orange">
+                  <ShieldCheck size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-nc-orange tracking-wide">Área do Cliente</span>
+                    <span className="text-[10px] font-mono bg-nc-orange/30 text-white px-2 py-0.5 rounded font-bold">Portal Seguro</span>
+                  </div>
+                  <p className="text-[11px] text-nc-warm/70">Acesso a relatórios, bilhetes e sistema OBT</p>
+                </div>
+              </div>
+              <ArrowRight size={15} className="text-nc-orange group-hover:translate-x-1 transition-all shrink-0" />
             </a>
           </div>
 
+          {/* Fixed Bottom Action Bar */}
+          <div className="shrink-0 p-4 bg-[#07090D]/95 backdrop-blur-md border-t border-white/10 flex flex-col gap-2.5 z-10">
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('#diagnostico');
+              }}
+              className="w-full inline-flex justify-center items-center gap-2.5 px-6 py-3.5 bg-gradient-to-r from-[#C8102E] via-[#D32F2F] to-[#DB8902] text-white rounded-xl text-xs font-bold uppercase tracking-[0.1em] shadow-lg shadow-red-900/30 active:scale-[0.99] transition-all cursor-pointer"
+            >
+              <span>{ctaLabel}</span>
+              <ArrowRight size={15} />
+            </button>
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <a
+                href="https://wa.me/554132811153?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20NC%20Turismo%20e%20gostaria%20de%20informa%C3%A7%C3%B5es."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold hover:bg-emerald-500/20 transition-all cursor-pointer"
+              >
+                <MessageSquare size={14} />
+                <span>WhatsApp 24h</span>
+              </a>
+              <a
+                href="tel:04132811153"
+                className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-nc-warm/80 font-semibold hover:bg-white/10 transition-all cursor-pointer"
+              >
+                <Phone size={14} />
+                <span>(41) 3281-1153</span>
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </header>
