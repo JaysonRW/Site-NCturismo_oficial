@@ -276,10 +276,10 @@ export const Header: React.FC<HeaderProps> = ({
                       </li>
                       <li>
                         <a 
-                          href="#solucoes"
+                          href="#bi-e-relatorios"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#solucoes');
+                            navigateTo('#bi-e-relatorios', 'bi-e-relatorios');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
@@ -299,10 +299,10 @@ export const Header: React.FC<HeaderProps> = ({
                     <ul className="space-y-2.5 text-xs text-nc-warm/75">
                       <li>
                         <a 
-                          href="#solucoes"
+                          href="#atendimento-24h"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#solucoes');
+                            navigateTo('#atendimento-24h', 'atendimento-24h');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
@@ -311,10 +311,10 @@ export const Header: React.FC<HeaderProps> = ({
                       </li>
                       <li>
                         <a 
-                          href="#solucoes"
+                          href="#compliance-esg"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#solucoes');
+                            navigateTo('#compliance-esg', 'compliance-esg');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
@@ -779,10 +779,10 @@ export const Header: React.FC<HeaderProps> = ({
                       <span className="text-[9px] text-nc-warm/50">Plataformas ágeis</span>
                     </a>
                     <a
-                      href="#solucoes"
+                      href="#bi-e-relatorios"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigateTo('#solucoes');
+                        navigateTo('#bi-e-relatorios', 'bi-e-relatorios');
                       }}
                       className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
                     >
@@ -790,10 +790,10 @@ export const Header: React.FC<HeaderProps> = ({
                       <span className="text-[9px] text-nc-warm/50">Métricas de saving</span>
                     </a>
                     <a
-                      href="#plantao"
+                      href="#atendimento-24h"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigateTo('#plantao');
+                        navigateTo('#atendimento-24h', 'atendimento-24h');
                       }}
                       className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
                     >
@@ -801,10 +801,10 @@ export const Header: React.FC<HeaderProps> = ({
                       <span className="text-[9px] text-emerald-400">Plantão próprio</span>
                     </a>
                     <a
-                      href="#solucoes"
+                      href="#compliance-esg"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigateTo('#solucoes');
+                        navigateTo('#compliance-esg', 'compliance-esg');
                       }}
                       className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
                     >

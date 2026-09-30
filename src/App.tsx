@@ -9,6 +9,7 @@ import { ScrollProgressBar } from './components/ScrollProgressBar';
 import { Hero } from './components/sections/Hero';
 import { InfiniteMarquee } from './components/InfiniteMarquee';
 import { Structure } from './components/sections/Structure';
+import { CompanyVideo } from './components/sections/CompanyVideo';
 import { Transformation } from './components/sections/Transformation';
 import { SolutionsAccordion } from './components/sections/SolutionsAccordion';
 import { ClientsCarousel } from './components/sections/ClientsCarousel';
@@ -26,13 +27,17 @@ import { ViagensCorporativasView } from './components/ViagensCorporativasView';
 import { GestaoViagensView } from './components/GestaoViagensView';
 import { GestaoDespesasView } from './components/GestaoDespesasView';
 import { TecnologiaObtView } from './components/TecnologiaObtView';
+import { Atendimento24hView } from './components/Atendimento24hView';
+import { BiRelatoriosView } from './components/BiRelatoriosView';
+import { ComplianceEsgView } from './components/ComplianceEsgView';
 import { LazerView } from './components/LazerView';
 import { BeneficiosViagensView } from './components/BeneficiosViagensView';
 import { AreaDoClienteView } from './components/AreaDoClienteView';
+import { BackToTopButton } from './components/BackToTopButton';
 import { supabase } from './lib/supabase';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post' | 'viagens-corporativas' | 'gestao-de-viagens' | 'gestao-de-despesas' | 'tecnologia-obt' | 'lazer' | 'area-cliente'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post' | 'viagens-corporativas' | 'gestao-de-viagens' | 'gestao-de-despesas' | 'tecnologia-obt' | 'atendimento-24h' | 'bi-e-relatorios' | 'compliance-esg' | 'lazer' | 'area-cliente'>('home');
   const [session, setSession] = useState<any>(null);
   const [activeSlug, setActiveSlug] = useState<string>('sla-suporte-viagens-corporativas-atendimento');
 
@@ -86,6 +91,35 @@ export default function App() {
         hash === '#obt'
       ) {
         setCurrentView('tecnologia-obt');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (
+        hash === '#atendimento-24h' || 
+        hash === '#atendimento-24-horas' || 
+        hash === '#atendimento24h' || 
+        hash === '#atendimento24horas' || 
+        hash === '#suporte-24h' || 
+        hash === '#plantao-24h'
+      ) {
+        setCurrentView('atendimento-24h');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (
+        hash === '#bi-e-relatorios' || 
+        hash === '#bi-relatorios' || 
+        hash === '#bi' || 
+        hash === '#relatorios' || 
+        hash === '#relatorios-gerenciais' ||
+        hash === '#bie-relatorios'
+      ) {
+        setCurrentView('bi-e-relatorios');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (
+        hash === '#compliance-esg' || 
+        hash === '#compliance' || 
+        hash === '#esg' || 
+        hash === '#compliance-e-esg' || 
+        hash === '#governanca-compliance'
+      ) {
+        setCurrentView('compliance-esg');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '#lazer') {
         setCurrentView('lazer');
@@ -231,6 +265,39 @@ export default function App() {
       window.location.hash = '#tecnologia-obt';
       setCurrentView('tecnologia-obt');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (
+      lower === 'atendimento-24h' || 
+      lower === 'atendimento-24-horas' || 
+      lower === 'atendimento24h' || 
+      lower === 'atendimento24horas' || 
+      lower === 'atendimento-24' ||
+      lower === 'suporte-24h' || 
+      lower === 'plantao-24h'
+    ) {
+      window.location.hash = '#atendimento-24h';
+      setCurrentView('atendimento-24h');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (
+      lower === 'bi-e-relatorios' || 
+      lower === 'bi-relatorios' || 
+      lower === 'bi' || 
+      lower === 'relatorios' || 
+      lower === 'relatorios-gerenciais' || 
+      lower === 'bie-relatorios'
+    ) {
+      window.location.hash = '#bi-e-relatorios';
+      setCurrentView('bi-e-relatorios');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (
+      lower === 'compliance-esg' || 
+      lower === 'compliance' || 
+      lower === 'esg' || 
+      lower === 'compliance-e-esg' || 
+      lower === 'governanca-compliance'
+    ) {
+      window.location.hash = '#compliance-esg';
+      setCurrentView('compliance-esg');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (lower === 'lazer') {
       window.location.hash = '#lazer';
       setCurrentView('lazer');
@@ -320,7 +387,19 @@ export default function App() {
             handleNavigate('#diagnostico');
           }}
           onSelectSolutionSection={(solutionId) => {
-            handleNavigate('#solucoes');
+            if (solutionId === 'planejamento' || solutionId === 'gestao') {
+              handleNavigate('gestao-de-viagens');
+            } else if (solutionId === 'despesas') {
+              handleNavigate('gestao-de-despesas');
+            } else if (solutionId === 'tecnologia') {
+              handleNavigate('tecnologia-obt');
+            } else if (solutionId === 'atendimento' || solutionId === 'suporte') {
+              handleNavigate('atendimento-24h');
+            } else if (solutionId === 'bi' || solutionId === 'relatorios') {
+              handleNavigate('bi-e-relatorios');
+            } else {
+              handleNavigate('#solucoes');
+            }
           }}
         />
       </div>
@@ -365,6 +444,57 @@ export default function App() {
         <ScrollProgressBar />
         <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="tecnologia-obt" />
         <TecnologiaObtView 
+          onBackToHome={handleBackToHome}
+          onOpenDiagnosis={() => {
+            handleNavigate('#diagnostico');
+          }}
+          onOpenLegalTab={handleOpenLegal}
+          onNavigateToSection={handleNavigate}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'atendimento-24h') {
+    return (
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
+        <ScrollProgressBar />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="atendimento-24h" />
+        <Atendimento24hView 
+          onBackToHome={handleBackToHome}
+          onOpenDiagnosis={() => {
+            handleNavigate('#diagnostico');
+          }}
+          onOpenLegalTab={handleOpenLegal}
+          onNavigateToSection={handleNavigate}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'bi-e-relatorios') {
+    return (
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
+        <ScrollProgressBar />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="bi-e-relatorios" />
+        <BiRelatoriosView 
+          onBackToHome={handleBackToHome}
+          onOpenDiagnosis={() => {
+            handleNavigate('#diagnostico');
+          }}
+          onOpenLegalTab={handleOpenLegal}
+          onNavigateToSection={handleNavigate}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'compliance-esg') {
+    return (
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
+        <ScrollProgressBar />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="compliance-esg" />
+        <ComplianceEsgView 
           onBackToHome={handleBackToHome}
           onOpenDiagnosis={() => {
             handleNavigate('#diagnostico');
@@ -484,6 +614,7 @@ export default function App() {
         <Hero />
         <InfiniteMarquee />
         <Structure />
+        <CompanyVideo />
         <Transformation />
         <SolutionsAccordion />
         <ClientsCarousel />
@@ -498,6 +629,7 @@ export default function App() {
           }}
         />
       </main>
+      <BackToTopButton />
     </div>
   );
 }
