@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase, Post, Category, Author, TermsAcceptance, getTermsAcceptances } from '../lib/supabase';
+import { supabase, Post, Category, Author, TermsAcceptance, getTermsAcceptances, LazerPackage, getLazerPackages } from '../lib/supabase';
+import { AdminLazerManager } from './AdminLazerManager';
 import { 
   Building2, 
   LogOut, 
@@ -12,19 +13,20 @@ import {
   Check, 
   Clock, 
   Calendar, 
-  Sparkles,
-  ArrowLeft,
-  UploadCloud,
-  CheckCircle2,
-  AlertTriangle,
-  RefreshCw,
-  FolderOpen,
-  Copy,
-  Database,
-  ExternalLink,
-  ShieldCheck,
-  Download,
-  Lock
+  Sparkles, 
+  ArrowLeft, 
+  UploadCloud, 
+  CheckCircle2, 
+  AlertTriangle, 
+  RefreshCw, 
+  FolderOpen, 
+  Copy, 
+  Database, 
+  ExternalLink, 
+  ShieldCheck, 
+  Download, 
+  Lock,
+  Palmtree
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -33,8 +35,9 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onBackToHome }) => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'posts' | 'terms'>('posts');
+  const [activeAdminTab, setActiveAdminTab] = useState<'posts' | 'terms' | 'lazer'>('posts');
   const [termsAcceptances, setTermsAcceptances] = useState<TermsAcceptance[]>([]);
+  const [lazerPackages, setLazerPackages] = useState<LazerPackage[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
@@ -102,6 +105,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onBack
       // 4. Fetch terms acceptances for LGPD compliance tracking
       const acceptances = await getTermsAcceptances();
       setTermsAcceptances(acceptances);
+
+      // 5. Fetch Lazer packages
+      const packages = await getLazerPackages();
+      setLazerPackages(packages);
     } catch (err: any) {
       console.error('Falha geral ao buscar dados do Supabase:', err);
     } finally {
@@ -431,7 +438,36 @@ CREATE TABLE IF NOT EXISTS public.terms_acceptances (
 
 ALTER TABLE public.terms_acceptances ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Permitir insercao anonima de aceites" ON public.terms_acceptances FOR INSERT TO anon, authenticated WITH CHECK (true);
-CREATE POLICY "Permitir leitura de aceites para autenticados" ON public.terms_acceptances FOR SELECT TO authenticated USING (true);`;
+CREATE POLICY "Permitir leitura de aceites para autenticados" ON public.terms_acceptances FOR SELECT TO authenticated USING (true);
+
+-- 8. Tabela de Pacotes & Lazer (lazer_packages)
+CREATE TABLE IF NOT EXISTS public.lazer_packages (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  destination TEXT NOT NULL,
+  category TEXT NOT NULL,
+  category_label TEXT,
+  cover_image TEXT NOT NULL,
+  gallery_images JSONB DEFAULT '[]'::jsonb,
+  price_from NUMERIC NOT NULL,
+  price_original NUMERIC,
+  installment_text TEXT NOT NULL,
+  departure_dates TEXT NOT NULL,
+  valid_until TEXT,
+  duration_days INT DEFAULT 7,
+  nights INT DEFAULT 6,
+  status TEXT DEFAULT 'active',
+  badge TEXT,
+  included_items JSONB DEFAULT '[]'::jsonb,
+  description TEXT,
+  featured BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.lazer_packages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Pacotes publicos para leitura" ON public.lazer_packages FOR SELECT USING (true);
+CREATE POLICY "Admin controle total pacotes lazer" ON public.lazer_packages FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);`;
                     navigator.clipboard.writeText(sql);
                     setCopiedSql(true);
                     setTimeout(() => setCopiedSql(false), 3000);
@@ -706,8 +742,8 @@ CREATE POLICY "Permitir leitura de aceites para autenticados" ON public.terms_ac
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Top Navigation Tabs: Posts vs Terms */}
-            <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+            {/* Top Navigation Tabs: Posts vs Terms vs Lazer */}
+            <div className="flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
               <button
                 onClick={() => setActiveAdminTab('posts')}
                 className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
@@ -718,6 +754,18 @@ CREATE POLICY "Permitir leitura de aceites para autenticados" ON public.terms_ac
               >
                 <FileText size={16} />
                 Artigos do Blog ({posts.length})
+              </button>
+
+              <button
+                onClick={() => setActiveAdminTab('lazer')}
+                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
+                  activeAdminTab === 'lazer'
+                    ? 'bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white shadow-md'
+                    : 'bg-white/5 text-nc-warm/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Palmtree size={16} />
+                Lazer, Promoções & Cruzeiros ({lazerPackages.length})
               </button>
 
               <button
@@ -733,7 +781,14 @@ CREATE POLICY "Permitir leitura de aceites para autenticados" ON public.terms_ac
               </button>
             </div>
 
-            {activeAdminTab === 'terms' ? (
+            {activeAdminTab === 'lazer' ? (
+              /* TAB: GESTÃO DE LAZER & PROMOÇÕES */
+              <AdminLazerManager
+                packages={lazerPackages}
+                onRefresh={loadData}
+                notify={notify}
+              />
+            ) : activeAdminTab === 'terms' ? (
               /* TAB: ACEITES DE TERMOS & LGPD */
               <div className="space-y-6">
                 {/* KPI Cards */}
