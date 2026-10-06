@@ -49,7 +49,7 @@ export const CompanyVideo: React.FC<CompanyVideoProps> = ({ onOpenConsultant }) 
                 /* Custom Poster & Play Trigger (Fast Initial Load) */
                 <div 
                   onClick={() => setIsPlaying(true)}
-                  className="group relative w-full h-full cursor-pointer overflow-hidden flex items-center justify-center select-none"
+                  className="group relative w-full h-full cursor-pointer overflow-hidden select-none"
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -59,7 +59,7 @@ export const CompanyVideo: React.FC<CompanyVideoProps> = ({ onOpenConsultant }) 
                   }}
                   aria-label="Assistir ao vídeo de apresentação da NC Turismo"
                 >
-                  {/* YouTube High-Resolution Thumbnail */}
+                  {/* YouTube High-Resolution Thumbnail Background */}
                   <img
                     src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
                     alt="Vídeo de apresentação da NC Turismo"
@@ -68,14 +68,14 @@ export const CompanyVideo: React.FC<CompanyVideoProps> = ({ onOpenConsultant }) 
                       // Fallback para HQ default caso maxres não esteja disponível
                       (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
                     }}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-[0.85] group-hover:brightness-95"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-[0.85] group-hover:brightness-95 pointer-events-none"
                   />
 
                   {/* Gradient overlays for cinematic contrast */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40 group-hover:via-black/20 transition-all duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40 group-hover:via-black/20 transition-all duration-300 pointer-events-none" />
 
-                  {/* Play Button Pulsing Aura */}
-                  <div className="relative z-10 flex flex-col items-center gap-4">
+                  {/* Play Button Exactly Centered in Container */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4 z-20 pointer-events-none">
                     <div className="relative flex items-center justify-center">
                       <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-[#C8102E] to-[#DB8902] opacity-40 blur-lg group-hover:opacity-75 group-hover:scale-125 transition-all duration-500 animate-pulse" />
                       <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-r from-[#C8102E] via-[#D32F2F] to-[#DB8902] text-white flex items-center justify-center shadow-2xl transform group-hover:scale-110 active:scale-95 transition-all duration-300 border-2 border-white/20">
@@ -83,8 +83,8 @@ export const CompanyVideo: React.FC<CompanyVideoProps> = ({ onOpenConsultant }) 
                       </div>
                     </div>
 
-                    <div className="text-center space-y-1">
-                      <span className="text-white font-bold text-sm sm:text-base tracking-wider uppercase drop-shadow-md">
+                    <div className="text-center space-y-1 mt-4">
+                      <span className="text-white font-bold text-sm sm:text-base tracking-wider uppercase drop-shadow-md block">
                         Assistir Apresentação
                       </span>
                       <p className="text-xs text-white/70 font-medium">
@@ -94,7 +94,7 @@ export const CompanyVideo: React.FC<CompanyVideoProps> = ({ onOpenConsultant }) 
                   </div>
 
                   {/* Bottom badge overlay */}
-                  <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-10 flex items-center gap-3">
+                  <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-20 flex items-center gap-3 pointer-events-none">
                     <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-mono font-medium">
                       HD 1080p
                     </span>
