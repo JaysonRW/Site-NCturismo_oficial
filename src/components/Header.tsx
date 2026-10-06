@@ -34,18 +34,16 @@ export const Header: React.FC<HeaderProps> = ({
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Desktop active dropdown state: 'corporativo' | 'beneficios' | 'mice' | null
-  const [activeDropdown, setActiveDropdown] = useState<'corporativo' | 'beneficios' | 'mice' | null>(null);
+  // Desktop active dropdown state: 'corporativo' | 'beneficios' | null
+  const [activeDropdown, setActiveDropdown] = useState<'corporativo' | 'beneficios' | null>(null);
   
   // Mobile accordion expand state
   const [mobileExpanded, setMobileExpanded] = useState<{
     corporativo: boolean;
     beneficios: boolean;
-    mice: boolean;
   }>({
     corporativo: false,
-    beneficios: false,
-    mice: false
+    beneficios: false
   });
 
   const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -81,7 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
     }
   }, [mobileMenuOpen]);
 
-  const handleMouseEnter = (menu: 'corporativo' | 'beneficios' | 'mice') => {
+  const handleMouseEnter = (menu: 'corporativo' | 'beneficios') => {
     if (leaveTimeoutRef.current) {
       clearTimeout(leaveTimeoutRef.current);
       leaveTimeoutRef.current = null;
@@ -492,108 +490,7 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* 3. MICE ▼ (Submenu) */}
-          <div 
-            className="relative"
-            onMouseEnter={() => handleMouseEnter('mice')}
-            onMouseLeave={handleMouseLeave}
-          >
-            <button
-              onClick={() => setActiveDropdown(activeDropdown === 'mice' ? null : 'mice')}
-              className={`inline-flex items-center gap-1.5 text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 focus:outline-none ${
-                activeDropdown === 'mice'
-                  ? 'text-nc-orange font-semibold'
-                  : 'text-nc-warm/80 hover:text-white'
-              }`}
-              aria-expanded={activeDropdown === 'mice'}
-              aria-haspopup="true"
-            >
-              <span>MICE</span>
-              <ChevronDown 
-                size={14} 
-                className={`transition-transform duration-200 ${activeDropdown === 'mice' ? 'rotate-180 text-nc-orange' : 'opacity-70'}`} 
-              />
-            </button>
-
-            {/* Submenu Dropdown */}
-            {activeDropdown === 'mice' && (
-              <div 
-                className="absolute top-full left-0 mt-3 w-72 bg-[#0c0e13]/98 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 shadow-2xl shadow-black/80 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-                onMouseEnter={() => handleMouseEnter('mice')}
-                onMouseLeave={handleMouseLeave}
-                role="menu"
-              >
-                <div className="text-[11px] font-mono uppercase tracking-wider text-nc-orange font-bold mb-3">
-                  Eventos & Incentivos
-                </div>
-                <ul className="space-y-2.5 text-xs text-nc-warm/80 mb-5">
-                  <li>
-                    <a 
-                      href="#diagnostico"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigateTo('#diagnostico');
-                      }}
-                      className="hover:text-white hover:translate-x-1 transition-all inline-block py-1 font-medium"
-                    >
-                      Eventos Corporativos
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="#diagnostico"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigateTo('#diagnostico');
-                      }}
-                      className="hover:text-white hover:translate-x-1 transition-all inline-block py-1 font-medium"
-                    >
-                      Grupos
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="#diagnostico"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigateTo('#diagnostico');
-                      }}
-                      className="hover:text-white hover:translate-x-1 transition-all inline-block py-1 font-medium"
-                    >
-                      Incentivos
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="#diagnostico"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigateTo('#diagnostico');
-                      }}
-                      className="hover:text-white hover:translate-x-1 transition-all inline-block py-1 font-medium"
-                    >
-                      Congressos e Convenções
-                    </a>
-                  </li>
-                </ul>
-
-                <div className="pt-4 border-t border-white/10">
-                  <a 
-                    href="#diagnostico"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigateTo('#diagnostico');
-                    }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-nc-orange hover:text-white transition-colors"
-                  >
-                    Planeje seu evento com a NC Turismo <ArrowRight size={13} />
-                  </a>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 4. LAZER (Direct Link) */}
+          {/* 3. LAZER (Direct Link) */}
           <a 
             href="#lazer"
             onClick={(e) => {
@@ -840,30 +737,7 @@ export const Header: React.FC<HeaderProps> = ({
               <ArrowRight size={15} className="text-white/40 group-hover:text-amber-400 group-hover:translate-x-1 transition-all shrink-0" />
             </a>
 
-            {/* 3. MICE (EVENTOS, GRUPOS & CONGRESSOS) */}
-            <a
-              href="#diagnostico"
-              onClick={(e) => {
-                e.preventDefault();
-                navigateTo('#diagnostico');
-              }}
-              className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-purple-400/40 transition-all text-white group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                  <CalendarDays size={18} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-white tracking-wide">MICE & Eventos</span>
-                  </div>
-                  <p className="text-[11px] text-nc-warm/60">Convenções, feiras, grupos e incentivos empresariais</p>
-                </div>
-              </div>
-              <ArrowRight size={15} className="text-white/40 group-hover:text-purple-400 group-hover:translate-x-1 transition-all shrink-0" />
-            </a>
-
-            {/* 4. LAZER & TURISMO EXCLUSIVO */}
+            {/* 3. LAZER & TURISMO EXCLUSIVO */}
             <a
               href="#lazer"
               onClick={(e) => {

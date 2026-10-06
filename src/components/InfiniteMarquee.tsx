@@ -10,12 +10,11 @@ export const InfiniteMarquee: React.FC<InfiniteMarqueeProps> = ({
   variant = 'dual',
   className = ''
 }) => {
-  // Primary message specified by user: WE ARE TRAVEL ✦ CORPORATIVO ✦ BENEFÍCIOS ✦ MICE ✦ LAZER ✦ TECNOLOGIA ✦ GESTÃO ✦ EXPERIÊNCIA ✦
+  // Primary message specified by user: WE ARE TRAVEL ✦ CORPORATIVO ✦ BENEFÍCIOS ✦ LAZER ✦ TECNOLOGIA ✦ GESTÃO ✦ EXPERIÊNCIA ✦
   const primaryItems = [
     { text: 'WE ARE TRAVEL', highlight: true, brand: true },
     { text: 'CORPORATIVO', highlight: true, badge: 'B2B' },
     { text: 'BENEFÍCIOS', highlight: false },
-    { text: 'MICE', highlight: false },
     { text: 'LAZER', highlight: false },
     { text: 'TECNOLOGIA', highlight: true, badge: 'T&E' },
     { text: 'GESTÃO', highlight: false },
@@ -28,7 +27,6 @@ export const InfiniteMarquee: React.FC<InfiniteMarqueeProps> = ({
     'WE ARE TRAVEL',
     'CORPORATIVO',
     'BENEFÍCIOS',
-    'MICE',
     'LAZER',
     'TECNOLOGIA & T&E',
     'GESTÃO',
