@@ -1,15 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 
-const MOCK_CLIENTS = [
-  { id: 1, name: 'Client 1', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg' },
-  { id: 2, name: 'Client 2', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg' },
-  { id: 3, name: 'Client 3', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg' },
-  { id: 4, name: 'Client 4', logo: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg' },
-  { id: 5, name: 'Client 5', logo: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg' },
-  { id: 6, name: 'Client 6', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b9/Slack_Technologies_Logo.svg' },
-  { id: 7, name: 'Client 7', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg' },
-  { id: 8, name: 'Client 8', logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg' },
+const CLIENT_LOGOS = [
+  { id: 1, name: 'Empresa Parceira 1', logo: '/logoempresa (1).jpeg' },
+  { id: 2, name: 'Empresa Parceira 2', logo: '/logoempresa (2).jpeg' },
+  { id: 3, name: 'Empresa Parceira 3', logo: '/logoempresa (3).jpeg' },
+  { id: 4, name: 'Empresa Parceira 4', logo: '/logoempresa (4).jpeg' },
+  { id: 5, name: 'Empresa Parceira 5', logo: '/logoempresa (5).jpeg' },
+  { id: 6, name: 'Empresa Parceira 6', logo: '/logoempresa (6).jpeg' },
+  { id: 7, name: 'Empresa Parceira 7', logo: '/logoempresa (7).jpeg' },
+  { id: 8, name: 'Empresa Parceira 8', logo: '/logoempresa (8).jpeg' },
+  { id: 9, name: 'Empresa Parceira 9', logo: '/logoempresa (9).jpeg' },
+  { id: 10, name: 'Empresa Parceira 10', logo: '/logoempresa (10).jpeg' },
+  { id: 11, name: 'Empresa Parceira 11', logo: '/logoempresa (11).jpeg' },
+  { id: 12, name: 'Empresa Parceira 12', logo: '/logoempresa (12).jpeg' },
 ];
 
 export const ClientsCarousel: React.FC = () => {
@@ -42,15 +46,16 @@ export const ClientsCarousel: React.FC = () => {
           ref={scrollerRef}
           className="flex gap-6 px-3 items-center animate-scroll"
         >
-          {MOCK_CLIENTS.map((client) => (
+          {CLIENT_LOGOS.map((client) => (
             <div 
               key={client.id}
-              className="flex-shrink-0 w-[200px] md:w-[240px] h-[100px] md:h-[120px] bg-white border border-slate-100 rounded-xl md:rounded-2xl flex items-center justify-center p-6 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+              className="flex-shrink-0 w-[180px] sm:w-[220px] md:w-[240px] h-[90px] md:h-[110px] bg-white border border-slate-200/90 rounded-2xl flex items-center justify-center p-4 sm:p-5 shadow-2xs hover:shadow-md hover:border-[#DB8902]/40 transition-all duration-300 group cursor-pointer overflow-hidden"
             >
               <img 
                 src={client.logo} 
                 alt={client.name} 
-                className="w-full h-full object-contain filter grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                loading="lazy"
+                className="w-full h-full object-contain filter grayscale contrast-125 opacity-70 group-hover:grayscale-0 group-hover:contrast-100 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
               />
             </div>
           ))}

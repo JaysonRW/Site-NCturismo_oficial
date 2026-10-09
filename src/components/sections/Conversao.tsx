@@ -296,7 +296,7 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCli
           
           <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-nc-warm/40">
             <p>&copy; {new Date().getFullYear()} NC Turismo. Todos os direitos reservados.</p>
-            <p>N C TURISMO LTDA. • CNPJ 81.102.709/0001-08 • Curitiba/PR</p>
+            <p>NC TURISMO LTDA. • CNPJ 81.102.709/0001-08 • Curitiba/PR</p>
           </div>
         </div>
       </footer>
