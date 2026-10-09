@@ -98,16 +98,19 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
       });
       setRedirectSuccess(true);
 
-      // Short delay so the user sees the confirmation and audit receipt
+      // Redireciona o usuário diretamente
       setTimeout(() => {
-        window.location.href = TARGET_URL;
-      }, 1000);
+        window.open(TARGET_URL, '_blank', 'noopener,noreferrer');
+        // Mantém também fallback direto para garantir direcionamento imediato
+        setIsSubmitting(false);
+      }, 700);
     } catch (err) {
       console.error('Erro ao registrar aceite:', err);
-      // Even if background logging has an exception, redirect the user
+      // Redireciona mesmo em caso de exceção de telemetria
       setTimeout(() => {
-        window.location.href = TARGET_URL;
-      }, 800);
+        window.open(TARGET_URL, '_blank', 'noopener,noreferrer');
+        setIsSubmitting(false);
+      }, 500);
     }
   };
 
