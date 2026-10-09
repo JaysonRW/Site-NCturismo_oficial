@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { LazerPackage, LazerCategory, saveLazerPackage, deleteLazerPackage } from '../lib/supabase';
+import React, { useState, useEffect } from 'react';
+import { supabase, LazerPackage, LazerCategory, saveLazerPackage, deleteLazerPackage } from '../lib/supabase';
 import { 
   Palmtree, 
   Plus, 
@@ -23,7 +23,9 @@ import {
   ExternalLink,
   Tag,
   ShieldCheck,
-  Star
+  Star,
+  AlertTriangle,
+  Database
 } from 'lucide-react';
 
 interface AdminLazerManagerProps {
@@ -38,6 +40,25 @@ export const AdminLazerManager: React.FC<AdminLazerManagerProps> = ({ packages, 
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'draft'>('all');
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [supabaseTableMissing, setSupabaseTableMissing] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+
+  useEffect(() => {
+    // Verifica se a tabela lazer_packages existe no Supabase
+    const checkTable = async () => {
+      try {
+        const { error } = await supabase.from('lazer_packages').select('id').limit(1);
+        if (error && (error.code === 'PGRST205' || error.message?.includes('Could not find the table') || error.message?.includes('lazer_packages'))) {
+          setSupabaseTableMissing(true);
+        } else if (!error) {
+          setSupabaseTableMissing(false);
+        }
+      } catch (e) {
+        setSupabaseTableMissing(true);
+      }
+    };
+    checkTable();
+  }, []);
 
   // Form State
   const initialForm: Omit<LazerPackage, 'id'> = {
@@ -182,6 +203,86 @@ export const AdminLazerManager: React.FC<AdminLazerManagerProps> = ({ packages, 
 
   return (
     <div className="space-y-8">
+      {/* Alerta de Sincronização em Nuvem (Caso a tabela lazer_packages ainda não exista no Supabase) */}
+      {supabaseTableMissing && (
+        <div className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-nc-warm space-y-4 animate-in fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 mt-0.5">
+                <AlertTriangle size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <span>Atenção: Ativação da Nuvem Supabase Necessária</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">Pendente</span>
+                </h3>
+                <p className="text-xs text-nc-warm/80 mt-1 max-w-2xl leading-relaxed">
+                  Para que as pausas e ativações de pacotes funcionem em <strong>todos os computadores, celulares e outros navegadores</strong>, a tabela <code className="text-amber-300 font-mono bg-black/40 px-1 py-0.5 rounded">lazer_packages</code> precisa ser criada no banco de dados Supabase da empresa. Atualmente as alterações estão salvas apenas neste navegador local.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  const sql = `-- Tabela de Pacotes & Lazer (lazer_packages)
+CREATE TABLE IF NOT EXISTS public.lazer_packages (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  destination TEXT NOT NULL,
+  category TEXT NOT NULL,
+  category_label TEXT,
+  cover_image TEXT NOT NULL,
+  gallery_images JSONB DEFAULT '[]'::jsonb,
+  price_from NUMERIC NOT NULL,
+  price_original NUMERIC,
+  installment_text TEXT NOT NULL,
+  departure_dates TEXT NOT NULL,
+  valid_until TEXT,
+  duration_days INT DEFAULT 7,
+  nights INT DEFAULT 6,
+  status TEXT DEFAULT 'active',
+  badge TEXT,
+  included_items JSONB DEFAULT '[]'::jsonb,
+  description TEXT,
+  featured BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.lazer_packages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Pacotes publicos para leitura" ON public.lazer_packages FOR SELECT USING (true);
+CREATE POLICY "Admin controle total pacotes lazer" ON public.lazer_packages FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);`;
+                  navigator.clipboard.writeText(sql);
+                  setCopiedSql(true);
+                  notify('Script SQL copiado com sucesso! Cole no SQL Editor do Supabase.');
+                  setTimeout(() => setCopiedSql(false), 3000);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-nc-space font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+              >
+                {copiedSql ? <Check size={16} /> : <Copy size={16} />}
+                <span>{copiedSql ? 'SQL Copiado!' : 'Copiar Script SQL'}</span>
+              </button>
+
+              <a
+                href="https://supabase.com/dashboard/project/bfpwjtdhpxakarsjyklh/sql/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/10 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+              >
+                <span>Abrir Supabase SQL</span>
+                <ExternalLink size={14} />
+              </a>
+            </div>
+          </div>
+
+          <div className="p-3 bg-black/40 rounded-xl border border-white/5 text-[11px] text-nc-warm/70 font-mono">
+            <strong>Como sincronizar em 1 minuto:</strong> 1. Clique em "Copiar Script SQL" ➔ 2. Clique em "Abrir Supabase SQL" ➔ 3. Cole na tela do Supabase e clique em <strong>Run</strong>. Pronto! A partir daí qualquer pausa refletirá instantaneamente em todos os dispositivos do mundo.
+          </div>
+        </div>
+      )}
+
       {/* Top Banner & Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-red-500/10 via-amber-500/10 to-transparent border border-white/10">
         <div className="space-y-1">
