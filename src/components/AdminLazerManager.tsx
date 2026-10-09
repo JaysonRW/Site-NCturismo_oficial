@@ -7,6 +7,7 @@ import {
   Edit3, 
   Trash2, 
   Eye, 
+  EyeOff,
   Sparkles, 
   Check, 
   X, 
@@ -112,6 +113,19 @@ export const AdminLazerManager: React.FC<AdminLazerManagerProps> = ({ packages, 
     };
     await saveLazerPackage(duplicated);
     notify('Oferta duplicada com sucesso como rascunho!');
+    onRefresh();
+  };
+
+  const handleToggleStatus = async (pkg: LazerPackage) => {
+    const nextStatus = pkg.status === 'active' ? 'draft' : 'active';
+    await saveLazerPackage({
+      ...pkg,
+      status: nextStatus
+    });
+    notify(nextStatus === 'active' 
+      ? `Pacote "${pkg.title}" ATIVADO! Agora está visível para os clientes.` 
+      : `Pacote "${pkg.title}" INATIVADO / RASCUNHO! Ele foi ocultado da vitrine.`
+    );
     onRefresh();
   };
 
@@ -275,17 +289,41 @@ export const AdminLazerManager: React.FC<AdminLazerManagerProps> = ({ packages, 
               </div>
 
               {/* Status & Destaque */}
-              <div className="flex items-center gap-6 pt-6">
-                <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={formData.status === 'active'}
-                    onChange={e => setFormData({ ...formData, status: e.target.checked ? 'active' : 'draft' })}
-                    className="w-4 h-4 rounded text-[#C8102E] accent-[#C8102E]"
-                  />
-                  <span>Ativo na vitrine</span>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+                  Status de Exibição no Site *
                 </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, status: 'active' })}
+                    className={`py-3 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      formData.status === 'active'
+                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-sm'
+                        : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Check size={14} className={formData.status === 'active' ? 'text-emerald-400' : 'opacity-0'} />
+                    <span>Ativo na Vitrine</span>
+                  </button>
 
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, status: 'draft' })}
+                    className={`py-3 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      formData.status === 'draft'
+                        ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-sm'
+                        : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <EyeOff size={14} className={formData.status === 'draft' ? 'text-amber-400' : 'opacity-0'} />
+                    <span>Inativo / Oculto</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Destaque */}
+              <div className="flex items-center gap-6 pt-6">
                 <label className="flex items-center gap-2 cursor-pointer text-sm text-amber-400">
                   <input
                     type="checkbox"
@@ -585,13 +623,29 @@ export const AdminLazerManager: React.FC<AdminLazerManagerProps> = ({ packages, 
                       <span className="px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider text-white">
                         {pkg.category_label || pkg.category}
                       </span>
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        pkg.status === 'active' 
-                          ? 'bg-emerald-500/80 text-white' 
-                          : 'bg-amber-500/80 text-black font-extrabold'
-                      }`}>
-                        {pkg.status === 'active' ? 'Ativo' : 'Rascunho'}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleStatus(pkg);
+                        }}
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all shadow-md flex items-center gap-1 cursor-pointer ${
+                          pkg.status === 'active' 
+                            ? 'bg-emerald-500/90 hover:bg-emerald-600 text-white border border-emerald-400/30' 
+                            : 'bg-amber-500/90 hover:bg-amber-600 text-black font-extrabold border border-amber-400/30'
+                        }`}
+                        title={pkg.status === 'active' ? 'Clique para INATIVAR / ocultar da vitrine' : 'Clique para ATIVAR na vitrine'}
+                      >
+                        {pkg.status === 'active' ? (
+                          <>
+                            <Eye size={11} /> <span>Ativo</span>
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff size={11} /> <span>Inativo / Rascunho</span>
+                          </>
+                        )}
+                      </button>
                     </div>
 
                     {/* Badge */}
@@ -645,6 +699,18 @@ export const AdminLazerManager: React.FC<AdminLazerManagerProps> = ({ packages, 
                 {/* Footer Controls */}
                 <div className="p-4 bg-white/[0.02] border-t border-white/5 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleToggleStatus(pkg)}
+                      className={`p-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+                        pkg.status === 'active'
+                          ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400'
+                          : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400'
+                      }`}
+                      title={pkg.status === 'active' ? 'Pausar/Inativar oferta da vitrine' : 'Ativar oferta na vitrine'}
+                    >
+                      {pkg.status === 'active' ? <EyeOff size={14} /> : <Eye size={14} />}
+                      <span>{pkg.status === 'active' ? 'Pausar' : 'Ativar'}</span>
+                    </button>
                     <button
                       onClick={() => handleEdit(pkg)}
                       className="p-2 rounded-lg bg-white/5 hover:bg-[#C8102E]/20 text-slate-300 hover:text-white transition-colors text-xs font-semibold flex items-center gap-1"

@@ -65,6 +65,18 @@ export const LazerView: React.FC<LazerViewProps> = ({
       }
     };
     loadPackages();
+
+    const handleUpdate = () => {
+      loadPackages();
+    };
+
+    window.addEventListener('nc_lazer_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    return () => {
+      window.removeEventListener('nc_lazer_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
   }, []);
 
   const categories = [

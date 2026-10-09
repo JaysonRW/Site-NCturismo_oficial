@@ -294,8 +294,11 @@ export const INITIAL_LAZER_PACKAGES: LazerPackage[] = [
   }
 ];
 
+const LAZER_STORAGE_KEY = 'nc_lazer_packages';
+const LAZER_STORAGE_INIT_FLAG = 'nc_lazer_packages_initialized_v2';
+
 export const getLazerPackages = async (): Promise<LazerPackage[]> => {
-  // 1. Tenta carregar do Supabase
+  // 1. Tenta carregar do Supabase caso a tabela exista
   try {
     const { data, error } = await supabase
       .from('lazer_packages')
@@ -303,29 +306,35 @@ export const getLazerPackages = async (): Promise<LazerPackage[]> => {
       .order('created_at', { ascending: false });
 
     if (!error && data && data.length > 0) {
-      // Atualiza cache local
-      localStorage.setItem('nc_lazer_packages', JSON.stringify(data));
+      localStorage.setItem(LAZER_STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(LAZER_STORAGE_INIT_FLAG, 'true');
       return data as LazerPackage[];
     }
   } catch (e) {
-    // continua para o fallback
+    // continua para o fallback local
   }
 
-  // 2. Fallback para localStorage
+  // 2. Se já inicializamos localmente, respeita estritamente o que o usuário alterou no cache
   try {
-    const cached = localStorage.getItem('nc_lazer_packages');
-    if (cached) {
+    const cached = localStorage.getItem(LAZER_STORAGE_KEY);
+    const hasInitialized = localStorage.getItem(LAZER_STORAGE_INIT_FLAG);
+    if (cached && hasInitialized) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+      if (Array.isArray(parsed)) {
+        return parsed as LazerPackage[];
       }
     }
   } catch (e) {
     // continua para inicial
   }
 
-  // 3. Fallback inicial com pacotes padrão
-  localStorage.setItem('nc_lazer_packages', JSON.stringify(INITIAL_LAZER_PACKAGES));
+  // 3. Primeira execução: semeia os pacotes padrão e marca a flag de inicializado
+  try {
+    localStorage.setItem(LAZER_STORAGE_KEY, JSON.stringify(INITIAL_LAZER_PACKAGES));
+    localStorage.setItem(LAZER_STORAGE_INIT_FLAG, 'true');
+  } catch (e) {
+    // ignore
+  }
   return INITIAL_LAZER_PACKAGES;
 };
 
@@ -335,19 +344,22 @@ export const saveLazerPackage = async (pkg: LazerPackage): Promise<LazerPackage>
   
   let updatedList: LazerPackage[];
   if (exists) {
-    updatedList = currentPackages.map(p => p.id === pkg.id ? { ...pkg, updated_at: new Date().toISOString() } : p);
+    updatedList = currentPackages.map(p => p.id === pkg.id ? { ...p, ...pkg, updated_at: new Date().toISOString() } : p);
   } else {
     updatedList = [{ ...pkg, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }, ...currentPackages];
   }
 
-  // Salva no cache do localStorage
+  // Salva no cache do localStorage com a flag de inicializado
   try {
-    localStorage.setItem('nc_lazer_packages', JSON.stringify(updatedList));
+    localStorage.setItem(LAZER_STORAGE_KEY, JSON.stringify(updatedList));
+    localStorage.setItem(LAZER_STORAGE_INIT_FLAG, 'true');
+    // Dispara evento customizado para sincronizar componentes na mesma aba
+    window.dispatchEvent(new Event('nc_lazer_updated'));
   } catch (err) {
     console.error('Erro ao salvar no localStorage:', err);
   }
 
-  // Tenta persistir no Supabase (se existir a tabela)
+  // Tenta persistir no Supabase (se a tabela existir)
   try {
     const { error } = await supabase
       .from('lazer_packages')
@@ -367,7 +379,9 @@ export const deleteLazerPackage = async (id: string): Promise<boolean> => {
   const updatedList = currentPackages.filter(p => p.id !== id);
 
   try {
-    localStorage.setItem('nc_lazer_packages', JSON.stringify(updatedList));
+    localStorage.setItem(LAZER_STORAGE_KEY, JSON.stringify(updatedList));
+    localStorage.setItem(LAZER_STORAGE_INIT_FLAG, 'true');
+    window.dispatchEvent(new Event('nc_lazer_updated'));
   } catch (e) {
     console.error(e);
   }
