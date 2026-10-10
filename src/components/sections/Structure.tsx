@@ -238,7 +238,7 @@ export const Structure: React.FC = () => {
         </div>
 
         {/* Right Column (Visuals) */}
-        <div className="lg:col-span-7 xl:col-span-6 relative h-[600px] lg:h-[800px] w-full mt-10 lg:mt-0 pointer-events-none select-none">
+        <div className="lg:col-span-7 xl:col-span-6 relative min-h-[580px] sm:min-h-[660px] lg:h-[800px] w-full mt-6 lg:mt-0 pointer-events-none select-none flex flex-col justify-end">
           
           {/* Floating text (Behind Woman) */}
           <div className="st-text absolute top-[5%] right-[5%] lg:right-[10%] lg:top-[4%] xl:top-[2%] xl:right-[12%] rotate-[-12deg] hidden md:block z-10 opacity-90">
@@ -250,27 +250,27 @@ export const Structure: React.FC = () => {
              </svg>
           </div>
 
-          {/* Woman Character */}
+          {/* Woman Character - Positioned cleanly in center/right with clear headroom on mobile */}
           <img 
             src="/mulherNC2.png" 
             alt="Executiva NC Turismo" 
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-auto lg:right-[15%] h-[90%] lg:h-[100%] object-contain z-20 drop-shadow-[0_20px_40px_rgba(0,0,0,0.2)]" 
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-auto lg:right-[15%] h-[82%] sm:h-[88%] lg:h-[100%] max-w-[340px] sm:max-w-[420px] lg:max-w-none object-contain object-bottom z-10 drop-shadow-[0_20px_40px_rgba(0,0,0,0.18)]" 
           />
 
           {/* Floating Elements Container */}
-          <div className="absolute inset-0 z-30">
+          <div className="absolute inset-0 z-20">
             
-            {/* Floating Card 1: Chart */}
-            <div className="st-card st-float-1 absolute top-[5%] left-[0%] lg:left-[5%] bg-white/95 backdrop-blur-md rounded-2xl p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-white/60 w-[270px]">
-              <h4 className="font-bold text-[#0F172A] text-[15px] mb-1.5">Viagens Aprovadas</h4>
-              <div className="flex items-center gap-2 mb-4">
-                 <span className="bg-[#3B82F6] text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 uppercase tracking-wider">
+            {/* Floating Card 1: Chart - Positioned top-left, scaled gracefully on mobile */}
+            <div className="st-card st-float-1 absolute top-[2%] -left-2 sm:left-2 lg:left-[5%] bg-white/95 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-white/60 w-[225px] sm:w-[260px] lg:w-[270px] scale-[0.88] sm:scale-95 lg:scale-100 origin-top-left">
+              <h4 className="font-bold text-[#0F172A] text-[13px] sm:text-[15px] mb-1">Viagens Aprovadas</h4>
+              <div className="flex items-center gap-1.5 mb-3 sm:mb-4">
+                 <span className="bg-[#3B82F6] text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded flex items-center gap-1 uppercase tracking-wider">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l7-7 7 7M12 19V5"/></svg>
                     + 32%
                  </span>
-                 <span className="text-[11px] text-slate-500 font-medium">vs. mês anterior</span>
+                 <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium">vs. mês anterior</span>
               </div>
-              <div className="relative h-[70px] w-full mt-2">
+              <div className="relative h-[55px] sm:h-[70px] w-full mt-1 sm:mt-2">
                 <svg viewBox="0 0 200 80" className="w-full h-full overflow-visible" preserveAspectRatio="none">
                    <defs>
                       <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
@@ -292,59 +292,59 @@ export const Structure: React.FC = () => {
                    </g>
                 </svg>
               </div>
-              <div className="flex justify-between mt-3 text-[9px] font-bold text-slate-400 uppercase tracking-widest px-1">
+              <div className="flex justify-between mt-2 sm:mt-3 text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest px-1">
                 <span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span>
               </div>
             </div>
 
-            {/* Floating Card 2: 80% */}
-            <div className="st-card st-float-2 absolute top-[45%] left-[-2%] lg:left-[8%] bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-white/60 w-[130px] flex flex-col items-center justify-center">
-               <div className="relative w-16 h-16 flex items-center justify-center mb-2">
+            {/* Floating Card 2: 80% - Adjusted down-left away from her torso on mobile */}
+            <div className="st-card st-float-2 absolute top-[52%] sm:top-[48%] lg:top-[45%] left-0 sm:left-2 lg:left-[8%] bg-white/95 backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-white/60 w-[115px] sm:w-[130px] flex flex-col items-center justify-center scale-90 sm:scale-95 lg:scale-100 origin-left">
+               <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center mb-1.5 sm:mb-2">
                   <svg className="w-full h-full -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#F1F5F9" strokeWidth="4" />
                      <path ref={donutPathRef} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#1D4ED8" strokeWidth="4" strokeDasharray="0, 100" />
                   </svg>
-                  <span ref={donutTextRef} className="absolute text-[15px] font-extrabold text-[#0F172A]">0%</span>
+                  <span ref={donutTextRef} className="absolute text-[13px] sm:text-[15px] font-extrabold text-[#0F172A]">0%</span>
                </div>
-               <span className="text-[11px] font-bold text-[#0F172A] text-center leading-snug">Processos<br/>autônomos</span>
+               <span className="text-[10px] sm:text-[11px] font-bold text-[#0F172A] text-center leading-snug">Processos<br/>autônomos</span>
             </div>
 
-            {/* Floating Card 3: List */}
-            <div className="st-card st-float-3 absolute top-[18%] right-[0%] lg:-right-[5%] bg-white/70 backdrop-blur-xl rounded-2xl p-2.5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-white w-[260px]">
+            {/* Floating Card 3: List - Moved comfortably to the right on mobile, scaled so it frames her without smothering */}
+            <div className="st-card st-float-3 absolute top-[20%] sm:top-[18%] -right-3 sm:right-0 lg:-right-[5%] bg-white/85 sm:bg-white/75 backdrop-blur-xl rounded-2xl p-2 sm:p-2.5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-white w-[215px] sm:w-[245px] lg:w-[260px] scale-[0.84] sm:scale-90 lg:scale-100 origin-top-right">
                {[
                  { icon: Plane, title: 'Emissão de passagens', desc: 'Mais agilidade' },
                  { icon: Building, title: 'Reservas de hospedagem', desc: 'Tarifas corporativas' },
                  { icon: Car, title: 'Locação de veículos', desc: 'Parceiros confiáveis' },
                  { icon: ShieldCheck, title: 'Gestão de despesas', desc: 'Conformidade e controle' }
                ].map((item, i) => (
-                 <div key={i} className="flex items-center gap-3 p-2.5 bg-transparent rounded-xl">
-                    <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] border border-[#DBEAFE] flex items-center justify-center text-[#2563EB]">
-                       <item.icon className="w-4 h-4" />
+                 <div key={i} className="flex items-center gap-2.5 p-1.5 sm:p-2 bg-transparent rounded-xl">
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-[#EFF6FF] border border-[#DBEAFE] flex items-center justify-center text-[#2563EB] shrink-0">
+                       <item.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                     <div>
-                       <h5 className="text-[13px] font-bold text-[#0F172A] leading-tight mb-0.5">{item.title}</h5>
-                       <p className="text-[11px] text-slate-500 font-medium leading-none">{item.desc}</p>
+                       <h5 className="text-[11px] sm:text-[13px] font-bold text-[#0F172A] leading-tight mb-0.5">{item.title}</h5>
+                       <p className="text-[9px] sm:text-[11px] text-slate-500 font-medium leading-none">{item.desc}</p>
                     </div>
                  </div>
                ))}
             </div>
 
-            {/* Floating Card 4: Support */}
-            <div className="st-card st-float-4 absolute bottom-[15%] right-[5%] lg:-right-[2%] bg-[#212529] rounded-[20px] p-4 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.6)] border border-[#333A45] w-[320px] flex items-center justify-between">
-               <div className="flex items-center gap-3.5">
+            {/* Floating Card 4: Support - Placed neatly at bottom-center on mobile, well clear of the BackToTopButton */}
+            <div className="st-card st-float-4 absolute bottom-[2%] sm:bottom-[6%] lg:bottom-[15%] left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-auto lg:-right-[2%] bg-[#212529] rounded-[20px] p-3 sm:p-4 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.6)] border border-[#333A45] w-[285px] sm:w-[310px] lg:w-[320px] flex items-center justify-between scale-[0.92] sm:scale-95 lg:scale-100">
+               <div className="flex items-center gap-2.5 sm:gap-3.5">
                   <div className="text-[#F59E0B]">
-                     <Star className="w-7 h-7 fill-[#F59E0B]" />
+                     <Star className="w-5 h-5 sm:w-7 sm:h-7 fill-[#F59E0B]" />
                   </div>
                   <div>
-                     <h5 className="text-white font-bold text-[15px] leading-tight mb-0.5">Atendimento 24h</h5>
-                     <p className="text-slate-400 text-[11px] font-medium">Onde sua empresa estiver</p>
+                     <h5 className="text-white font-bold text-[13px] sm:text-[15px] leading-tight mb-0.5">Atendimento 24h</h5>
+                     <p className="text-slate-400 text-[10px] sm:text-[11px] font-medium">Onde sua empresa estiver</p>
                   </div>
                </div>
                <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full border-2 border-[#212529] overflow-hidden"><img src="https://i.pravatar.cc/100?img=47" alt="Agent" className="w-full h-full object-cover"/></div>
-                  <div className="w-8 h-8 rounded-full border-2 border-[#212529] overflow-hidden"><img src="https://i.pravatar.cc/100?img=32" alt="Agent" className="w-full h-full object-cover"/></div>
-                  <div className="w-8 h-8 rounded-full border-2 border-[#212529] overflow-hidden"><img src="https://i.pravatar.cc/100?img=68" alt="Agent" className="w-full h-full object-cover"/></div>
-                  <div className="w-8 h-8 rounded-full border-2 border-[#212529] bg-[#333A45] flex items-center justify-center text-white text-[10px] font-bold">+</div>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#212529] overflow-hidden"><img src="https://i.pravatar.cc/100?img=47" alt="Agent" className="w-full h-full object-cover"/></div>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#212529] overflow-hidden"><img src="https://i.pravatar.cc/100?img=32" alt="Agent" className="w-full h-full object-cover"/></div>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#212529] overflow-hidden"><img src="https://i.pravatar.cc/100?img=68" alt="Agent" className="w-full h-full object-cover"/></div>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#212529] bg-[#333A45] flex items-center justify-center text-white text-[9px] sm:text-[10px] font-bold">+</div>
                </div>
             </div>
 

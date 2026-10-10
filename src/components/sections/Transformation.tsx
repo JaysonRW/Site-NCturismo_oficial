@@ -13,16 +13,16 @@ export const Transformation: React.FC = () => {
     
     let mm = gsap.matchMedia();
     
-    mm.add('(prefers-reduced-motion: no-preference)', () => {
-      const isDesktop = window.innerWidth >= 1024;
-      const xOffsetLeft = isDesktop ? 220 : 40;
-      const xOffsetRight = isDesktop ? -220 : -40;
+    // DESKTOP: Mantém a animação cinemática com scrub e separação
+    mm.add('(min-width: 1024px)', () => {
+      const xOffsetLeft = 220;
+      const xOffsetRight = -220;
 
       const scrubTl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
           start: 'top 70%', 
-          end: 'bottom 80%', // Termina antes da seção sair da tela
+          end: 'bottom 80%',
           scrub: 1,
         }
       });
@@ -36,10 +36,9 @@ export const Transformation: React.FC = () => {
       .fromTo('.st-title-right', 
         { opacity: 0, x: xOffsetRight - 50 },
         { opacity: 1, x: xOffsetRight, duration: 1.5, ease: 'power1.out' },
-        "-=0.5" // Sobrepõe um pouco a primeira para agilizar a sequência
+        "-=0.5"
       )
       
-      // Breve momento com as duas no centro (reduzido)
       .addLabel('separacao', "+=0.2")
       
       // 3. Imagem surge no centro expandindo e joga as frases para os lados
@@ -57,6 +56,37 @@ export const Transformation: React.FC = () => {
         { opacity: 1, y: 0, duration: 1.5, ease: 'power1.out' },
         "-=1"
       );
+    });
+
+    // MOBILE: Entrada limpa e vertical fluida (sem sobreposição)
+    mm.add('(max-width: 1023px)', () => {
+      const mobileTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: 'top 75%',
+        }
+      });
+
+      mobileTl
+        .fromTo('.st-mob-title-top', 
+          { opacity: 0, y: 25 },
+          { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }
+        )
+        .fromTo('.st-mob-center-img',
+          { opacity: 0, scale: 0.9, y: 20 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.8, ease: 'back.out(1.2)' },
+          "-=0.3"
+        )
+        .fromTo('.st-mob-title-bottom',
+          { opacity: 0, y: 25 },
+          { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' },
+          "-=0.4"
+        )
+        .fromTo('.st-bottom-text',
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' },
+          "-=0.2"
+        );
     });
 
   }, { scope: containerRef });
@@ -92,32 +122,59 @@ export const Transformation: React.FC = () => {
         </div>
 
         {/* Main Content Layout */}
-        <div className="relative w-full flex flex-col items-center justify-center min-h-[450px] lg:min-h-[550px] mt-4 mb-12">
-           
+        
+        {/* DESKTOP LAYOUT (>= 1024px) - Mantém a animação cinemática com scrub e separação */}
+        <div className="hidden lg:flex relative w-full flex-col items-center justify-center min-h-[550px] mt-4 mb-12">
            {/* Left Title */}
-           <div className="st-title-left absolute left-0 lg:left-[5%] xl:left-[8%] top-[5%] lg:top-[25%] w-full lg:w-auto text-center lg:text-left z-20">
-              <h2 className="text-[#0F172A] text-4xl md:text-5xl lg:text-[44px] xl:text-[50px] font-bold leading-[1.1] tracking-tight">
+           <div className="st-title-left absolute left-[5%] xl:left-[8%] top-[25%] w-auto text-left z-20">
+              <h2 className="text-[#0F172A] text-4xl lg:text-[44px] xl:text-[50px] font-bold leading-[1.1] tracking-tight">
                  Da solicitação<br/>ao retorno,
               </h2>
            </div>
 
            {/* Right Title */}
-           <div className="st-title-right absolute right-0 lg:right-[2%] xl:right-[4%] top-[25%] lg:top-[25%] w-full lg:w-auto text-center lg:text-right z-20 mt-32 lg:mt-0">
-              <h2 className="text-[#0F172A] text-4xl md:text-5xl lg:text-[44px] xl:text-[50px] font-bold leading-[1.1] tracking-tight">
+           <div className="st-title-right absolute right-[2%] xl:right-[4%] top-[25%] w-auto text-right z-20">
+              <h2 className="text-[#0F172A] text-4xl lg:text-[44px] xl:text-[50px] font-bold leading-[1.1] tracking-tight">
                  uma gestão que<br/>
                  <span className="text-[#DB8902]">conecta cada etapa.</span>
               </h2>
            </div>
 
            {/* Center Illustration */}
-           <div className="st-center-img relative w-[90%] md:w-[70%] lg:w-[55%] xl:w-[45%] mt-[180px] lg:mt-0 z-10 flex justify-center items-center">
+           <div className="st-center-img relative w-[55%] xl:w-[45%] z-10 flex justify-center items-center">
               <img 
                  src="/ilustra3.png" 
                  alt="Gestão de Viagens Conectada" 
                  className="w-full h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)]"
               />
            </div>
+        </div>
 
+        {/* MOBILE LAYOUT (< 1024px) - Sequência vertical solicitada: Frase 1 -> Imagem -> Frase 2 */}
+        <div className="lg:hidden flex flex-col items-center text-center mt-2 mb-8 space-y-6">
+           {/* 1. Primeira frase */}
+           <div className="st-mob-title-top px-4">
+              <h2 className="text-[#0F172A] text-3xl sm:text-4xl font-bold leading-[1.15] tracking-tight">
+                 Da solicitação<br/>ao retorno,
+              </h2>
+           </div>
+
+           {/* 2. Imagem da Atendente / Ilustração no Centro */}
+           <div className="st-mob-center-img w-[82%] sm:w-[65%] max-w-[340px] py-1">
+              <img 
+                 src="/ilustra3.png" 
+                 alt="Atendente Gestão de Viagens Conectada" 
+                 className="w-full h-auto object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.08)]"
+              />
+           </div>
+
+           {/* 3. Segunda frase */}
+           <div className="st-mob-title-bottom px-4">
+              <h2 className="text-[#0F172A] text-3xl sm:text-4xl font-bold leading-[1.15] tracking-tight">
+                 uma gestão que<br/>
+                 <span className="text-[#DB8902]">conecta cada etapa.</span>
+              </h2>
+           </div>
         </div>
 
         {/* Bottom Text */}
