@@ -132,7 +132,11 @@ export default function App() {
         hash === '#beneficios-viagens' || 
         hash === '#beneficios-em-viagens' || 
         hash === '#beneficios-e-parcerias' ||
-        hash === '#beneficios-e-viagens'
+        hash === '#beneficios-e-viagens' ||
+        hash === '#nc-partners' ||
+        hash === '#ncpartners' ||
+        hash === '#partners' ||
+        hash === '#parcerias'
       ) {
         setCurrentView('beneficios');
         window.scrollTo({ top: 0, behavior: 'smooth' });

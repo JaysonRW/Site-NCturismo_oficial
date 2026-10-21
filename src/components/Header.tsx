@@ -425,7 +425,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Submenu Dropdown */}
             {activeDropdown === 'beneficios' && (
               <div 
-                className="absolute top-full left-0 mt-3 w-80 bg-[#0c0e13]/98 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 shadow-2xl shadow-black/80 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                className="absolute top-full left-0 mt-3 w-88 bg-[#0c0e13]/98 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 shadow-2xl shadow-black/80 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                 onMouseEnter={() => handleMouseEnter('beneficios')}
                 onMouseLeave={handleMouseLeave}
                 role="menu"
@@ -440,7 +440,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <span className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-nc-orange animate-pulse" />
-                    Benefícios em Viagens
+                    NC Partners • Benefícios & Parcerias
                   </span>
                   <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
                 </a>
@@ -452,9 +452,10 @@ export const Header: React.FC<HeaderProps> = ({
                         e.preventDefault();
                         navigateTo('#beneficios', 'beneficios');
                       }}
-                      className="hover:text-white hover:translate-x-1 transition-all inline-block py-1 font-medium"
+                      className="hover:text-white hover:translate-x-1 transition-all flex items-center justify-between py-1 font-medium group"
                     >
-                      Para Empresas
+                      <span>Programa NC Partners</span>
+                      <span className="text-[10px] uppercase font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">Novo</span>
                     </a>
                   </li>
                   <li>
@@ -466,14 +467,38 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="hover:text-white hover:translate-x-1 transition-all inline-block py-1 font-medium"
                     >
-                      Para Associações e Entidades
+                      Para Empresas & Departamentos de RH
+                    </a>
+                  </li>
+                  <li>
+                    <a 
+                      href="#beneficios"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigateTo('#beneficios', 'beneficios');
+                      }}
+                      className="hover:text-white hover:translate-x-1 transition-all inline-block py-1 font-medium"
+                    >
+                      Para Associações, Federações & Cooperativas
+                    </a>
+                  </li>
+                  <li>
+                    <a 
+                      href="#beneficios"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigateTo('#beneficios', 'beneficios');
+                      }}
+                      className="hover:text-white hover:translate-x-1 transition-all inline-block py-1 font-medium text-white/70"
+                    >
+                      Portal de Acesso do Beneficiário
                     </a>
                   </li>
                 </ul>
 
                 <div className="pt-4 border-t border-white/10 space-y-2">
                   <p className="text-[11px] text-nc-warm/60 leading-relaxed">
-                    Sua organização também pode oferecer viagens como benefício para colaboradores e membros.
+                    Sua organização também pode oferecer viagens como benefício exclusivo para colaboradores e membros com custo zero de implantação.
                   </p>
                   <a 
                     href="#beneficios"
@@ -481,9 +506,9 @@ export const Header: React.FC<HeaderProps> = ({
                       e.preventDefault();
                       navigateTo('#beneficios', 'beneficios');
                     }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-nc-orange hover:text-white transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-nc-orange hover:text-white transition-colors pt-1"
                   >
-                    Conheça a solução <ArrowRight size={13} />
+                    Cadastrar Minha Organização <ArrowRight size={13} />
                   </a>
                 </div>
               </div>
@@ -713,7 +738,7 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
-            {/* 2. BENEFÍCIOS E PARCERIAS */}
+            {/* 2. BENEFÍCIOS E PARCERIAS (NC PARTNERS) */}
             <a
               href="#beneficios"
               onClick={(e) => {
@@ -728,10 +753,10 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-white tracking-wide">Benefícios & Parcerias</span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Ambiente Exclusivo</span>
+                    <span className="text-sm font-bold text-white tracking-wide">NC Partners & Benefícios</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Parcerias</span>
                   </div>
-                  <p className="text-[11px] text-nc-warm/60">Vantagens corporativas para colaboradores e entidades</p>
+                  <p className="text-[11px] text-nc-warm/60">Vantagens corporativas para colaboradores, associados e cooperados</p>
                 </div>
               </div>
               <ArrowRight size={15} className="text-white/40 group-hover:text-amber-400 group-hover:translate-x-1 transition-all shrink-0" />

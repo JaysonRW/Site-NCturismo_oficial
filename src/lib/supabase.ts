@@ -395,3 +395,486 @@ export const deleteLazerPackage = async (id: string): Promise<boolean> => {
   return true;
 };
 
+// ==========================================
+// MÓDULO DE LEADS & PARCERIAS (NC PARTNERS)
+// ==========================================
+
+export interface LeadParceria {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string;
+  empresa: string;
+  cargo?: string;
+  interesse: string;
+  tipo_organizacao?: string;
+  publico_beneficiado?: string;
+  quantidade_pessoas?: string;
+  origem_pagina?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  privacidade_aceita?: boolean;
+  status: 'novo' | 'em_contato' | 'proposta_enviada' | 'convertido' | 'descartado';
+  observacoes?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface EmpresaConveniada {
+  id: string;
+  nome: string;
+  cnpj?: string;
+  codigo_acesso: string; // Ex: 'NC-TURISMO-VIP'
+  dominio_email?: string;
+  desconto_percentual?: number;
+  tipo: 'empresa' | 'associacao' | 'cooperativa' | 'federacao' | 'outro';
+  ativa: boolean;
+  total_beneficiados_estimado?: number;
+  contato_rh_nome?: string;
+  contato_rh_email?: string;
+  contato_rh_telefone?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface SolicitacaoCodigo {
+  id: string;
+  nome_colaborador: string;
+  email_corporativo: string;
+  telefone?: string;
+  nome_empresa: string;
+  empresa_id?: string;
+  status: 'pendente' | 'atendido' | 'invalido';
+  created_at: string;
+}
+
+const LEADS_STORAGE_KEY = 'nc_leads_parcerias';
+const EMPRESAS_STORAGE_KEY = 'nc_empresas_conveniadas';
+const SOLICITACOES_STORAGE_KEY = 'nc_solicitacoes_codigo';
+
+export const INITIAL_EMPRESAS_CONVENIADAS: EmpresaConveniada[] = [
+  {
+    id: 'emp-nc-turismo',
+    nome: 'NC Turismo (Colaboradores & Familiares)',
+    codigo_acesso: 'NC-TURISMO-VIP',
+    tipo: 'empresa',
+    ativa: true,
+    desconto_percentual: 15,
+    total_beneficiados_estimado: 50,
+    created_at: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'emp-amapar',
+    nome: 'Associação dos Magistrados do Paraná (AMAPAR)',
+    codigo_acesso: 'NC-AMAPAR-2026',
+    tipo: 'associacao',
+    ativa: true,
+    desconto_percentual: 10,
+    total_beneficiados_estimado: 850,
+    contato_rh_nome: 'Secretaria Geral',
+    contato_rh_email: 'convenios@amapar.org.br',
+    created_at: '2026-01-10T00:00:00Z'
+  },
+  {
+    id: 'emp-sicredi',
+    nome: 'Cooperativa de Crédito Sicredi',
+    codigo_acesso: 'NC-SICREDI-2026',
+    tipo: 'cooperativa',
+    ativa: true,
+    desconto_percentual: 12,
+    total_beneficiados_estimado: 1200,
+    created_at: '2026-02-01T00:00:00Z'
+  },
+  {
+    id: 'emp-fiep',
+    nome: 'Federação das Indústrias do Paraná (FIEP)',
+    codigo_acesso: 'NC-FIEP-2026',
+    tipo: 'federacao',
+    ativa: true,
+    desconto_percentual: 10,
+    total_beneficiados_estimado: 2500,
+    created_at: '2026-02-15T00:00:00Z'
+  },
+  {
+    id: 'emp-renault',
+    nome: 'Renault do Brasil',
+    codigo_acesso: 'NC-RENAULT-2026',
+    tipo: 'empresa',
+    ativa: true,
+    desconto_percentual: 10,
+    total_beneficiados_estimado: 4000,
+    contato_rh_nome: 'Recursos Humanos / Benefícios',
+    created_at: '2026-03-01T00:00:00Z'
+  }
+];
+
+// -------------------------------------------------------------
+// OPERAÇÕES DE LEADS DE PARCERIA
+// -------------------------------------------------------------
+
+export const saveLeadParceria = async (leadData: Omit<LeadParceria, 'id' | 'created_at' | 'status'> & { status?: LeadParceria['status'] }): Promise<LeadParceria> => {
+  const newLead: LeadParceria = {
+    id: `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    ...leadData,
+    status: leadData.status || 'novo',
+    created_at: new Date().toISOString()
+  };
+
+  // 1. Persistência local imediata
+  try {
+    const existing = JSON.parse(localStorage.getItem(LEADS_STORAGE_KEY) || '[]');
+    localStorage.setItem(LEADS_STORAGE_KEY, JSON.stringify([newLead, ...existing]));
+    window.dispatchEvent(new Event('nc_leads_updated'));
+  } catch (e) {
+    console.error('Erro ao salvar lead no localStorage:', e);
+  }
+
+  // 2. Persistência no Supabase
+  try {
+    const { error } = await supabase.from('leads_parcerias').insert([{
+      nome: newLead.nome,
+      email: newLead.email,
+      telefone: newLead.telefone,
+      empresa: newLead.empresa,
+      cargo: newLead.cargo,
+      interesse: newLead.interesse,
+      tipo_organizacao: newLead.tipo_organizacao,
+      publico_beneficiado: newLead.publico_beneficiado,
+      quantidade_pessoas: newLead.quantidade_pessoas,
+      origem_pagina: newLead.origem_pagina,
+      utm_source: newLead.utm_source,
+      utm_medium: newLead.utm_medium,
+      utm_campaign: newLead.utm_campaign,
+      utm_term: newLead.utm_term,
+      utm_content: newLead.utm_content,
+      privacidade_aceita: newLead.privacidade_aceita ?? true,
+      status: newLead.status,
+      created_at: newLead.created_at
+    }]);
+
+    if (error) {
+      console.warn('Aviso ao sincronizar lead no Supabase:', error.message);
+    }
+  } catch (err) {
+    console.warn('Erro ao conectar ao Supabase para lead:', err);
+  }
+
+  return newLead;
+};
+
+export const getLeadsParcerias = async (): Promise<LeadParceria[]> => {
+  // 1. Tenta Supabase
+  try {
+    const { data, error } = await supabase
+      .from('leads_parcerias')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data && data.length > 0) {
+      // Normaliza campos caso o banco use snake_case
+      const formatted: LeadParceria[] = data.map((d: any) => ({
+        id: d.id,
+        nome: d.nome,
+        email: d.email,
+        telefone: d.telefone,
+        empresa: d.empresa,
+        cargo: d.cargo,
+        interesse: d.interesse,
+        tipo_organizacao: d.tipo_organizacao || d.tipoOrganizacao,
+        publico_beneficiado: d.publico_beneficiado || d.publicoBeneficiado,
+        quantidade_pessoas: d.quantidade_pessoas || d.quantidadePessoas,
+        origem_pagina: d.origem_pagina || d.origemPagina,
+        utm_source: d.utm_source,
+        utm_medium: d.utm_medium,
+        utm_campaign: d.utm_campaign,
+        utm_term: d.utm_term,
+        utm_content: d.utm_content,
+        privacidade_aceita: d.privacidade_aceita,
+        status: d.status || 'novo',
+        observacoes: d.observacoes,
+        created_at: d.created_at
+      }));
+      return formatted;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // 2. Fallback localStorage
+  try {
+    return JSON.parse(localStorage.getItem(LEADS_STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+};
+
+export const updateLeadStatus = async (id: string, status: LeadParceria['status'], observacoes?: string): Promise<boolean> => {
+  // Atualiza local
+  try {
+    const current = JSON.parse(localStorage.getItem(LEADS_STORAGE_KEY) || '[]');
+    const updated = current.map((l: LeadParceria) => l.id === id ? { ...l, status, observacoes: observacoes ?? l.observacoes } : l);
+    localStorage.setItem(LEADS_STORAGE_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new Event('nc_leads_updated'));
+  } catch (e) {
+    console.error(e);
+  }
+
+  // Atualiza Supabase
+  try {
+    await supabase.from('leads_parcerias').update({ status, observacoes }).eq('id', id);
+  } catch {
+    // ignora
+  }
+
+  return true;
+};
+
+// -------------------------------------------------------------
+// OPERAÇÕES DE EMPRESAS CONVENIADAS & CÓDIGOS DE ACESSO
+// -------------------------------------------------------------
+
+export const getEmpresasConveniadas = async (): Promise<EmpresaConveniada[]> => {
+  // 1. Tenta Supabase
+  try {
+    const { data, error } = await supabase
+      .from('empresas_conveniadas')
+      .select('*')
+      .order('nome', { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      const formatted: EmpresaConveniada[] = data.map((d: any) => ({
+        id: d.id,
+        nome: d.nome,
+        cnpj: d.cnpj,
+        codigo_acesso: d.codigo_acesso || d.codigoAcesso,
+        dominio_email: d.dominio_email || d.dominioEmail,
+        desconto_percentual: Number(d.desconto_percentual ?? 10),
+        tipo: d.tipo || 'empresa',
+        ativa: d.ativa ?? true,
+        total_beneficiados_estimado: d.total_beneficiados_estimado,
+        contato_rh_nome: d.contato_rh_nome,
+        contato_rh_email: d.contato_rh_email,
+        contato_rh_telefone: d.contato_rh_telefone,
+        created_at: d.created_at
+      }));
+      return formatted;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // 2. Fallback localStorage com seed padrão
+  try {
+    const stored = localStorage.getItem(EMPRESAS_STORAGE_KEY);
+    if (!stored) {
+      localStorage.setItem(EMPRESAS_STORAGE_KEY, JSON.stringify(INITIAL_EMPRESAS_CONVENIADAS));
+      return INITIAL_EMPRESAS_CONVENIADAS;
+    }
+    return JSON.parse(stored);
+  } catch {
+    return INITIAL_EMPRESAS_CONVENIADAS;
+  }
+};
+
+export const saveEmpresaConveniada = async (empresa: Omit<EmpresaConveniada, 'id' | 'created_at'> & { id?: string }): Promise<EmpresaConveniada> => {
+  const currentList = await getEmpresasConveniadas();
+  
+  const formattedCode = empresa.codigo_acesso.trim().toUpperCase().replace(/\s+/g, '-');
+  const targetId = empresa.id || `emp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+  
+  const savedEmpresa: EmpresaConveniada = {
+    ...empresa,
+    id: targetId,
+    codigo_acesso: formattedCode,
+    created_at: new Date().toISOString()
+  };
+
+  const existingIndex = currentList.findIndex(e => e.id === targetId);
+  const updatedList = existingIndex >= 0 
+    ? currentList.map(e => e.id === targetId ? savedEmpresa : e)
+    : [savedEmpresa, ...currentList];
+
+  try {
+    localStorage.setItem(EMPRESAS_STORAGE_KEY, JSON.stringify(updatedList));
+    window.dispatchEvent(new Event('nc_empresas_updated'));
+  } catch (err) {
+    console.error(err);
+  }
+
+  try {
+    await supabase.from('empresas_conveniadas').upsert({
+      id: savedEmpresa.id,
+      nome: savedEmpresa.nome,
+      cnpj: savedEmpresa.cnpj,
+      codigo_acesso: savedEmpresa.codigo_acesso,
+      dominio_email: savedEmpresa.dominio_email,
+      desconto_percentual: savedEmpresa.desconto_percentual,
+      tipo: savedEmpresa.tipo,
+      ativa: savedEmpresa.ativa,
+      total_beneficiados_estimado: savedEmpresa.total_beneficiados_estimado,
+      contato_rh_nome: savedEmpresa.contato_rh_nome,
+      contato_rh_email: savedEmpresa.contato_rh_email,
+      contato_rh_telefone: savedEmpresa.contato_rh_telefone,
+    }, { onConflict: 'codigo_acesso' });
+  } catch {
+    // ignora
+  }
+
+  return savedEmpresa;
+};
+
+export const toggleEmpresaStatus = async (id: string, ativa: boolean): Promise<boolean> => {
+  const currentList = await getEmpresasConveniadas();
+  const updatedList = currentList.map(e => e.id === id ? { ...e, ativa } : e);
+  
+  try {
+    localStorage.setItem(EMPRESAS_STORAGE_KEY, JSON.stringify(updatedList));
+    window.dispatchEvent(new Event('nc_empresas_updated'));
+  } catch (e) {
+    console.error(e);
+  }
+
+  try {
+    await supabase.from('empresas_conveniadas').update({ ativa }).eq('id', id);
+  } catch {
+    // ignora
+  }
+
+  return true;
+};
+
+export const deleteEmpresaConveniada = async (id: string): Promise<boolean> => {
+  const currentList = await getEmpresasConveniadas();
+  const updatedList = currentList.filter(e => e.id !== id);
+
+  try {
+    localStorage.setItem(EMPRESAS_STORAGE_KEY, JSON.stringify(updatedList));
+    window.dispatchEvent(new Event('nc_empresas_updated'));
+  } catch (e) {
+    console.error(e);
+  }
+
+  try {
+    await supabase.from('empresas_conveniadas').delete().eq('id', id);
+  } catch {
+    // ignora
+  }
+
+  return true;
+};
+
+export const validateEmpresaCodigo = async (codigo: string, nomeEmpresa?: string): Promise<{ valid: boolean; empresa?: EmpresaConveniada; message?: string }> => {
+  const cleanCode = codigo.trim().toUpperCase();
+  const empresas = await getEmpresasConveniadas();
+
+  const found = empresas.find(e => e.codigo_acesso.toUpperCase() === cleanCode);
+
+  if (!found) {
+    return {
+      valid: false,
+      message: 'Código de convênio não encontrado. Verifique com o RH de sua empresa ou solicite o código abaixo.'
+    };
+  }
+
+  if (!found.ativa) {
+    return {
+      valid: false,
+      message: 'O convênio desta organização está temporariamente em revisão. Fale com nosso atendimento.'
+    };
+  }
+
+  // Se o usuário digitou o nome da empresa e queremos alertar se divergir
+  if (nomeEmpresa && nomeEmpresa.trim().length > 2) {
+    const cleanName = nomeEmpresa.trim().toLowerCase();
+    const targetName = found.nome.toLowerCase();
+    if (!targetName.includes(cleanName) && !cleanName.includes(targetName)) {
+      // Código válido mesmo com variação de grafia, apenas retorna a empresa identificada
+    }
+  }
+
+  return {
+    valid: true,
+    empresa: found
+  };
+};
+
+// -------------------------------------------------------------
+// OPERAÇÕES DE RECUPERAÇÃO DE CÓDIGO
+// -------------------------------------------------------------
+
+export const saveSolicitacaoCodigo = async (data: Omit<SolicitacaoCodigo, 'id' | 'created_at' | 'status'>): Promise<SolicitacaoCodigo> => {
+  const newSolicitacao: SolicitacaoCodigo = {
+    id: `sol_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    ...data,
+    status: 'pendente',
+    created_at: new Date().toISOString()
+  };
+
+  try {
+    const existing = JSON.parse(localStorage.getItem(SOLICITACOES_STORAGE_KEY) || '[]');
+    localStorage.setItem(SOLICITACOES_STORAGE_KEY, JSON.stringify([newSolicitacao, ...existing]));
+    window.dispatchEvent(new Event('nc_solicitacoes_updated'));
+  } catch (e) {
+    console.error(e);
+  }
+
+  try {
+    await supabase.from('solicitacoes_codigo').insert([{
+      nome_colaborador: newSolicitacao.nome_colaborador,
+      email_corporativo: newSolicitacao.email_corporativo,
+      telefone: newSolicitacao.telefone,
+      nome_empresa: newSolicitacao.nome_empresa,
+      status: newSolicitacao.status,
+      created_at: newSolicitacao.created_at
+    }]);
+  } catch {
+    // ignora
+  }
+
+  return newSolicitacao;
+};
+
+export const getSolicitacoesCodigo = async (): Promise<SolicitacaoCodigo[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('solicitacoes_codigo')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data && data.length > 0) {
+      return data;
+    }
+  } catch {
+    // ignora
+  }
+
+  try {
+    return JSON.parse(localStorage.getItem(SOLICITACOES_STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+};
+
+export const updateSolicitacaoStatus = async (id: string, status: SolicitacaoCodigo['status']): Promise<boolean> => {
+  try {
+    const current = JSON.parse(localStorage.getItem(SOLICITACOES_STORAGE_KEY) || '[]');
+    const updated = current.map((s: SolicitacaoCodigo) => s.id === id ? { ...s, status } : s);
+    localStorage.setItem(SOLICITACOES_STORAGE_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new Event('nc_solicitacoes_updated'));
+  } catch (e) {
+    console.error(e);
+  }
+
+  try {
+    await supabase.from('solicitacoes_codigo').update({ status }).eq('id', id);
+  } catch {
+    // ignora
+  }
+
+  return true;
+};
+
+

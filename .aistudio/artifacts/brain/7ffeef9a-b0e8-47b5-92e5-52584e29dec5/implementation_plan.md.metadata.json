@@ -1,0 +1,6 @@
+{
+  "summary":  "Plano de implementação detalhado com arquitetura de leads, validação de códigos corporativos de empresas conveniadas, recuperação de código para beneficiários e integração com Painel Administrativo, e-mail (atendimento@ncturismo.com.br), WhatsApp (41 99683-0144) e scripts SQL para o Supabase.",
+  "updatedAt":  "2026-10-21T14:12:59.893557501Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

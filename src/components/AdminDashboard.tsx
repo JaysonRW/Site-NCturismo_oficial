@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, Post, Category, Author, TermsAcceptance, getTermsAcceptances, LazerPackage, getLazerPackages } from '../lib/supabase';
 import { AdminLazerManager } from './AdminLazerManager';
+import { AdminLeadsManager } from './AdminLeadsManager';
+import { AdminEmpresasManager } from './AdminEmpresasManager';
 import { 
   Building2, 
   LogOut, 
@@ -26,7 +28,9 @@ import {
   ShieldCheck, 
   Download, 
   Lock,
-  Palmtree
+  Palmtree,
+  Users,
+  KeyRound
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -35,7 +39,7 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onBackToHome }) => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'posts' | 'terms' | 'lazer'>('posts');
+  const [activeAdminTab, setActiveAdminTab] = useState<'posts' | 'terms' | 'lazer' | 'leads' | 'empresas'>('leads');
   const [termsAcceptances, setTermsAcceptances] = useState<TermsAcceptance[]>([]);
   const [lazerPackages, setLazerPackages] = useState<LazerPackage[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -742,46 +746,76 @@ CREATE POLICY "Admin controle total pacotes lazer" ON public.lazer_packages FOR 
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Top Navigation Tabs: Posts vs Terms vs Lazer */}
+            {/* Top Navigation Tabs: Leads vs Empresas vs Posts vs Lazer vs Terms */}
             <div className="flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
               <button
+                onClick={() => setActiveAdminTab('leads')}
+                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeAdminTab === 'leads'
+                    ? 'bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white shadow-md'
+                    : 'bg-white/5 text-nc-warm/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Users size={16} />
+                <span>Leads & Oportunidades</span>
+              </button>
+
+              <button
+                onClick={() => setActiveAdminTab('empresas')}
+                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeAdminTab === 'empresas'
+                    ? 'bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white shadow-md'
+                    : 'bg-white/5 text-nc-warm/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Building2 size={16} />
+                <span>Empresas & Códigos Únicos</span>
+              </button>
+
+              <button
                 onClick={() => setActiveAdminTab('posts')}
-                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
                   activeAdminTab === 'posts'
                     ? 'bg-nc-orange text-nc-space shadow-md'
                     : 'bg-white/5 text-nc-warm/70 hover:text-white hover:bg-white/10'
                 }`}
               >
                 <FileText size={16} />
-                Artigos do Blog ({posts.length})
+                <span>Artigos do Blog ({posts.length})</span>
               </button>
 
               <button
                 onClick={() => setActiveAdminTab('lazer')}
-                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
                   activeAdminTab === 'lazer'
                     ? 'bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white shadow-md'
                     : 'bg-white/5 text-nc-warm/70 hover:text-white hover:bg-white/10'
                 }`}
               >
                 <Palmtree size={16} />
-                Lazer, Promoções & Cruzeiros ({lazerPackages.length})
+                <span>Lazer & Cruzeiros ({lazerPackages.length})</span>
               </button>
 
               <button
                 onClick={() => setActiveAdminTab('terms')}
-                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
                   activeAdminTab === 'terms'
                     ? 'bg-nc-orange text-nc-space shadow-md'
                     : 'bg-white/5 text-nc-warm/70 hover:text-white hover:bg-white/10'
                 }`}
               >
                 <ShieldCheck size={16} />
-                Aceites de Termos & LGPD ({termsAcceptances.length})
+                <span>Aceites LGPD ({termsAcceptances.length})</span>
               </button>
             </div>
 
-            {activeAdminTab === 'lazer' ? (
+            {activeAdminTab === 'leads' ? (
+              /* TAB: GESTÃO DE LEADS & PARCERIAS */
+              <AdminLeadsManager notify={notify} />
+            ) : activeAdminTab === 'empresas' ? (
+              /* TAB: GESTÃO DE EMPRESAS CONVENIADAS & CÓDIGOS */
+              <AdminEmpresasManager notify={notify} />
+            ) : activeAdminTab === 'lazer' ? (
               /* TAB: GESTÃO DE LAZER & PROMOÇÕES */
               <AdminLazerManager
                 packages={lazerPackages}
