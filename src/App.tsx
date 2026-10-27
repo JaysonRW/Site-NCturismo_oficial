@@ -33,13 +33,15 @@ import { ComplianceEsgView } from './components/ComplianceEsgView';
 import { LazerView } from './components/LazerView';
 import { BeneficiosViagensView } from './components/BeneficiosViagensView';
 import { AreaDoClienteView } from './components/AreaDoClienteView';
+import { PropostaApresentacaoView } from './components/PropostaApresentacaoView';
 import { BackToTopButton } from './components/BackToTopButton';
-import { supabase } from './lib/supabase';
+import { supabase, getPropostaComercialById, PropostaComercial, INITIAL_PROPOSTAS_COMERCIAIS } from './lib/supabase';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post' | 'viagens-corporativas' | 'gestao-de-viagens' | 'gestao-de-despesas' | 'tecnologia-obt' | 'atendimento-24h' | 'bi-e-relatorios' | 'compliance-esg' | 'lazer' | 'area-cliente'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post' | 'viagens-corporativas' | 'gestao-de-viagens' | 'gestao-de-despesas' | 'tecnologia-obt' | 'atendimento-24h' | 'bi-e-relatorios' | 'compliance-esg' | 'lazer' | 'area-cliente' | 'proposta'>('home');
   const [session, setSession] = useState<any>(null);
   const [activeSlug, setActiveSlug] = useState<string>('sla-suporte-viagens-corporativas-atendimento');
+  const [activeProposta, setActiveProposta] = useState<PropostaComercial>(INITIAL_PROPOSTAS_COMERCIAIS[0]);
 
   useEffect(() => {
     // Check initial auth state
@@ -146,6 +148,13 @@ export default function App() {
       } else if (hash === '#legal-beneficios') {
         setCurrentView('termos');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash.startsWith('#proposta/')) {
+        const propCode = window.location.hash.replace('#proposta/', '');
+        setCurrentView('proposta');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        getPropostaComercialById(propCode).then((found) => {
+          if (found) setActiveProposta(found);
+        });
       } else if (hash.startsWith('#admin')) {
         setCurrentView('admin');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -376,6 +385,16 @@ export default function App() {
           setSession(null);
         }}
         onBackToHome={handleBackToHome}
+      />
+    );
+  }
+
+  if (currentView === 'proposta') {
+    return (
+      <PropostaApresentacaoView
+        proposta={activeProposta}
+        isPublicView={true}
+        onBack={handleBackToHome}
       />
     );
   }

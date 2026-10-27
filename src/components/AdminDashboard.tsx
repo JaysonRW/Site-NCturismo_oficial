@@ -3,6 +3,7 @@ import { supabase, Post, Category, Author, TermsAcceptance, getTermsAcceptances,
 import { AdminLazerManager } from './AdminLazerManager';
 import { AdminLeadsManager } from './AdminLeadsManager';
 import { AdminEmpresasManager } from './AdminEmpresasManager';
+import { AdminPropostasManager } from './AdminPropostasManager';
 import { 
   Building2, 
   LogOut, 
@@ -30,7 +31,8 @@ import {
   Lock,
   Palmtree,
   Users,
-  KeyRound
+  KeyRound,
+  Briefcase
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -39,7 +41,7 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onBackToHome }) => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'posts' | 'terms' | 'lazer' | 'leads' | 'empresas'>('leads');
+  const [activeAdminTab, setActiveAdminTab] = useState<'propostas' | 'posts' | 'terms' | 'lazer' | 'leads' | 'empresas'>('propostas');
   const [termsAcceptances, setTermsAcceptances] = useState<TermsAcceptance[]>([]);
   const [lazerPackages, setLazerPackages] = useState<LazerPackage[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -318,6 +320,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onBack
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setActiveAdminTab('propostas');
+              }}
+              className="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white text-xs font-bold shadow-md hover:brightness-105 transition-all cursor-pointer"
+            >
+              <Briefcase size={14} />
+              <span>Apresentações Comerciais</span>
+            </button>
             <button
               onClick={loadData}
               className="p-2 text-nc-warm/60 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
@@ -746,8 +758,20 @@ CREATE POLICY "Admin controle total pacotes lazer" ON public.lazer_packages FOR 
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Top Navigation Tabs: Leads vs Empresas vs Posts vs Lazer vs Terms */}
+            {/* Top Navigation Tabs: Propostas vs Leads vs Empresas vs Posts vs Lazer vs Terms */}
             <div className="flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
+              <button
+                onClick={() => setActiveAdminTab('propostas')}
+                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeAdminTab === 'propostas'
+                    ? 'bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white shadow-md'
+                    : 'bg-white/5 text-nc-warm/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Briefcase size={16} />
+                <span>Apresentações Comerciais</span>
+              </button>
+
               <button
                 onClick={() => setActiveAdminTab('leads')}
                 className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
@@ -809,7 +833,10 @@ CREATE POLICY "Admin controle total pacotes lazer" ON public.lazer_packages FOR 
               </button>
             </div>
 
-            {activeAdminTab === 'leads' ? (
+            {activeAdminTab === 'propostas' ? (
+              /* TAB: GERADOR DE APRESENTAÇÕES & PROPOSTAS COMERCIAIS */
+              <AdminPropostasManager notify={notify} />
+            ) : activeAdminTab === 'leads' ? (
               /* TAB: GESTÃO DE LEADS & PARCERIAS */
               <AdminLeadsManager notify={notify} />
             ) : activeAdminTab === 'empresas' ? (

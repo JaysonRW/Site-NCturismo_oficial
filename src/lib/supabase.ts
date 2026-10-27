@@ -834,4 +834,509 @@ export const updateSolicitacaoStatus = async (id: string, status: SolicitacaoCod
   return true;
 };
 
+// ==========================================
+// MÓDULO DE APRESENTAÇÕES & PROPOSTAS COMERCIAIS B2B
+// ==========================================
+
+export interface PropostaModulo {
+  id: string;
+  codigo: string;
+  categoria: 'despesas' | 'obt' | 'agenciamento' | 'bi' | 'atendimento' | 'beneficios' | 'custom';
+  titulo: string;
+  subtitulo: string;
+  ativo_programa: string; // Ex: "Argo Travel & Expense", "WTS Corporate", "Clara TravelPay", "BI Proprietário NC"
+  descricao: string;
+  entregaveis: string[];
+  selecionado: boolean;
+  destaque?: string;
+}
+
+export interface PropostaItemComercial {
+  id: string;
+  item: string;
+  modelo: string; // Ex: "Isento na Implantação", "Por Transação (Fee)", "Mensalidade Fixa", "Incluso no Escopo"
+  valor: string;  // Ex: "R$ 0,00 (Bonificado)", "Sob Medida", "R$ 18,50 / emissão"
+  observacao?: string;
+}
+
+export interface PropostaComercial {
+  id: string;
+  codigo_proposta: string; // Ex: "NC-PROP-2026-001"
+  status: 'rascunho' | 'enviada' | 'em_negociacao' | 'aprovada' | 'arquivada';
+  
+  // Dados do Cliente & Padronização Visual
+  cliente_nome: string;
+  cliente_cnpj?: string;
+  cliente_segmento?: string;
+  cliente_logo_url?: string; // URL ou Base64 da logo do cliente
+  cliente_volume_mensal?: string;
+  contato_nome: string;
+  contato_cargo?: string;
+  contato_email?: string;
+  contato_telefone?: string;
+
+  // Dados do Executivo NC Responsável
+  consultor_nome: string;
+  consultor_cargo: string;
+  consultor_email: string;
+  consultor_telefone: string;
+  data_emissao: string;
+  validade_dias: number;
+
+  // Textos Editáveis da Proposta (Elaboração Consultiva)
+  titulo_apresentacao: string;
+  subtitulo_apresentacao: string;
+  carta_introducao: string;
+  diagnostico_cenario: string;
+  objetivos_estrategicos: string[];
+  
+  // Produtos Consultivos, Ativos e Programas NC Turismo
+  modulos: PropostaModulo[];
+
+  // Metodologia de Implantação / Cronograma
+  metodologia_texto: string;
+  etapas_implantacao: { fase: string; titulo: string; prazo: string; descricao: string }[];
+
+  // Condições Comerciais & Termos Editáveis
+  modelo_remuneracao_resumo: string;
+  itens_comerciais: PropostaItemComercial[];
+  beneficio_especial_destaque?: string; // Ex: "Até 12 meses de benefícios para sua empresa + Cupons Mensais"
+  termos_condicoes: string;
+  observacoes_finais?: string;
+
+  created_at: string;
+  updated_at: string;
+}
+
+export const DEFAULT_PROPOSTA_MODULOS: PropostaModulo[] = [
+  {
+    id: 'mod-gestao-despesas',
+    codigo: '01',
+    categoria: 'despesas',
+    titulo: 'Gestão de Despesas Corporativas (Expense Management)',
+    subtitulo: 'Digitalização de ponta a ponta da prestação de contas, adiantamentos e cartões',
+    ativo_programa: 'Ecossistema Expense Sync · Leitura OCR & Conciliação ERP',
+    descricao: 'Elimine planilhas manuais e recibos físicos. Nossa solução consultiva integra o ciclo completo de viagens à prestação de contas digital, com parametrização das regras fiscais e financeiras da sua empresa.',
+    entregaveis: [
+      'Prestação de contas 100% digital via smartphone com leitura automática (OCR) de recibos',
+      'Gestão estruturada de adiantamentos, reembolsos, quilometragem e diárias',
+      'Conciliação automática de faturas de cartões corporativos e bloqueio de duplicidades',
+      'Rateio inteligente por múltiplos centros de custo, projetos ou unidades de negócio',
+      'Integração contábil homologada com ERPs (SAP, TOTVS Protheus/Datasul, Senior, Oracle, Sankhya)'
+    ],
+    selecionado: true,
+    destaque: 'Até 65% menos tempo operacional no financeiro'
+  },
+  {
+    id: 'mod-ativos-obt',
+    codigo: '02',
+    categoria: 'obt',
+    titulo: 'Ativos Tecnológicos & Plataforma OBT Corporativa',
+    subtitulo: 'Autonomia para solicitar, cotar e aprovar viagens dentro da política da empresa',
+    ativo_programa: 'Argo Travel & Expense / Reserve Corporate OBT',
+    descricao: 'Disponibilizamos e parametrizamos os motores de reserva corporativa (OBT) líderes da América Latina, configurados sob medida para a hierarquia e as alçadas de aprovação da sua organização.',
+    entregaveis: [
+      'Parametrização preventiva de Políticas de Viagem (antecedência, limites de tarifa e classes)',
+      'Fluxos de aprovação multinível (por centro de custo, valor ou alçada de diretoria) com aprovação em 1 clique',
+      'Busca simultânea em múltiplos GDS e conexões diretas NDC com companhias aéreas e redes hoteleiras',
+      'Aplicativo mobile nativo e portal web para solicitantes, secretárias, gestores e viajantes',
+      'Rastreamento e reaproveitamento automático de bilhetes não voados (créditos aéreos)'
+    ],
+    selecionado: true,
+    destaque: 'Zero divergência de alçadas e 100% de aderência à política'
+  },
+  {
+    id: 'mod-agenciamento-consultivo',
+    codigo: '03',
+    categoria: 'agenciamento',
+    titulo: 'Agenciamento Consultivo de Viagens 360° (37 Anos de Atuação)',
+    subtitulo: 'Inteligência tarifária, negociações exclusivas e operação corporativa completa',
+    ativo_programa: 'Consultoria Sênior NC Turismo · Aéreo, Hotelaria, Locação & Grupos',
+    descricao: 'Mais do que tecnologia, entregamos curadoria humana e força de negociação construída em 37 anos de mercado. Atuamos ativamente na redução do custo médio por viagem (ticket médio) da sua empresa.',
+    entregaveis: [
+      'Emissão e gestão completa de passagens aéreas nacionais e internacionais, hotelaria, locação de veículos e transfers',
+      'Negociação e aplicação de acordos corporativos tripartites com companhias aéreas e redes de hotéis',
+      'Engenharia de rotas e sugestão proativa de tarifas comparativas (menor tarifa elegível)',
+      'Logística especializada para eventos corporativos, treinamentos, feiras e deslocamento de equipes técnicas'
+    ],
+    selecionado: true,
+    destaque: '37 anos de solidez e condições comerciais diferenciadas'
+  },
+  {
+    id: 'mod-pagamentos-backoffice',
+    codigo: '04',
+    categoria: 'despesas',
+    titulo: 'Meios de Pagamento & Backoffice Financeiro Unificado',
+    subtitulo: 'Faturamento centralizado, cartões virtuais e auditoria contábil sem falhas',
+    ativo_programa: 'WTS Corporate & Soluções VCN (Virtual Card Numbers)',
+    descricao: 'Centralizamos o fluxo de pagamentos das viagens corporativas para eliminar adiantamentos inseguros e entregar faturas consolidadas, auditadas e prontas para a contabilidade.',
+    entregaveis: [
+      'Emissão de Cartões Virtuais (VCN) exclusivos por reserva de hotel ou aéreo com teto de gasto configurado',
+      'Faturamento corporativo centralizado com faturas analíticas por centro de custo e nota fiscal unificada',
+      'Auditoria preventiva de tarifas, taxas de embarque e franquias de bagagem antes do faturamento',
+      'Portal do Cliente NC para emissão instantânea de 2ª via de faturas, boletos e relatórios operacionais'
+    ],
+    selecionado: true,
+    destaque: 'Auditoria 100% rastreável e conciliação automatizada'
+  },
+  {
+    id: 'mod-bi-analytics',
+    codigo: '05',
+    categoria: 'bi',
+    titulo: 'Business Intelligence (BI Proprietário NC) & Governança ESG',
+    subtitulo: 'Dashboards executivos em tempo real para CFOs, Compras e Gestores',
+    ativo_programa: 'Portal NC Analytics & Relatórios de Saving',
+    descricao: 'Transformamos dados operacionais em inteligência estratégica para a tomada de decisão da diretoria, demonstrando linha a linha a economia real gerada pela gestão da NC Turismo.',
+    entregaveis: [
+      'Painel executivo em tempo real com indicadores de Saving Realizado vs. Saving Perdido',
+      'Análise de antecedência média de compra, share de fornecedores e ranking por departamento',
+      'Mapeamento de exceções de política e motivos de reprovação/urgência',
+      'Relatório de emissões de CO₂ (Pegada de Carbono) para matrizes de sustentabilidade e Compliance ESG',
+      'Reuniões periódicas de Account Review (QBR) com apresentação de resultados e plano de ação'
+    ],
+    selecionado: true,
+    destaque: 'Visibilidade executiva para redução contínua de custos'
+  },
+  {
+    id: 'mod-atendimento-24h',
+    codigo: '06',
+    categoria: 'atendimento',
+    titulo: 'Atendimento Humanizado & Plantão Emergencial 24/7 Próprio',
+    subtitulo: 'Suporte sênior ininterrupto sem terceirização e sem robôs em momentos críticos',
+    ativo_programa: 'Célula de Atendimento Dedicada & Plantão VIP 24/7 NC Turismo',
+    descricao: 'Sabemos que imprevistos em viagens não têm hora para acontecer. Por isso, o plantão 24/7 da NC Turismo é operado exclusivamente por consultores seniores da nossa própria equipe.',
+    entregaveis: [
+      'Atendimento emergencial 24 horas por dia, 7 dias por semana (inclusive domingos e feriados)',
+      'Suporte humano direto via WhatsApp e telefone sem filas de URA ou call centers terceirizados',
+      'Reacomodação imediata em casos de cancelamento de voos, conexões perdidas ou alterações de agenda',
+      'Atendimento VIP dedicado para Diretoria, Presidência e Conselheiros'
+    ],
+    selecionado: true,
+    destaque: 'Equipe 100% própria NC Turismo — SLA prioritário'
+  },
+  {
+    id: 'mod-beneficios-colaboradores',
+    codigo: '07',
+    categoria: 'beneficios',
+    titulo: 'Benefícios NC Turismo & Cupons Mensais para a Empresa',
+    subtitulo: 'Vantagens exclusivas em viagens corporativas e extensão para lazer dos colaboradores',
+    ativo_programa: 'Portal de Benefícios NC Turismo & Cupons Mensais',
+    descricao: 'Além da eficiência nas viagens a negócios, sua empresa passa a contar com o programa de Benefícios NC Turismo, agregando economia direta e valorização para toda a equipe sem custo adicional para o RH.',
+    entregaveis: [
+      'Cupons mensais de desconto para utilização em reservas e serviços de viagem',
+      'Acesso ao Portal de Benefícios NC Turismo com condições diferenciadas em lazer para colaboradores',
+      'Atendimento consultivo estendido para férias e viagens particulares de diretores e funcionários',
+      'Elegibilidade ao programa especial de até 12 meses de benefícios corporativos'
+    ],
+    selecionado: true,
+    destaque: 'Benefício de retenção e economia imediata sem custo ao RH'
+  }
+];
+
+export const DEFAULT_ETAPAS_IMPLANTACAO = [
+  {
+    fase: 'Fase 01',
+    titulo: 'Diagnóstico & Desenho da Política',
+    prazo: 'Dias 1 a 3',
+    descricao: 'Mapeamento dos centros de custo, hierarquia de aprovadores, regras de adiantamento/despesas e definição de SLAs.'
+  },
+  {
+    fase: 'Fase 02',
+    titulo: 'Parametrização de Ativos (OBT & Expense)',
+    prazo: 'Dias 4 a 7',
+    descricao: 'Configuração do sistema OBT e módulo de Gestão de Despesas, cadastro de usuários, cartões e integração com o ERP.'
+  },
+  {
+    fase: 'Fase 03',
+    titulo: 'Treinamento das Equipes & Gestores',
+    prazo: 'Dias 8 a 10',
+    descricao: 'Capacitação prática para solicitantes, viajantes, aprovadores e equipe financeira com material de apoio personalizado.'
+  },
+  {
+    fase: 'Fase 04',
+    titulo: 'Go-Live Assistido & Monitoramento BI',
+    prazo: 'Dia 11 em diante',
+    descricao: 'Início da operação com acompanhamento intensivo da célula sênior NC Turismo e ativação dos dashboards gerenciais.'
+  }
+];
+
+export const DEFAULT_ITENS_COMERCIAIS: PropostaItemComercial[] = [
+  {
+    id: 'item-1',
+    item: 'Setup, Parametrização do OBT e Implantação da Política de Viagens',
+    modelo: 'Bonificado / Isento',
+    valor: 'R$ 0,00',
+    observacao: '100% custeado pela NC Turismo na assinatura da parceria'
+  },
+  {
+    id: 'item-2',
+    item: 'Treinamento de Solicitantes, Aprovadores e Equipe Financeira',
+    modelo: 'Incluso no Escopo',
+    valor: 'Incluso',
+    observacao: 'Sessões online ou presenciais + manuais rápidos de uso'
+  },
+  {
+    id: 'item-3',
+    item: 'Acesso ao Portal NC BI Executivo & Relatórios de Saving/ESG',
+    modelo: 'Incluso no Escopo',
+    valor: 'Incluso',
+    observacao: 'Acesso ilimitado para gestores e diretoria financeira'
+  },
+  {
+    id: 'item-4',
+    item: 'Agenciamento Consultivo (Emissão Aérea, Hotelaria e Locação) + Gestão de Despesas',
+    modelo: 'Transaction Fee / Mensalidade Sob Medida',
+    valor: 'Condição Especial Comercial',
+    observacao: 'Elegível à campanha de até 12 meses de benefícios e cupons mensais'
+  },
+  {
+    id: 'item-5',
+    item: 'Suporte Emergencial 24/7 com Equipe Própria Sênior',
+    modelo: 'Disponibilidade Integral',
+    valor: 'Incluso',
+    observacao: 'Acionamento direto via WhatsApp e telefone 24 horas'
+  }
+];
+
+export const DEFAULT_TERMOS_PROPOSTA = `1. VALIDADE DA PROPOSTA: As condições técnicas e comerciais apresentadas neste documento têm validade de 15 (quinze) dias corridos a partir da data de emissão.
+2. FATURAMENTO E CONCILIAÇÃO: Os serviços de agenciamento e reservas corporativas poderão ser faturados quinzenalmente ou mensalmente, mediante análise de crédito padrão, acompanhados de relatórios analíticos por centro de custo, solicitante e projeto, ou integrados via cartão corporativo/VCN.
+3. NÍVEL DE SERVIÇO (SLA): A NC Turismo garante atendimento consultivo durante o horário comercial com tempo médio de resposta inferior a 30 minutos para cotações complexas, além de emissões online imediatas via OBT 24/7 e suporte emergencial humano 24 horas por dia, 7 dias por semana.
+4. CONFIDENCIALIDADE E LGPD: Todas as informações cadastrais, dados de viajantes, políticas internas e relatórios financeiros tratados no escopo desta parceria seguem rigorosamente a Lei Geral de Proteção de Dados (Lei nº 13.709/2018), com trilha de auditoria e criptografia de ponta a ponta.
+5. AUSÊNCIA DE FIDELIDADE ABUSIVA: Nossa parceria é sustentada pela entrega contínua de resultado (saving, governança e satisfação dos viajantes), podendo o contrato ser ajustado conforme a evolução da demanda da empresa.`;
+
+export const PROPOSTAS_SQL_SCHEMA = `-- ============================================================================
+-- TABELA DE PROPOSTAS E APRESENTAÇÕES COMERCIAIS (NC TURISMO)
+-- Execute este script no SQL Editor do seu projeto Supabase
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.propostas_comerciais (
+  id TEXT PRIMARY KEY,
+  codigo_proposta TEXT UNIQUE NOT NULL,
+  status TEXT DEFAULT 'rascunho' CHECK (status IN ('rascunho', 'enviada', 'em_negociacao', 'aprovada', 'arquivada')),
+  
+  -- Dados do Cliente e Padronizacao Visual
+  cliente_nome TEXT NOT NULL,
+  cliente_cnpj TEXT,
+  cliente_segmento TEXT,
+  cliente_logo_url TEXT,
+  cliente_volume_mensal TEXT,
+  contato_nome TEXT NOT NULL,
+  contato_cargo TEXT,
+  contato_email TEXT,
+  contato_telefone TEXT,
+
+  -- Dados do Consultor NC Turismo
+  consultor_nome TEXT NOT NULL,
+  consultor_cargo TEXT,
+  consultor_email TEXT,
+  consultor_telefone TEXT,
+  data_emissao TEXT NOT NULL,
+  validade_dias INT DEFAULT 15,
+
+  -- Conteudo Consultivo e Textos Editaveis
+  titulo_apresentacao TEXT NOT NULL,
+  subtitulo_apresentacao TEXT,
+  carta_introducao TEXT,
+  diagnostico_cenario TEXT,
+  objetivos_estrategicos JSONB DEFAULT '[]'::jsonb,
+  
+  -- Modulos, Produtos Consultivos, Ativos e Programas
+  modulos JSONB DEFAULT '[]'::jsonb,
+
+  -- Metodologia e Implantacao
+  metodologia_texto TEXT,
+  etapas_implantacao JSONB DEFAULT '[]'::jsonb,
+
+  -- Condicoes Comerciais e Termos
+  modelo_remuneracao_resumo TEXT,
+  itens_comerciais JSONB DEFAULT '[]'::jsonb,
+  beneficio_especial_destaque TEXT,
+  termos_condicoes TEXT,
+  observacoes_finais TEXT,
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Indices para busca rapida no painel administrativo e link compartilhavel
+CREATE INDEX IF NOT EXISTS idx_propostas_codigo ON public.propostas_comerciais(codigo_proposta);
+CREATE INDEX IF NOT EXISTS idx_propostas_cliente ON public.propostas_comerciais(cliente_nome);
+CREATE INDEX IF NOT EXISTS idx_propostas_status ON public.propostas_comerciais(status);
+
+-- Habilitar Row Level Security (RLS)
+ALTER TABLE public.propostas_comerciais ENABLE ROW LEVEL SECURITY;
+
+-- Politica de leitura publica (permite que o cliente visualize a apresentacao pelo link unico)
+DROP POLICY IF EXISTS "Leitura publica de propostas por link" ON public.propostas_comerciais;
+CREATE POLICY "Leitura publica de propostas por link"
+  ON public.propostas_comerciais
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+-- Politica de escrita/controle para o painel administrativo
+DROP POLICY IF EXISTS "Controle total admin propostas comerciais" ON public.propostas_comerciais;
+CREATE POLICY "Controle total admin propostas comerciais"
+  ON public.propostas_comerciais
+  FOR ALL
+  TO anon, authenticated
+  USING (true)
+  WITH CHECK (true);`;
+
+const PROPOSTAS_STORAGE_KEY = 'nc_propostas_comerciais_v1';
+
+export const INITIAL_PROPOSTAS_COMERCIAIS: PropostaComercial[] = [
+  {
+    id: 'prop-modelo-corporativo',
+    codigo_proposta: 'NC-2026-001',
+    status: 'enviada',
+    cliente_nome: 'Grupo Industrial & Logística S.A. (Modelo Exemplo)',
+    cliente_cnpj: '00.000.000/0001-00',
+    cliente_segmento: 'Indústria & Operações',
+    cliente_logo_url: '',
+    cliente_volume_mensal: 'R$ 45.000 a R$ 80.000 / mês',
+    contato_nome: 'Diretoria Financeira & Suprimentos',
+    contato_cargo: 'CFO / Gestor de Viagens',
+    contato_email: 'financeiro@empresaexemplo.com.br',
+    contato_telefone: '(41) 99999-0000',
+    consultor_nome: 'Equipe Executiva NC Turismo',
+    consultor_cargo: 'Diretoria de Novos Negócios & Soluções Corporativas',
+    consultor_email: 'corporativo@ncturismo.com.br',
+    consultor_telefone: '(41) 3281-1153',
+    data_emissao: new Date().toISOString().slice(0, 10),
+    validade_dias: 15,
+    titulo_apresentacao: 'Proposta de Gestão Consultiva de Viagens, Despesas & Ativos Tecnológicos',
+    subtitulo_apresentacao: 'Da primeira reserva à gestão completa: governança financeira, tecnologia OBT/Expense integrada ao seu ERP e suporte humano 24/7 com a solidez de 37 anos da NC Turismo.',
+    carta_introducao: 'Prezada Diretoria,\n\nÉ uma honra apresentar a proposta estruturada da NC Turismo para modernizar e otimizar a gestão de viagens e despesas corporativas da sua organização.\n\nCom 37 anos de atuação sólida no mercado brasileiro, combinamos plataformas tecnológicas líderes (OBT, Expense Management e BI Executivo) a um atendimento consultivo 100% próprio. Nosso compromisso é transformar o centro de despesas de mobilidade da sua empresa em uma operação enxuta, auditável, previsível e geradora de economia real (saving).',
+    diagnostico_cenario: 'Identificamos que empresas em expansão frequentemente enfrentam desafios como: descentralização de solicitações, falta de visibilidade em tempo real por centro de custo, retrabalho manual na conferência de notas/reembolsos e perda de prazos tarifários por ausência de fluxos ágeis de aprovação. Nossa arquitetura consultiva elimina esses gargalos já nas primeiras semanas de implantação.',
+    objetivos_estrategicos: [
+      'Reduzir entre 15% e 28% o custo médio das viagens através de compras planejadas, acordos corporativos e engenharia tarifária',
+      'Digitalizar 100% da prestação de contas e conciliação de despesas, reduzindo em até 65% o tempo operacional do departamento financeiro',
+      'Garantir 100% de conformidade (compliance) com a Política de Viagens através de alçadas automáticas no sistema OBT',
+      'Assegurar suporte emergencial humano 24/7 pela equipe própria da NC Turismo para total tranquilidade dos viajantes e executivos'
+    ],
+    modulos: DEFAULT_PROPOSTA_MODULOS,
+    metodologia_texto: 'Nossa implantação segue uma metodologia ágil e assistida em 4 etapas, garantindo transição suave, sem interrupção das viagens em andamento e com adesão imediata dos colaboradores.',
+    etapas_implantacao: DEFAULT_ETAPAS_IMPLANTACAO,
+    modelo_remuneracao_resumo: 'Modelo transparente orientado à eficiência operacional, com isenção integral de taxas de setup/implantação da plataforma e acesso ao programa exclusivo de Cupons Mensais.',
+    itens_comerciais: DEFAULT_ITENS_COMERCIAIS,
+    beneficio_especial_destaque: 'Condição Especial de Adesão: Elegibilidade a até 12 meses de benefícios para sua empresa + Pacote de Cupons Mensais NC Turismo.',
+    termos_condicoes: DEFAULT_TERMOS_PROPOSTA,
+    observacoes_finais: 'Estamos à inteira disposição para ajustar qualquer parâmetro técnico, fluxo de aprovação ou condição comercial para atender com precisão à realidade da sua empresa.',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
+export const getPropostasComerciais = async (): Promise<PropostaComercial[]> => {
+  // 1. Tenta carregar do Supabase
+  try {
+    const { data, error } = await supabase
+      .from('propostas_comerciais')
+      .select('*')
+      .order('updated_at', { ascending: false });
+
+    if (!error && data && data.length > 0) {
+      localStorage.setItem(PROPOSTAS_STORAGE_KEY, JSON.stringify(data));
+      return data as PropostaComercial[];
+    }
+  } catch {
+    // fallback para localStorage
+  }
+
+  // 2. Fallback localStorage
+  try {
+    const cached = localStorage.getItem(PROPOSTAS_STORAGE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed as PropostaComercial[];
+      }
+    }
+    localStorage.setItem(PROPOSTAS_STORAGE_KEY, JSON.stringify(INITIAL_PROPOSTAS_COMERCIAIS));
+    return INITIAL_PROPOSTAS_COMERCIAIS;
+  } catch {
+    return INITIAL_PROPOSTAS_COMERCIAIS;
+  }
+};
+
+export const getPropostaComercialById = async (idOrCode: string): Promise<PropostaComercial | null> => {
+  const clean = idOrCode.trim();
+  // 1. Tenta Supabase direto
+  try {
+    const { data, error } = await supabase
+      .from('propostas_comerciais')
+      .select('*')
+      .or(`id.eq.${clean},codigo_proposta.eq.${clean}`)
+      .limit(1);
+
+    if (!error && data && data.length > 0) {
+      return data[0] as PropostaComercial;
+    }
+  } catch {
+    // fallback
+  }
+
+  const all = await getPropostasComerciais();
+  return all.find(p => p.id === clean || p.codigo_proposta.toLowerCase() === clean.toLowerCase()) || null;
+};
+
+export const savePropostaComercial = async (proposta: PropostaComercial): Promise<{ proposta: PropostaComercial; syncedSupabase: boolean; errorMsg?: string }> => {
+  const now = new Date().toISOString();
+  const payload: PropostaComercial = {
+    ...proposta,
+    updated_at: now,
+    created_at: proposta.created_at || now
+  };
+
+  // 1. Atualiza imediatamente no localStorage
+  try {
+    const currentList = await getPropostasComerciais();
+    const exists = currentList.some(p => p.id === payload.id);
+    const updatedList = exists
+      ? currentList.map(p => p.id === payload.id ? payload : p)
+      : [payload, ...currentList];
+
+    localStorage.setItem(PROPOSTAS_STORAGE_KEY, JSON.stringify(updatedList));
+    window.dispatchEvent(new Event('nc_propostas_updated'));
+  } catch (e) {
+    console.error('Erro ao salvar proposta no localStorage:', e);
+  }
+
+  // 2. Persiste no Supabase se a tabela existir
+  try {
+    const { error } = await supabase
+      .from('propostas_comerciais')
+      .upsert(payload, { onConflict: 'id' });
+
+    if (error) {
+      console.warn('Aviso ao sincronizar proposta no Supabase:', error.message);
+      return { proposta: payload, syncedSupabase: false, errorMsg: error.message };
+    }
+    return { proposta: payload, syncedSupabase: true };
+  } catch (err: any) {
+    return { proposta: payload, syncedSupabase: false, errorMsg: err?.message };
+  }
+};
+
+export const deletePropostaComercial = async (id: string): Promise<boolean> => {
+  try {
+    const currentList = await getPropostasComerciais();
+    const updatedList = currentList.filter(p => p.id !== id);
+    localStorage.setItem(PROPOSTAS_STORAGE_KEY, JSON.stringify(updatedList));
+    window.dispatchEvent(new Event('nc_propostas_updated'));
+  } catch (e) {
+    console.error(e);
+  }
+
+  try {
+    await supabase.from('propostas_comerciais').delete().eq('id', id);
+  } catch {
+    // ignora
+  }
+
+  return true;
+};
+
+
 
