@@ -395,125 +395,21 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* 2. BENEFÍCIOS E PARCERIAS (Submenu) */}
-          <div 
-            className="relative"
-            onMouseEnter={() => handleMouseEnter('beneficios')}
-            onMouseLeave={handleMouseLeave}
+          {/* 2. BENEFÍCIOS E PARCERIAS (Direct Link) */}
+          <a
+            href="#beneficios"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateTo('#beneficios', 'beneficios');
+            }}
+            className={`text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 ${
+              currentView === 'beneficios'
+                ? 'text-nc-orange font-semibold'
+                : 'text-nc-warm/80 hover:text-white'
+            }`}
           >
-            <a
-              href="#beneficios"
-              onClick={(e) => {
-                e.preventDefault();
-                navigateTo('#beneficios', 'beneficios');
-              }}
-              className={`inline-flex items-center gap-1.5 text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 focus:outline-none ${
-                activeDropdown === 'beneficios' || currentView === 'beneficios'
-                  ? 'text-nc-orange font-semibold'
-                  : 'text-nc-warm/80 hover:text-white'
-              }`}
-              aria-expanded={activeDropdown === 'beneficios'}
-              aria-haspopup="true"
-            >
-              <span>Benefícios e Parcerias</span>
-              <ChevronDown 
-                size={14} 
-                className={`transition-transform duration-200 ${activeDropdown === 'beneficios' ? 'rotate-180 text-nc-orange' : 'opacity-70'}`} 
-              />
-            </a>
-
-            {/* Submenu Dropdown */}
-            {activeDropdown === 'beneficios' && (
-              <div 
-                className="absolute top-full left-0 mt-3 w-88 bg-[#0c0e13]/98 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 shadow-2xl shadow-black/80 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-                onMouseEnter={() => handleMouseEnter('beneficios')}
-                onMouseLeave={handleMouseLeave}
-                role="menu"
-              >
-                <a 
-                  href="#beneficios"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigateTo('#beneficios', 'beneficios');
-                  }}
-                  className="group flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-nc-orange hover:text-white font-bold mb-3 transition-colors"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-nc-orange animate-pulse" />
-                    NC Partners • Benefícios & Parcerias
-                  </span>
-                  <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
-                </a>
-                <ul className="space-y-2.5 text-xs text-nc-warm/80 mb-5">
-                  <li>
-                    <a 
-                      href="#beneficios"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigateTo('#beneficios', 'beneficios');
-                      }}
-                      className="hover:text-white hover:translate-x-1 transition-all flex items-center justify-between py-1 font-medium group"
-                    >
-                      <span>Programa NC Partners</span>
-                      <span className="text-[10px] uppercase font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">Novo</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="#beneficios"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigateTo('#beneficios', 'beneficios');
-                      }}
-                      className="hover:text-white hover:translate-x-1 transition-all inline-block py-1 font-medium"
-                    >
-                      Para Empresas & Departamentos de RH
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="#beneficios"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigateTo('#beneficios', 'beneficios');
-                      }}
-                      className="hover:text-white hover:translate-x-1 transition-all inline-block py-1 font-medium"
-                    >
-                      Para Associações, Federações & Cooperativas
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="#beneficios"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigateTo('#beneficios', 'beneficios');
-                      }}
-                      className="hover:text-white hover:translate-x-1 transition-all inline-block py-1 font-medium text-white/70"
-                    >
-                      Portal de Acesso do Beneficiário
-                    </a>
-                  </li>
-                </ul>
-
-                <div className="pt-4 border-t border-white/10 space-y-2">
-                  <p className="text-[11px] text-nc-warm/60 leading-relaxed">
-                    Sua organização também pode oferecer viagens como benefício exclusivo para colaboradores e membros com custo zero de implantação.
-                  </p>
-                  <a 
-                    href="#beneficios"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigateTo('#beneficios', 'beneficios');
-                    }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-nc-orange hover:text-white transition-colors pt-1"
-                  >
-                    Cadastrar Minha Organização <ArrowRight size={13} />
-                  </a>
-                </div>
-              </div>
-            )}
-          </div>
+            Benefícios e Parcerias
+          </a>
 
           {/* 3. LAZER (Direct Link) */}
           <a 

@@ -222,7 +222,7 @@ export const QuemSomosView: React.FC<QuemSomosViewProps> = ({
       <div className="absolute top-[800px] right-0 w-[550px] h-[600px] bg-gradient-to-l from-amber-100/25 to-transparent blur-3xl pointer-events-none -z-10" />
 
       {/* =========================================================================
-          HERO SECTION: 38 ANOS CONECTANDO PESSOAS
+          HERO SECTION: 37 ANOS CONECTANDO PESSOAS
          ========================================================================= */}
       <section className="relative pt-36 md:pt-44 pb-20 md:pb-28 px-6 md:px-12 lg:px-20 max-w-[1440px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -242,11 +242,11 @@ export const QuemSomosView: React.FC<QuemSomosViewProps> = ({
                 <span className="px-3.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-[#DB8902] text-xs md:text-sm font-bold uppercase tracking-widest">
                   Tradição & Vanguarda
                 </span>
-                <span className="text-xs uppercase tracking-wider text-slate-500 font-mono">1989 — 2027</span>
+                <span className="text-xs uppercase tracking-wider text-slate-500 font-mono">1989 — 2026</span>
               </div>
               <h1 className="qs-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-extrabold text-[#0F172A] leading-[1.08] tracking-tight">
                 <span className="bg-gradient-to-r from-[#C8102E] via-[#D32F2F] to-[#DB8902] bg-clip-text text-transparent">
-                  38 anos
+                  37 anos
                 </span>{' '}
                 conectando pessoas, empresas e destinos.
               </h1>
@@ -289,7 +289,7 @@ export const QuemSomosView: React.FC<QuemSomosViewProps> = ({
             {/* Micro Highlights */}
             <div className="pt-6 border-t border-slate-200 grid grid-cols-3 gap-4">
               <div>
-                <div className="text-2xl md:text-3xl font-display font-bold text-[#0F172A]">38+</div>
+                <div className="text-2xl md:text-3xl font-display font-bold text-[#0F172A]">37</div>
                 <div className="text-xs text-slate-500 uppercase tracking-wider mt-0.5">Anos de Mercado</div>
               </div>
               <div>
@@ -706,7 +706,7 @@ export const QuemSomosView: React.FC<QuemSomosViewProps> = ({
         <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <img src="/logo.png" alt="NC Turismo" className="w-[140px] h-auto object-contain" />
-            <span className="text-xs text-slate-400 hidden md:inline">| We Are Travel · 38 anos de história</span>
+            <span className="text-xs text-slate-400 hidden md:inline">| We Are Travel · 37 anos de história</span>
           </div>
 
           <div className="flex items-center gap-6 text-xs text-slate-600">

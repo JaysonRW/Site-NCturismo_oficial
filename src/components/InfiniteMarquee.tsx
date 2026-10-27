@@ -31,7 +31,7 @@ export const InfiniteMarquee: React.FC<InfiniteMarqueeProps> = ({
     'TECNOLOGIA & T&E',
     'GESTÃO',
     'EXPERIÊNCIA',
-    '38 ANOS EM CURITIBA',
+    '37 ANOS EM CURITIBA',
     'PLANTÃO DEDICADO'
   ];
 

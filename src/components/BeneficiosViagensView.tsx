@@ -4,36 +4,25 @@ import {
   ArrowLeft, 
   ArrowRight, 
   ExternalLink, 
-  Check, 
   FileText, 
   Lock, 
   Building2, 
   Sparkles, 
   Clock, 
-  HelpCircle, 
   CheckCircle2, 
   X,
-  Phone,
-  Mail,
-  MapPin,
   AlertCircle,
   Handshake,
   Users,
   Award,
-  Zap,
-  TrendingUp,
   Tag,
   Briefcase,
-  KeyRound,
-  MessageCircle
+  Compass,
+  Layers,
+  Ticket,
+  Headphones
 } from 'lucide-react';
-import { 
-  recordTermsAcceptance, 
-  validateEmpresaCodigo, 
-  getEmpresasConveniadas, 
-  saveSolicitacaoCodigo, 
-  EmpresaConveniada 
-} from '../lib/supabase';
+import { recordTermsAcceptance } from '../lib/supabase';
 import { LeadForm } from './LeadForm';
 
 interface BeneficiosViagensViewProps {
@@ -48,46 +37,25 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
   const [accepted, setAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [redirectSuccess, setRedirectSuccess] = useState(false);
-  const [acceptanceRecord, setAcceptanceRecord] = useState<{
-    timestamp: string;
-    version: string;
-    id: string;
-  } | null>(null);
+  const [consentWarning, setConsentWarning] = useState(false);
 
   // Modal preview state for viewing legal documents inline
   const [modalDocument, setModalDocument] = useState<'termos' | 'privacidade' | null>(null);
 
-  // Estados de Validação do Convênio Corporativo
-  const [empresaNome, setEmpresaNome] = useState('');
-  const [codigoAcesso, setCodigoAcesso] = useState('');
-  const [codigoError, setCodigoError] = useState<string | null>(null);
-  const [validatedEmpresa, setValidatedEmpresa] = useState<EmpresaConveniada | null>(null);
-  const [empresasLista, setEmpresasLista] = useState<EmpresaConveniada[]>([]);
-
-  // Estados do Modal "Esqueci meu Código"
-  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
-  const [forgotForm, setForgotForm] = useState({
-    nome: '',
-    emailCorporativo: '',
-    empresa: '',
-    telefone: ''
-  });
-  const [forgotSubmitting, setForgotSubmitting] = useState(false);
-  const [forgotSubmitted, setForgotSubmitted] = useState(false);
+  // Parâmetro opcional caso o usuário venha por um link de parceiro na URL (?convenio= ou ?codigo=)
+  const [partnerRef, setPartnerRef] = useState<string>('');
 
   const DOCUMENT_VERSION = 'Termos de Uso v1.1 e Política de Privacidade v1.1';
   const TARGET_URL = 'http://beneficios.ncturismo.com.br/b2c/';
 
-  const [consentWarning, setConsentWarning] = useState(false);
-
   useEffect(() => {
-    // Carrega a lista de empresas conveniadas ativas para auxílio visual
-    getEmpresasConveniadas().then(data => {
-      setEmpresasLista(data.filter(e => e.ativa));
-    });
-
-    // Check if user has already accepted in this browser session/storage
     try {
+      const params = new URLSearchParams(window.location.search);
+      const refCode = params.get('convenio') || params.get('codigo') || params.get('parceiro') || '';
+      if (refCode) {
+        setPartnerRef(refCode.toUpperCase());
+      }
+
       const lastAccepted = localStorage.getItem('nc_last_accepted_at');
       const lastVersion = localStorage.getItem('nc_current_accepted_version');
       if (lastAccepted && lastVersion === DOCUMENT_VERSION) {
@@ -99,37 +67,15 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
   }, []);
 
   const handleAccess = async () => {
-    if (!codigoAcesso.trim()) {
-      setCodigoError('Por favor, informe o Código Único da sua organização conveniada.');
-      return;
-    }
-
-    setCodigoError(null);
-    setIsSubmitting(true);
-
-    // Validação do código corporativo
-    const validation = await validateEmpresaCodigo(codigoAcesso, empresaNome);
-    if (!validation.valid || !validation.empresa) {
-      setCodigoError(validation.message || 'Código de convênio não encontrado. Solicite o código abaixo.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    setValidatedEmpresa(validation.empresa);
-
     if (!accepted) {
       setConsentWarning(true);
-      setIsSubmitting(false);
       return;
     }
-    
+    if (isSubmitting) return;
+
     setConsentWarning(false);
+    setIsSubmitting(true);
     const nowIso = new Date().toISOString();
-    const formattedDate = new Date().toLocaleString('pt-BR', {
-      timeZone: 'America/Sao_Paulo',
-      dateStyle: 'short',
-      timeStyle: 'medium'
-    });
 
     try {
       localStorage.setItem('nc_last_accepted_at', nowIso);
@@ -138,64 +84,36 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
       // ignore localStorage errors
     }
 
+    const finalUrl = partnerRef
+      ? `${TARGET_URL}?convenio=${encodeURIComponent(partnerRef)}`
+      : TARGET_URL;
+
     try {
-      const record = await recordTermsAcceptance({
+      await recordTermsAcceptance({
         document_version: DOCUMENT_VERSION,
         accepted_at: nowIso,
         user_agent: navigator.userAgent || 'unknown',
-        target_url: `${TARGET_URL}?convenio=${encodeURIComponent(validation.empresa.codigo_acesso)}`,
-        source: `convenio_${validation.empresa.codigo_acesso}`
+        target_url: finalUrl,
+        source: partnerRef ? `portal_beneficios_${partnerRef}` : 'portal_beneficios_acesso_livre'
       });
 
-      setAcceptanceRecord({
-        timestamp: formattedDate,
-        version: DOCUMENT_VERSION,
-        id: record.id
-      });
       setRedirectSuccess(true);
 
-      // Redireciona o usuário para nova aba
       setTimeout(() => {
-        window.open(`${TARGET_URL}?convenio=${encodeURIComponent(validation.empresa.codigo_acesso)}`, '_blank', 'noopener,noreferrer');
+        window.open(finalUrl, '_blank', 'noopener,noreferrer');
         setIsSubmitting(false);
-      }, 700);
+      }, 600);
     } catch (err) {
       console.error('Erro ao registrar aceite:', err);
       setTimeout(() => {
-        window.open(`${TARGET_URL}?convenio=${encodeURIComponent(validation.empresa.codigo_acesso)}`, '_blank', 'noopener,noreferrer');
+        window.open(finalUrl, '_blank', 'noopener,noreferrer');
         setIsSubmitting(false);
-      }, 500);
+      }, 400);
     }
-  };
-
-  const handleForgotSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setForgotSubmitting(true);
-
-    try {
-      await saveSolicitacaoCodigo({
-        nome_colaborador: forgotForm.nome,
-        email_corporativo: forgotForm.emailCorporativo,
-        telefone: forgotForm.telefone,
-        nome_empresa: forgotForm.empresa
-      });
-    } catch (err) {
-      console.warn('Erro ao salvar solicitação:', err);
-    }
-
-    setTimeout(() => {
-      setForgotSubmitting(false);
-      setForgotSubmitted(true);
-    }, 400);
-  };
-
-  const generateForgotWhatsAppUrl = () => {
-    const text = `Olá equipe NC Turismo! Sou colaborador da empresa *${forgotForm.empresa}* e gostaria de receber o código de acesso para o portal de benefícios em viagens.\n\n*Nome:* ${forgotForm.nome}\n*E-mail Corporativo:* ${forgotForm.emailCorporativo}\n*Telefone:* ${forgotForm.telefone}`;
-    return `https://wa.me/5541996830144?text=${encodeURIComponent(text)}`;
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-[#C8102E] selection:text-white pt-28 pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-[#C8102E] selection:text-white pt-28 pb-24">
       
       {/* Top Header / Breadcrumb */}
       <div className="max-w-6xl mx-auto px-6 md:px-12 mb-8">
@@ -208,15 +126,18 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
             Voltar para o site principal
           </button>
 
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-mono text-slate-700 shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            NC Partners & Benefícios em Viagens
+          <div className="flex items-center gap-2 text-xs font-mono text-slate-600">
+            <span>NC Turismo</span>
+            <span aria-hidden="true">·</span>
+            <span className="font-semibold text-[#0F172A]">37 Anos de Atuação (2026)</span>
+            <span aria-hidden="true">·</span>
+            <span className="text-[#C8102E] font-semibold">B2B & B2C</span>
           </div>
         </div>
       </div>
 
       {/* =========================================================================
-          SEÇÃO 1: HERO & PROPOSTA DE VALOR
+          ETAPA 1: HERO SECTION & OS 3 PILARES DE VALOR
          ========================================================================= */}
       <div className="max-w-6xl mx-auto px-6 md:px-12 mb-12">
         <div className="relative rounded-3xl bg-white border border-slate-200/90 p-8 md:p-14 shadow-xl shadow-slate-200/60 overflow-hidden">
@@ -224,328 +145,156 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
           <div className="absolute bottom-0 left-0 -ml-24 -mb-24 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 space-y-6 max-w-4xl">
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-red-50 border border-red-200 text-[#C8102E] text-xs md:text-sm font-mono font-bold tracking-wider uppercase">
-              <Sparkles size={14} className="text-[#C8102E]" />
-              Benefícios Corporativos & Parcerias Institucionais
+            <div className="flex items-center gap-2 text-xs md:text-sm font-mono font-bold tracking-wider uppercase text-[#C8102E]">
+              <Sparkles size={15} className="text-[#C8102E]" />
+              <span>Benefícios em Viagens, Lazer & Soluções Corporativas</span>
             </div>
 
             <h1 className="text-3xl md:text-5xl font-display font-extrabold text-[#0F172A] tracking-tight leading-[1.15]">
-              Viagens como benefício estratégico para sua equipe e associados.
+              Da primeira reserva à gestão completa. A solução certa para cada empresa.
             </h1>
 
-            <p className="text-base md:text-xl text-slate-600 font-normal leading-relaxed">
-              Conecte sua empresa, associação, cooperativa ou federação ao ecossistema da <strong>NC Turismo</strong>. Oferecemos um clube completo de vantagens com tarifas negociadas, tecnologia de ponta e suporte humanizado para férias e lazer.
+            <h2 className="text-xl md:text-2xl font-display font-bold text-[#C8102E] tracking-tight">
+              Sua empresa merece mais vantagens para viajar — e você também.
+            </h2>
+
+            <p className="text-base md:text-lg text-slate-600 font-normal leading-relaxed">
+              Com <strong>37 anos de atuação no mercado em 2026</strong>, a <strong>NC Turismo</strong> conecta empresas, entidades parceiras, colaboradores e viajantes individuais a um portal completo para buscar itinerários, reservar viagens corporativas ou planejar férias com condições reais e suporte dedicado.
             </p>
 
             <div className="pt-2 flex flex-wrap gap-4">
               <a
-                href="#formulario-parceria"
+                href="#porta-de-entrada"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white font-bold text-xs uppercase tracking-wider hover:brightness-105 transition-all shadow-md shadow-red-500/20"
               >
-                <span>Quero ser um parceiro NC</span>
+                <span>Acessar Portal de Viagens & Benefícios</span>
                 <ArrowRight size={15} />
               </a>
 
               <a
-                href="#portal-colaborador"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider transition-all border border-slate-200"
+                href="#formulario-parceria"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider transition-all border border-slate-200"
               >
-                <span>Já sou beneficiário / Acessar portal</span>
+                <span>Quero cadastrar minha empresa / entidade</span>
               </a>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* =========================================================================
-          SEÇÃO 2: PROGRAMA "NC PARTNERS" (CONTEÚDO INTEGRADO)
-         ========================================================================= */}
-      <div className="max-w-6xl mx-auto px-6 md:px-12 mb-14">
-        <div className="rounded-3xl bg-gradient-to-br from-[#0C0F17] via-[#141824] to-[#0A0D14] p-8 md:p-12 text-white border border-white/10 shadow-2xl relative overflow-hidden">
-          
-          {/* Subtle Ambient lights */}
-          <div className="absolute top-0 right-1/4 w-80 h-80 bg-[#C8102E]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 right-0 w-80 h-80 bg-[#DB8902]/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 space-y-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-8">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 text-amber-300 border border-white/10 text-xs font-mono uppercase tracking-wider">
-                  <Handshake size={14} className="text-[#DB8902]" />
-                  Programa Exclusivo NC Partners
-                </div>
-                <h2 className="text-2xl md:text-4xl font-display font-bold text-white tracking-tight">
-                  Como funciona o convênio para sua entidade
-                </h2>
+          {/* OS 3 PILARES CENTRAIS: Economia, Facilidade e Assessoria */}
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 pt-10 border-t border-slate-200">
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+              <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-200 text-[#C8102E] flex items-center justify-center">
+                <Ticket size={22} />
               </div>
-              <p className="text-xs md:text-sm text-nc-warm/70 max-w-md">
-                Soluções sob medida para valorização de colaboradores, membros e cooperados com custo zero de implantação para a organização.
+              <h3 className="text-lg font-bold text-[#0F172A]">
+                1. Economia e Benefícios
+              </h3>
+              <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                Acesso a <strong>cupons mensais da BRT</strong> e condições comerciais diferenciadas em hotelaria, pacotes e serviços para empresas cadastradas, entidades e viajantes.
               </p>
             </div>
 
-            {/* Pilares do NC Partners */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 flex items-center justify-center">
-                  <Tag size={20} />
-                </div>
-                <h3 className="text-base font-bold text-white">Tarifas Negociadas</h3>
-                <p className="text-xs text-nc-warm/70 leading-relaxed">
-                  Condições especiais e tarifas reduzidas em passagens aéreas, hotéis, resorts e locação de veículos.
-                </p>
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+              <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 text-[#DB8902] flex items-center justify-center">
+                <Compass size={22} />
               </div>
-
-              <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center">
-                  <Clock size={20} />
-                </div>
-                <h3 className="text-base font-bold text-white">Plantão 24/7 Dedicado</h3>
-                <p className="text-xs text-nc-warm/70 leading-relaxed">
-                  Segurança total para quem viaja com atendimento de emergência ativo em qualquer fuso horário.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center">
-                  <Briefcase size={20} />
-                </div>
-                <h3 className="text-base font-bold text-white">Zero Burocracia</h3>
-                <p className="text-xs text-nc-warm/70 leading-relaxed">
-                  Implantação rápida e canal exclusivo online sem sobrecarregar a equipe interna do seu RH ou diretoria.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
-                  <Award size={20} />
-                </div>
-                <h3 className="text-base font-bold text-white">38 Anos de Solidez</h3>
-                <p className="text-xs text-nc-warm/70 leading-relaxed">
-                  A garantia de uma das agências mais conceituadas do país cuidando das viagens das pessoas que movem seu negócio.
-                </p>
-              </div>
+              <h3 className="text-lg font-bold text-[#0F172A]">
+                2. Facilidade de Reserva
+              </h3>
+              <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                Acesso simples, direto e transparente ao portal para pesquisar itinerários de viagens corporativas ou de lazer com total autonomia e rapidez.
+              </p>
             </div>
 
-            {/* Organizações atendidas pelo NC Partners */}
-            <div className="pt-2 flex flex-wrap items-center justify-between gap-4 text-xs text-nc-warm/70 border-t border-white/10">
-              <span className="font-semibold text-white">Modalidades atendidas no NC Partners:</span>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Empresas Privadas (RH & Benefícios)</span>
-                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Cooperativas de Crédito & Agro</span>
-                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Associações de Classe</span>
-                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Federações & Sindicatos</span>
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center">
+                <Headphones size={22} />
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* =========================================================================
-          SEÇÃO 3: FORMULÁRIO MULTI-ÁREA PADRÃO (FOCO EM BENEFÍCIOS & PARCERIAS)
-         ========================================================================= */}
-      <div id="formulario-parceria" className="max-w-6xl mx-auto px-6 md:px-12 mb-16 scroll-mt-28">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          
-          <div className="lg:col-span-5 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-[#DB8902] text-xs font-mono font-bold uppercase tracking-wider">
-              <Users size={14} /> Adesão Institucional
-            </div>
-
-            <h2 className="text-2xl md:text-4xl font-display font-extrabold text-[#0F172A] tracking-tight leading-tight">
-              Cadastre sua organização no programa de parcerias.
-            </h2>
-
-            <p className="text-sm md:text-base text-slate-600 leading-relaxed">
-              Preencha o formulário ao lado. Nossa equipe de parcerias corporativas entrará em contato para apresentar a proposta e ativar os benefícios para seus colaboradores ou associados.
-            </p>
-
-            <div className="space-y-4 pt-2">
-              <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-slate-200">
-                <CheckCircle2 size={18} className="text-[#DB8902] shrink-0 mt-0.5" />
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  <strong>Sem taxa de adesão:</strong> Sua entidade não paga mensalidade para disponibilizar o canal aos associados ou colaboradores.
-                </p>
-              </div>
-
-              <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-slate-200">
-                <CheckCircle2 size={18} className="text-[#DB8902] shrink-0 mt-0.5" />
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  <strong>Atendimento consultivo:</strong> Orientação personalizada em roteiros de lazer, pacotes, cruzeiros e viagens internacionais.
-                </p>
-              </div>
-            </div>
-
-            {/* Contato direto */}
-            <div className="p-6 rounded-2xl bg-slate-100 border border-slate-200 space-y-2">
-              <p className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Canal direto de parcerias:</p>
-              <p className="text-xs text-slate-600 font-mono">
-                Telefone: (41) 3281-1167 | E-mail: atendimento@ncturismo.com.br
+              <h3 className="text-lg font-bold text-[#0F172A]">
+                3. Assessoria e Suporte 24/7
+              </h3>
+              <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                Atendimento humano 24 horas por dia, 7 dias por semana, sustentado pelos <strong>37 anos de solidez</strong> da NC Turismo para apoiar cada etapa da sua jornada.
               </p>
             </div>
           </div>
-
-          <div className="lg:col-span-7">
-            <LeadForm
-              defaultInteresse="beneficios-parcerias"
-              sourceContext="pagina_beneficios_parcerias"
-              onOpenLegal={onOpenLegalTab}
-              theme="light"
-              title="Formulário de Interesse & Parcerias"
-              subtitle="Informe os dados da sua instituição para receber nossa apresentação completa."
-            />
-          </div>
-
         </div>
       </div>
 
       {/* =========================================================================
-          SEÇÃO 4: ACESSO AO PORTAL DO COLABORADOR / BENEFICIÁRIO (MOTOR B2C)
+          ETAPA 2: PORTA DE ENTRADA (ACESSO LIVRE AO PORTAL B2B & B2C)
          ========================================================================= */}
-      <div id="portal-colaborador" className="max-w-4xl mx-auto px-6 md:px-12 scroll-mt-28">
-        <div className="relative rounded-3xl bg-white border border-slate-200/90 p-8 md:p-12 shadow-xl shadow-slate-200/60 overflow-hidden">
+      <div id="porta-de-entrada" className="max-w-6xl mx-auto px-6 md:px-12 mb-16 scroll-mt-28">
+        <div className="mb-8 space-y-2">
+          <div className="text-xs font-mono uppercase tracking-[0.16em] text-[#C8102E] font-bold">
+            Porta de Entrada • Para Viajantes (B2C) e Empresas (B2B)
+          </div>
+          <h2 className="text-2xl md:text-4xl font-display font-extrabold text-[#0F172A] tracking-tight">
+            Acesse o portal de buscas ou escolha como deseja avançar
+          </h2>
+          <p className="text-sm md:text-base text-slate-600 max-w-3xl leading-relaxed">
+            Nosso ambiente de reservas e benefícios está liberado para você consultar itinerários, pacotes e tarifas — seja para uma viagem corporativa, pelo convênio da sua entidade ou para sua próxima viagem pessoal.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.16em] text-[#C8102E] font-bold">
-              <Lock size={14} /> Acesso do Viajante Beneficiário
-            </div>
-
-            <h3 className="text-2xl md:text-3xl font-display font-bold text-[#0F172A]">
-              Já é colaborador ou associado conveniado?
-            </h3>
-
-            <p className="text-sm md:text-base text-slate-600 leading-relaxed">
-              Consulte e reserve suas viagens de férias e lazer no ambiente exclusivo <strong>beneficios.ncturismo.com.br</strong> com as tarifas e vantagens do convênio da sua entidade.
-            </p>
-
-            {/* Formulário de Identificação do Convênio Corporativo */}
-            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-6 md:p-8 space-y-5">
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-200">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <KeyRound size={15} className="text-[#C8102E]" />
-                    Identificação do Convênio
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setForgotSubmitted(false);
-                      setIsForgotModalOpen(true);
-                    }}
-                    className="text-xs text-[#C8102E] hover:underline font-semibold cursor-pointer"
-                  >
-                    Esqueceu ou não tem seu código?
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Nome da Empresa / Organização */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Nome da Empresa / Entidade <span className="text-[#C8102E]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      list="empresas-conveniadas-list"
-                      placeholder="Ex: Sicredi, AMAPAR, FIEP, Renault..."
-                      value={empresaNome}
-                      onChange={(e) => {
-                        setEmpresaNome(e.target.value);
-                        setCodigoError(null);
-                        // Se o usuário selecionar ou digitar um nome conhecido, preenche o código automaticamente se encontrar
-                        const match = empresasLista.find(emp => emp.nome.toLowerCase() === e.target.value.toLowerCase());
-                        if (match && !codigoAcesso) {
-                          setCodigoAcesso(match.codigo_acesso);
-                          setValidatedEmpresa(match);
-                        }
-                      }}
-                      className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-sm text-[#0F172A] placeholder:text-slate-400 focus:outline-none focus:border-[#C8102E] transition-all"
-                    />
-                    <datalist id="empresas-conveniadas-list">
-                      {empresasLista.map(emp => (
-                        <option key={emp.id} value={emp.nome} />
-                      ))}
-                    </datalist>
-                  </div>
-
-                  {/* Código Único de Acesso */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Código Único da Empresa <span className="text-[#C8102E]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: NC-AMAPAR-2026"
-                      value={codigoAcesso}
-                      onChange={(e) => {
-                        setCodigoAcesso(e.target.value.toUpperCase());
-                        setCodigoError(null);
-                        setValidatedEmpresa(null);
-                      }}
-                      className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-sm font-mono uppercase text-[#0F172A] placeholder:text-slate-400 focus:outline-none focus:border-[#C8102E] transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Feedback de Validação do Convênio */}
-                {validatedEmpresa && (
-                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs animate-in fade-in">
-                    <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                    <div>
-                      <strong>Convênio Validado:</strong> {validatedEmpresa.nome} • Benefício de {validatedEmpresa.desconto_percentual}% de desconto aplicado!
-                    </div>
-                  </div>
-                )}
-
-                {codigoError && (
-                  <div className="flex items-start gap-3 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-900 text-xs animate-in fade-in">
-                    <AlertCircle size={16} className="text-red-600 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p>{codigoError}</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setForgotForm(prev => ({ ...prev, empresa: empresaNome }));
-                          setForgotSubmitted(false);
-                          setIsForgotModalOpen(true);
-                        }}
-                        className="mt-1 text-xs text-[#C8102E] underline font-bold cursor-pointer"
-                      >
-                        Clique aqui para solicitar o código de acesso da sua organização
-                      </button>
-                    </div>
-                  </div>
-                )}
+          {/* COLUNA PRINCIPAL: ACESSO DIRETO E LIVRE AO PORTAL (SEM TRAVAMENTO DE CÓDIGO) */}
+          <div id="portal-colaborador" className="lg:col-span-7 rounded-3xl bg-white border-2 border-[#C8102E]/20 p-7 md:p-10 shadow-xl shadow-slate-200/60 flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold flex items-center gap-1.5">
+                  <Lock size={14} /> Acesso Direto ao Portal de Benefícios & Itinerários
+                </span>
+                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg">
+                  Acesso Livre • Sem bloqueio de cadastro
+                </span>
               </div>
 
-              {/* Documentação & Termos */}
-              <div className="pt-2 border-t border-slate-200 space-y-4">
+              <h3 className="text-2xl md:text-3xl font-display font-bold text-[#0F172A]">
+                Buscar itinerários e acessar benefícios em viagens
+              </h3>
+
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Consulte disponibilidade, compare opções e faça suas buscas diretamente no portal <strong>beneficios.ncturismo.com.br</strong>. Para prosseguir com transparência e segurança, basta revisar os termos abaixo e confirmar a ciência.
+              </p>
+
+              {/* Documentação & Termos Ativos */}
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-5 space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Documentação e Termos:</span>
-                  <span className="text-[11px] text-slate-500 font-mono">Versão auditada v1.1</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Consulta de Documentos Legais:
+                  </span>
+                  <span className="text-[11px] text-slate-500 font-mono">
+                    Termos de Uso & Privacidade Ativos
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setModalDocument('termos')}
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-white hover:bg-red-50/30 border border-slate-200 text-left transition-all cursor-pointer group"
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-white hover:bg-red-50/40 border border-slate-200 text-left transition-all cursor-pointer group"
                   >
-                    <span className="text-xs font-bold text-slate-800 group-hover:text-[#C8102E]">Consultar Termos de Uso</span>
+                    <span className="text-xs font-bold text-slate-800 group-hover:text-[#C8102E]">
+                      Consultar Termos de Uso
+                    </span>
                     <ArrowRight size={14} className="text-slate-400 group-hover:text-[#C8102E]" />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setModalDocument('privacidade')}
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-white hover:bg-amber-50/30 border border-slate-200 text-left transition-all cursor-pointer group"
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-white hover:bg-amber-50/40 border border-slate-200 text-left transition-all cursor-pointer group"
                   >
-                    <span className="text-xs font-bold text-slate-800 group-hover:text-[#DB8902]">Consultar Política de Privacidade</span>
+                    <span className="text-xs font-bold text-slate-800 group-hover:text-[#DB8902]">
+                      Consultar Política de Privacidade
+                    </span>
                     <ArrowRight size={14} className="text-slate-400 group-hover:text-[#DB8902]" />
                   </button>
                 </div>
 
-                {/* Checkbox de Aceite Simplificado Conforme Solicitado */}
+                {/* Checkbox de Aceite */}
                 <div className="pt-1">
                   <label className={`flex items-start gap-3 cursor-pointer p-3.5 rounded-xl transition-all border select-none ${
                     consentWarning && !accepted
@@ -582,211 +331,393 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                   {consentWarning && !accepted && (
                     <div className="mt-2.5 flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs animate-in fade-in">
                       <AlertCircle size={15} className="shrink-0 text-amber-600" />
-                      <span>Por favor, marque a caixa acima confirmando o aceite para acessar o motor de reservas.</span>
+                      <span>Por favor, marque a caixa acima confirmando a ciência dos termos para abrir o portal.</span>
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
 
-                {/* Botão de Redirecionamento Direto com Validação */}
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={handleAccess}
-                  className={`w-full py-4 px-8 rounded-full font-bold text-xs md:text-sm uppercase tracking-wider flex items-center justify-center gap-3 transition-all duration-300 shadow-xl ${
-                    isSubmitting
-                      ? 'bg-slate-200 text-slate-400 cursor-wait border border-slate-300'
-                      : 'bg-gradient-to-r from-[#C8102E] via-[#D32F2F] to-[#DB8902] text-white hover:brightness-105 shadow-red-600/25 cursor-pointer'
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Validando código e registrando conformidade...</span>
-                    </>
-                  ) : redirectSuccess ? (
-                    <>
-                      <CheckCircle2 size={18} className="text-white" />
-                      <span>Convênio validado! Abrindo portal em nova aba...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>VALIDAR E ACESSAR BENEFÍCIOS (NOVA ABA)</span>
-                      <ArrowRight size={18} />
-                    </>
-                  )}
-                </button>
+            <div className="space-y-3 pt-2">
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleAccess}
+                className={`w-full py-4 px-8 rounded-full font-bold text-xs md:text-sm uppercase tracking-wider flex items-center justify-center gap-3 transition-all duration-300 shadow-xl ${
+                  isSubmitting
+                    ? 'bg-slate-200 text-slate-400 cursor-wait border border-slate-300'
+                    : 'bg-gradient-to-r from-[#C8102E] via-[#D32F2F] to-[#DB8902] text-white hover:brightness-105 shadow-red-600/25 cursor-pointer'
+                }`}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Abrindo portal em nova aba...</span>
+                  </>
+                ) : redirectSuccess ? (
+                  <>
+                    <CheckCircle2 size={18} className="text-white" />
+                    <span>Acesso liberado! Abrindo portal em nova aba...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>ACESSAR BENEFÍCIOS EM VIAGENS (NOVA ABA)</span>
+                    <ExternalLink size={17} />
+                  </>
+                )}
+              </button>
 
-                <div className="flex items-center justify-between text-[11px] text-slate-500 px-1 flex-wrap gap-2">
-                  <span className="flex items-center gap-1.5 font-mono">
-                    <Lock size={12} className="text-[#C8102E]" />
-                    Destino: <strong className="text-[#0F172A]">beneficios.ncturismo.com.br/b2c/</strong>
-                  </span>
-                  <span className="text-slate-400 font-mono">
-                    Autenticação Corporativa SSL 256-bit
-                  </span>
-                </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-500 px-1 flex-wrap gap-2">
+                <span className="flex items-center gap-1.5 font-mono">
+                  <Lock size={12} className="text-[#C8102E]" />
+                  Ambiente Oficial: <strong className="text-[#0F172A]">beneficios.ncturismo.com.br</strong>
+                </span>
+                <span className="text-slate-400 font-mono">
+                  Aberto para buscas B2B e B2C
+                </span>
               </div>
             </div>
           </div>
 
+          {/* COLUNA LATERAL: CAMINHOS DIRECIONADOS ("Quero viajar" & "Quero oferecer benefícios") */}
+          <div className="lg:col-span-5 flex flex-col justify-between gap-6">
+            
+            {/* Caminho 1: Quero oferecer benefícios para minha empresa ou entidade */}
+            <div className="rounded-3xl bg-white border border-slate-200 p-7 shadow-lg flex-1 flex flex-col justify-between space-y-5">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 text-[#DB8902] flex items-center justify-center">
+                  <Building2 size={20} />
+                </div>
+                <div className="text-xs font-mono uppercase tracking-wider text-[#DB8902] font-bold">
+                  Para Empresas, RH e Entidades (B2B)
+                </div>
+                <h4 className="text-xl font-display font-bold text-[#0F172A]">
+                  Quer oferecer este benefício para sua empresa ou entidade?
+                </h4>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                  Disponibilize cupons mensais da BRT, condições diferenciadas e suporte 24/7 para seus colaboradores, associados ou cooperados sem custo de adesão.
+                </p>
+              </div>
+
+              <a
+                href="#formulario-parceria"
+                className="w-full py-3.5 px-5 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+              >
+                <span>Quero oferecer benefícios para minha empresa ou entidade</span>
+                <ArrowRight size={15} />
+              </a>
+            </div>
+
+            {/* Caminho 2: Quero viajar (Roteiros & Lazer) */}
+            <div className="rounded-3xl bg-white border border-slate-200 p-7 shadow-lg flex-1 flex flex-col justify-between space-y-5">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-200 text-[#C8102E] flex items-center justify-center">
+                  <Compass size={20} />
+                </div>
+                <div className="text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold">
+                  Para Viajantes & Famílias (B2C)
+                </div>
+                <h4 className="text-xl font-display font-bold text-[#0F172A]">
+                  Planejando sua próxima viagem ou férias?
+                </h4>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                  Além de pesquisar diretamente no portal ao lado, você também pode conferir nossos pacotes selecionados, cruzeiros e roteiros personalizados de lazer.
+                </p>
+              </div>
+
+              <a
+                href="#lazer"
+                className="w-full py-3.5 px-5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#0F172A] border border-slate-200 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+              >
+                <span>Quero viajar (Ver Roteiros & Lazer)</span>
+                <ArrowRight size={15} />
+              </a>
+            </div>
+
+          </div>
         </div>
       </div>
 
       {/* =========================================================================
-          MODAL: RECUPERAÇÃO DE CÓDIGO ESQUECIDO (CONVÊNIOS)
+          ETAPA 4 (PARTE A): VITRINE DE CUPONS MENSAIS BRT (ISCA DE CONVERSÃO)
          ========================================================================= */}
-      {isForgotModalOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={() => setIsForgotModalOpen(false)}
-        >
-          <div 
-            className="relative w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 md:p-8 overflow-hidden text-slate-800"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-100 text-[#C8102E] flex items-center justify-center">
-                  <KeyRound size={20} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-[#0F172A]">
-                    Solicitar Código de Acesso
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Convênio corporativo e benefícios em viagens
-                  </p>
-                </div>
+      <div className="max-w-6xl mx-auto px-6 md:px-12 mb-16">
+        <div className="rounded-3xl bg-gradient-to-r from-[#C8102E] via-[#B71C1C] to-[#DB8902] p-8 md:p-12 text-white shadow-xl relative overflow-hidden">
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-8 space-y-4">
+              <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-amber-200 font-bold">
+                <Ticket size={16} /> Vitrine de Campanhas & Vantagens Exclusivas
               </div>
-
-              <button
-                type="button"
-                onClick={() => setIsForgotModalOpen(false)}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer"
-              >
-                <X size={18} />
-              </button>
+              <h2 className="text-2xl md:text-4xl font-display font-extrabold tracking-tight">
+                Cupons Mensais BRT para Empresas e Viajantes
+              </h2>
+              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl">
+                Em parceria estratégica com a <strong>BRT</strong>, disponibilizamos lotes mensais de cupons promocionais e condições especiais em hospedagens nacionais e internacionais, pacotes completos e serviços turísticos no portal.
+              </p>
+              <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-medium text-white/90">
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-amber-300" />
+                  Campanhas renovadas mensalmente
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-amber-300" />
+                  Aplicação direta nas reservas elegíveis
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-amber-300" />
+                  Curadoria com 37 anos de experiência NC
+                </span>
+              </div>
             </div>
 
-            {forgotSubmitted ? (
-              <div className="py-6 text-center space-y-5 animate-in fade-in">
-                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
-                  <CheckCircle2 size={30} />
-                </div>
-
-                <div className="space-y-1">
-                  <h4 className="text-xl font-bold text-[#0F172A]">Solicitação Registrada!</h4>
-                  <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                    Recebemos seus dados e registramos no painel de atendimento da NC Turismo.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <p className="text-xs font-semibold text-slate-700">
-                    Prefere receber seu código imediatamente pelo WhatsApp?
-                  </p>
-                  <a
-                    href={generateForgotWhatsAppUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-5 rounded-full bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
-                  >
-                    <MessageCircle size={16} />
-                    <span>Falar com o Suporte da NC no WhatsApp</span>
-                  </a>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIsForgotModalOpen(false)}
-                  className="text-xs font-semibold text-slate-500 hover:text-slate-800 underline"
-                >
-                  Fechar janela
-                </button>
+            <div className="lg:col-span-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-center space-y-4">
+              <div className="text-xs font-mono uppercase tracking-wider text-amber-200">
+                Benefício Recorrente
               </div>
-            ) : (
-              <form onSubmit={handleForgotSubmit} className="pt-5 space-y-4">
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Preencha os campos abaixo com seus dados corporativos para localizarmos o convênio ativo da sua organização:
-                </p>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    Nome Completo <span className="text-[#C8102E]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Seu nome completo"
-                    value={forgotForm.nome}
-                    onChange={e => setForgotForm({ ...forgotForm, nome: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-[#0F172A] focus:outline-none focus:border-[#C8102E]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    E-mail Corporativo ou Pessoal <span className="text-[#C8102E]">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="ex: seu.nome@empresa.com.br"
-                    value={forgotForm.emailCorporativo}
-                    onChange={e => setForgotForm({ ...forgotForm, emailCorporativo: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-[#0F172A] focus:outline-none focus:border-[#C8102E]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Empresa / Entidade <span className="text-[#C8102E]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Nome da organização"
-                      value={forgotForm.empresa}
-                      onChange={e => setForgotForm({ ...forgotForm, empresa: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-[#0F172A] focus:outline-none focus:border-[#C8102E]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      WhatsApp / Celular <span className="text-[#C8102E]">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="(41) 99999-9999"
-                      value={forgotForm.telefone}
-                      onChange={e => setForgotForm({ ...forgotForm, telefone: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-[#0F172A] focus:outline-none focus:border-[#C8102E]"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={forgotSubmitting}
-                  className="w-full mt-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] hover:brightness-105 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {forgotSubmitting ? (
-                    <span>Registrando solicitação...</span>
-                  ) : (
-                    <>
-                      <span>Enviar Solicitação de Código</span>
-                      <ArrowRight size={15} />
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
+              <div className="text-2xl font-display font-extrabold text-white">
+                Cupons Mensais BRT
+              </div>
+              <p className="text-xs text-white/80 leading-relaxed">
+                Cadastre sua empresa no final desta página para habilitar o recebimento recorrente das campanhas mensais para sua equipe.
+              </p>
+              <a
+                href="#formulario-parceria"
+                className="inline-flex items-center justify-center gap-2 w-full py-3 px-5 rounded-xl bg-white text-[#C8102E] hover:bg-amber-50 font-bold text-xs uppercase tracking-wider transition-all shadow-md"
+              >
+                <span>Habilitar para minha empresa</span>
+                <ArrowRight size={14} />
+              </a>
+            </div>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* =========================================================================
+          ETAPA 4 (PARTE B): PORTFÓLIO UNIFICADO (3 NÍVEIS DE SERVIÇO NA MESMA TELA)
+         ========================================================================= */}
+      <div className="max-w-6xl mx-auto px-6 md:px-12 mb-16">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 md:p-12 shadow-lg space-y-8">
+          <div className="max-w-3xl space-y-2">
+            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold">
+              <Layers size={15} /> Evolução Contínua • Portfólio Unificado NC Turismo
+            </div>
+            <h2 className="text-2xl md:text-3xl font-display font-extrabold text-[#0F172A] tracking-tight">
+              Três níveis de serviço que acompanham o momento da sua empresa
+            </h2>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              A NC Turismo escala junto com a sua operação: desde a primeira reserva com benefícios imediatos até a governança corporativa integrada.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Nível 1 */}
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="text-xs font-mono font-bold text-[#C8102E] uppercase tracking-wider">
+                  01. Entrada & Vantagens
+                </div>
+                <h3 className="text-xl font-display font-bold text-[#0F172A]">
+                  Benefícios NC Turismo
+                </h3>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                  Acesso imediato ao PDV de viagens e aos <strong>cupons mensais BRT</strong>. Ideal para colaboradores, associados e empresas que buscam economia rápida em reservas pontuais e viagens de lazer.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-slate-200/80 text-[11px] font-mono text-slate-500">
+                PDV Online · Cupons Mensais · Suporte 24/7
+              </div>
+            </div>
+
+            {/* Nível 2 */}
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="text-xs font-mono font-bold text-[#DB8902] uppercase tracking-wider">
+                  02. Controle & Performance
+                </div>
+                <h3 className="text-xl font-display font-bold text-[#0F172A]">
+                  Gestão Corporativa
+                </h3>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                  Estruturação completa das viagens a trabalho da sua empresa, com faturamento centralizado, organização por centros de custo, relatórios gerenciais e atendimento consultivo dedicado.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-slate-200/80 text-[11px] font-mono text-slate-500">
+                Centros de Custo · Faturamento · BI & Relatórios
+              </div>
+            </div>
+
+            {/* Nível 3 */}
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider">
+                  03. Governança & Escala
+                </div>
+                <h3 className="text-xl font-display font-bold text-[#0F172A]">
+                  Gestão Integrada
+                </h3>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                  Operação avançada com integração direta ao seu ERP, aplicação automatizada de políticas de viagem (compliance), fluxos multinível de aprovação e acordos corporativos globais.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-slate-200/80 text-[11px] font-mono text-slate-500">
+                Integração ERP · Políticas & Compliance · SLA Dedicado
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          ETAPA 4 (PARTE C): NC PARTNERS (ISOLADO VISUALMENTE PARA PARCERIAS INSTITUCIONAIS)
+         ========================================================================= */}
+      <div className="max-w-6xl mx-auto px-6 md:px-12 mb-16">
+        <div className="rounded-3xl bg-gradient-to-br from-[#0C0F17] via-[#141824] to-[#0A0D14] p-8 md:p-12 text-white border border-white/10 shadow-2xl relative overflow-hidden">
+          
+          <div className="absolute top-0 right-1/4 w-80 h-80 bg-[#C8102E]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-[#DB8902]/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-8">
+              <div className="space-y-3 max-w-2xl">
+                <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">
+                  <Handshake size={15} className="text-[#DB8902]" />
+                  <span>Programa Institucional • NC Partners</span>
+                </div>
+                <h2 className="text-2xl md:text-4xl font-display font-bold text-white tracking-tight">
+                  Parcerias estratégicas para Entidades, Associações e RH
+                </h2>
+                <p className="text-xs md:text-sm text-nc-warm/80 leading-relaxed">
+                  Diferente da gestão tradicional de viagens a trabalho, o <strong>NC Partners</strong> é o programa institucional desenhado para que sindicatos, federações, cooperativas (como SINDIFAR, FPCG e entidades de classe) e departamentos de RH agreguem valor direto aos seus associados e colaboradores em viagens pessoais e familiares.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <a
+                  href="#formulario-parceria"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/15 font-bold text-xs uppercase tracking-wider transition-all"
+                >
+                  <span>Tornar-se Entidade Parceira</span>
+                  <ArrowRight size={14} />
+                </a>
+              </div>
+            </div>
+
+            {/* Pilares do NC Partners */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 flex items-center justify-center">
+                  <Tag size={20} />
+                </div>
+                <h3 className="text-base font-bold text-white">Condições de Clube</h3>
+                <p className="text-xs text-nc-warm/70 leading-relaxed">
+                  Acesso ao portal e campanhas de cupons mensais sem custo de implantação ou mensalidade para a entidade parceira.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+                  <Clock size={20} />
+                </div>
+                <h3 className="text-base font-bold text-white">Suporte 24/7 Real</h3>
+                <p className="text-xs text-nc-warm/70 leading-relaxed">
+                  Assistência completa para o associado ou colaborador antes, durante e após a viagem em qualquer destino.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center">
+                  <Briefcase size={20} />
+                </div>
+                <h3 className="text-base font-bold text-white">Zero Sobrecarga</h3>
+                <p className="text-xs text-nc-warm/70 leading-relaxed">
+                  A NC Turismo assume toda a operação e o atendimento ao viajante, sem gerar trabalho operacional para o seu RH ou secretaria.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+                  <Award size={20} />
+                </div>
+                <h3 className="text-base font-bold text-white">37 Anos de Solidez</h3>
+                <p className="text-xs text-nc-warm/70 leading-relaxed">
+                  Em 2026, celebramos 37 anos de atuação e credibilidade cuidando das viagens das maiores organizações do país.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-nc-warm/70 border-t border-white/10">
+              <span className="font-semibold text-white">Perfis que integram o NC Partners:</span>
+              <div className="flex flex-wrap items-center gap-2 text-nc-warm/80">
+                <span>Empresas Privadas & RH</span>
+                <span aria-hidden="true">·</span>
+                <span>Sindicatos & Federações</span>
+                <span aria-hidden="true">·</span>
+                <span>Associações Profissionais</span>
+                <span aria-hidden="true">·</span>
+                <span>Cooperativas</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          ETAPA 3: FORMULÁRIO SIMPLIFICADO DE CADASTRO DE EMPRESAS (ÚLTIMA PARTE DA PÁGINA)
+         ========================================================================= */}
+      <div id="formulario-parceria" className="max-w-6xl mx-auto px-6 md:px-12 scroll-mt-28">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+          
+          <div className="lg:col-span-5 space-y-6">
+            <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-[#DB8902]">
+              <Users size={15} /> Cadastro de Empresas & Entidades (B2B)
+            </div>
+
+            <h2 className="text-2xl md:text-4xl font-display font-extrabold text-[#0F172A] tracking-tight leading-tight">
+              Leve os benefícios da NC Turismo para a sua organização.
+            </h2>
+
+            <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+              Quer oferecer <strong>cupons mensais BRT</strong>, condições especiais em viagens de lazer ou estruturar a gestão de viagens corporativas da sua empresa? Preencha os dados essenciais ao lado para conhecer o programa.
+            </p>
+
+            <div className="space-y-4 pt-2">
+              <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-slate-200">
+                <CheckCircle2 size={18} className="text-[#DB8902] shrink-0 mt-0.5" />
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  <strong>Adesão rápida e descomplicada:</strong> Sem burocracia inicial. Nossa equipe apresentará o formato ideal para o perfil da sua empresa ou entidade.
+                </p>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-slate-200">
+                <CheckCircle2 size={18} className="text-[#DB8902] shrink-0 mt-0.5" />
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  <strong>Atendimento consultivo 24/7:</strong> Suporte dedicado tanto para o gestor quanto para cada viajante beneficiado.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-slate-100 border border-slate-200 space-y-2">
+              <p className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Canal direto de parcerias e atendimento:</p>
+              <p className="text-xs text-slate-600 font-mono">
+                WhatsApp: (41) 99683-0144 | E-mail: atendimento@ncturismo.com.br
+              </p>
+            </div>
+          </div>
+
+          <div className="lg:col-span-7">
+            <LeadForm
+              variant="b2b-simple"
+              defaultInteresse="beneficios-parcerias"
+              sourceContext="pagina_beneficios_parcerias_b2b"
+              onOpenLegal={onOpenLegalTab}
+              theme="light"
+              title="Quero oferecer este benefício na minha empresa"
+              subtitle="Preencha seus dados de contato para receber a apresentação do programa."
+              submitLabel="Quero conhecer o programa"
+            />
+          </div>
+
+        </div>
+      </div>
 
       {/* =========================================================================
           MODAL VIEWER FOR "TERMOS DE USO" AND "POLÍTICA DE PRIVACIDADE"
@@ -811,7 +742,7 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                     {modalDocument === 'termos' ? 'Termos e Condições de Uso' : 'Política de Privacidade'}
                   </h3>
                   <p className="text-xs text-slate-500 font-mono">
-                    NC Turismo • Versão 1.1 Vigente • Atualizado em 2026
+                    NC Turismo • 37 Anos de Atuação (2026) • Versão 1.1 Vigente
                   </p>
                 </div>
               </div>

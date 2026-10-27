@@ -38,6 +38,8 @@ interface LeadFormProps {
   theme?: 'dark' | 'light';
   title?: string;
   subtitle?: string;
+  variant?: 'default' | 'b2b-simple';
+  submitLabel?: string;
 }
 
 export const LeadForm: React.FC<LeadFormProps> = ({
@@ -47,7 +49,9 @@ export const LeadForm: React.FC<LeadFormProps> = ({
   className = '',
   theme = 'dark',
   title,
-  subtitle
+  subtitle,
+  variant = 'default',
+  submitLabel
 }) => {
   const [formData, setFormData] = useState<LeadFormData>({
     nome: '',
@@ -133,6 +137,11 @@ export const LeadForm: React.FC<LeadFormProps> = ({
 
   // Gerador de mensagem formatada para o WhatsApp comercial (41 99683-0144)
   const generateWhatsAppUrl = () => {
+    if (variant === 'b2b-simple') {
+      const msg = `Olá equipe NC Turismo! Quero conhecer o programa de benefícios e parcerias.\n\n*Nome:* ${formData.nome}\n*Empresa/Entidade:* ${formData.empresa}\n*Cargo/Área:* ${formData.cargo || 'Não informado'}\n*WhatsApp:* ${formData.telefone}\n*E-mail:* ${formData.email}`;
+      return `https://wa.me/5541996830144?text=${encodeURIComponent(msg)}`;
+    }
+
     let msg = `Olá equipe NC Turismo! Acabei de enviar meus dados pelo site.\n\n*Nome:* ${formData.nome}\n*Empresa/Org:* ${formData.empresa}\n*Cargo:* ${formData.cargo}\n*Telefone:* ${formData.telefone}\n*E-mail:* ${formData.email}\n*Interesse:* `;
     
     switch (formData.interesse) {
@@ -157,7 +166,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
 
   const generateMailtoUrl = () => {
     const subject = `Novo Lead de Parceria: ${formData.empresa} (${formData.nome})`;
-    const body = `Olá equipe NC Turismo,\n\nRecebemos uma nova solicitação no site:\n\nNome: ${formData.nome}\nEmpresa: ${formData.empresa}\nCargo: ${formData.cargo}\nE-mail: ${formData.email}\nTelefone: ${formData.telefone}\nInteresse: ${formData.interesse}\nTipo de Org: ${formData.tipoOrganizacao || '-'}\nPúblico Beneficiado: ${formData.publicoBeneficiado || '-'}\nQtd. Estimada: ${formData.quantidadePessoas || '-'}\nOrigem: ${formData.origem_pagina}\nUTM Source: ${formData.utm_source || '-'}\n`;
+    const body = `Olá equipe NC Turismo,\n\nRecebemos uma nova solicitação no site:\n\nNome: ${formData.nome}\nEmpresa/Entidade: ${formData.empresa}\nCargo/Área: ${formData.cargo || '-'}\nE-mail: ${formData.email}\nWhatsApp: ${formData.telefone}\nInteresse: ${formData.interesse}\nOrigem: ${formData.origem_pagina}\nUTM Source: ${formData.utm_source || '-'}\n`;
     return `mailto:atendimento@ncturismo.com.br?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
@@ -259,225 +268,330 @@ export const LeadForm: React.FC<LeadFormProps> = ({
           <input type="hidden" name="utm_term" value={formData.utm_term} />
           <input type="hidden" name="utm_content" value={formData.utm_content} />
 
-          {/* 1. Campos Iniciais Obrigatórios: Nome e E-mail */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
-                isDark ? 'text-nc-warm/80' : 'text-slate-700'
-              }`}>
-                Nome completo <span className="text-[#C8102E]">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Seu nome"
-                value={formData.nome}
-                onChange={e => setFormData({ ...formData, nome: e.target.value })}
-                className={`w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none ${
-                  isDark
-                    ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
-                    : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
-                }`}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
-                isDark ? 'text-nc-warm/80' : 'text-slate-700'
-              }`}>
-                E-mail corporativo / pessoal <span className="text-[#C8102E]">*</span>
-              </label>
-              <input
-                type="email"
-                required
-                placeholder="seu.email@empresa.com.br"
-                value={formData.email}
-                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                className={`w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none ${
-                  isDark
-                    ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
-                    : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
-                }`}
-              />
-            </div>
-          </div>
-
-          {/* 2. Telefone / WhatsApp, Empresa e Cargo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div>
-              <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
-                isDark ? 'text-nc-warm/80' : 'text-slate-700'
-              }`}>
-                Telefone / WhatsApp <span className="text-[#C8102E]">*</span>
-              </label>
-              <input
-                type="tel"
-                required
-                placeholder="(00) 00000-0000"
-                value={formData.telefone}
-                onChange={e => setFormData({ ...formData, telefone: e.target.value })}
-                className={`w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none ${
-                  isDark
-                    ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
-                    : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
-                }`}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
-                isDark ? 'text-nc-warm/80' : 'text-slate-700'
-              }`}>
-                Empresa ou organização <span className="text-[#C8102E]">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Nome da empresa/entidade"
-                value={formData.empresa}
-                onChange={e => setFormData({ ...formData, empresa: e.target.value })}
-                className={`w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none ${
-                  isDark
-                    ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
-                    : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
-                }`}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
-                isDark ? 'text-nc-warm/80' : 'text-slate-700'
-              }`}>
-                Cargo / Área <span className="text-[#C8102E]">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Ex: Diretor, RH, Gestor"
-                value={formData.cargo}
-                onChange={e => setFormData({ ...formData, cargo: e.target.value })}
-                className={`w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none ${
-                  isDark
-                    ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
-                    : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
-                }`}
-              />
-            </div>
-          </div>
-
-          {/* 3. Campo de Seleção de Interesse */}
-          <div>
-            <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
-              isDark ? 'text-nc-warm/80' : 'text-slate-700'
-            }`}>
-              Tenho interesse em: <span className="text-[#C8102E]">*</span>
-            </label>
-            <select
-              value={formData.interesse}
-              onChange={e => setFormData({ ...formData, interesse: e.target.value as LeadInteresse })}
-              className={`w-full px-4 py-3 rounded-xl text-sm font-medium transition-all focus:outline-none cursor-pointer ${
-                isDark
-                  ? 'bg-[#151A24] border border-white/10 text-white focus:border-[#DB8902]'
-                  : 'bg-slate-50 border border-slate-200 text-[#0F172A] focus:border-[#C8102E] focus:bg-white'
-              }`}
-            >
-              <option value="gestao-viagens">Gestão de viagens corporativas</option>
-              <option value="beneficios-parcerias">Benefícios e Parcerias (NC Partners)</option>
-              <option value="eventos-mice">Eventos e grupos / MICE</option>
-              <option value="viagens-lazer">Viagens de lazer</option>
-              <option value="outro">Outro</option>
-            </select>
-          </div>
-
-          {/* 4. CAMPOS CONDICIONAIS: Se o interesse for "Benefícios e Parcerias" */}
-          {formData.interesse === 'beneficios-parcerias' && (
-            <div className={`p-5 md:p-6 rounded-2xl border space-y-5 animate-in fade-in slide-in-from-top-2 duration-200 ${
-              isDark
-                ? 'bg-gradient-to-br from-amber-500/10 via-red-500/5 to-transparent border-[#DB8902]/30'
-                : 'bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-white border-amber-300'
-            }`}>
-              <div className="flex items-center gap-2 pb-1 border-b border-amber-500/20">
-                <Sparkles size={16} className="text-[#DB8902]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#DB8902]">
-                  Informações sobre a Parceria / NC Partners
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Tipo de organização */}
-                <div>
-                  <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
-                    isDark ? 'text-nc-warm/80' : 'text-slate-700'
-                  }`}>
-                    Tipo de organização <span className="text-[#C8102E]">*</span>
-                  </label>
-                  <select
-                    required
-                    value={formData.tipoOrganizacao}
-                    onChange={e => setFormData({ ...formData, tipoOrganizacao: e.target.value })}
-                    className={`w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none cursor-pointer ${
-                      isDark
-                        ? 'bg-[#151A24] border border-white/10 text-white focus:border-[#DB8902]'
-                        : 'bg-white border border-slate-200 text-[#0F172A] focus:border-[#C8102E]'
-                    }`}
-                  >
-                    <option value="">Selecione o tipo</option>
-                    <option value="Empresa">Empresa Privada</option>
-                    <option value="Associação">Associação</option>
-                    <option value="Federação">Federação</option>
-                    <option value="Cooperativa">Cooperativa</option>
-                    <option value="Outra">Outra</option>
-                  </select>
-                </div>
-
-                {/* Público que pretende beneficiar */}
-                <div>
-                  <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
-                    isDark ? 'text-nc-warm/80' : 'text-slate-700'
-                  }`}>
-                    Público que pretende beneficiar <span className="text-[#C8102E]">*</span>
-                  </label>
-                  <select
-                    required
-                    value={formData.publicoBeneficiado}
-                    onChange={e => setFormData({ ...formData, publicoBeneficiado: e.target.value })}
-                    className={`w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none cursor-pointer ${
-                      isDark
-                        ? 'bg-[#151A24] border border-white/10 text-white focus:border-[#DB8902]'
-                        : 'bg-white border border-slate-200 text-[#0F172A] focus:border-[#C8102E]'
-                    }`}
-                  >
-                    <option value="">Selecione o público</option>
-                    <option value="Colaboradores">Colaboradores (Empresa)</option>
-                    <option value="Associados">Associados</option>
-                    <option value="Cooperados">Cooperados</option>
-                    <option value="Membros">Membros / Filiados</option>
-                    <option value="Outro">Outro</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Quantidade aproximada de pessoas beneficiadas */}
-              <div>
-                <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
+          {variant === 'b2b-simple' ? (
+            /* MODO SIMPLIFICADO B2B (ETAPA 3): Alinhamento simétrico em 2 colunas + linha dedicada para Cargo/área */
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="flex flex-col justify-end">
+                <label className={`flex items-center justify-between gap-1 text-xs uppercase tracking-wider font-semibold mb-2 ${
                   isDark ? 'text-nc-warm/80' : 'text-slate-700'
                 }`}>
-                  Quantidade aproximada de pessoas beneficiadas <span className="text-[#C8102E]">*</span>
+                  <span>Nome <span className="text-[#C8102E]">*</span></span>
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: 50 a 200 pessoas, 500 associados, etc."
-                  value={formData.quantidadePessoas}
-                  onChange={e => setFormData({ ...formData, quantidadePessoas: e.target.value })}
-                  className={`w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none ${
+                  placeholder="Seu nome completo"
+                  value={formData.nome}
+                  onChange={e => setFormData({ ...formData, nome: e.target.value })}
+                  className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none ${
                     isDark
                       ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
-                      : 'bg-white border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E]'
+                      : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
+                  }`}
+                />
+              </div>
+
+              <div className="flex flex-col justify-end">
+                <label className={`flex items-center justify-between gap-1 text-xs uppercase tracking-wider font-semibold mb-2 ${
+                  isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                }`}>
+                  <span>Empresa / Entidade <span className="text-[#C8102E]">*</span></span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Nome da empresa ou entidade"
+                  value={formData.empresa}
+                  onChange={e => setFormData({ ...formData, empresa: e.target.value })}
+                  className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none ${
+                    isDark
+                      ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
+                      : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
+                  }`}
+                />
+              </div>
+
+              <div className="flex flex-col justify-end">
+                <label className={`flex items-center justify-between gap-1 text-xs uppercase tracking-wider font-semibold mb-2 ${
+                  isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                }`}>
+                  <span>E-mail <span className="text-[#C8102E]">*</span></span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="seu.email@empresa.com.br"
+                  value={formData.email}
+                  onChange={e => setFormData({ ...formData, email: e.target.value })}
+                  className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none ${
+                    isDark
+                      ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
+                      : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
+                  }`}
+                />
+              </div>
+
+              <div className="flex flex-col justify-end">
+                <label className={`flex items-center justify-between gap-1 text-xs uppercase tracking-wider font-semibold mb-2 ${
+                  isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                }`}>
+                  <span>WhatsApp <span className="text-[#C8102E]">*</span></span>
+                </label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="(00) 00000-0000"
+                  value={formData.telefone}
+                  onChange={e => setFormData({ ...formData, telefone: e.target.value })}
+                  className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none ${
+                    isDark
+                      ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
+                      : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
+                  }`}
+                />
+              </div>
+
+              <div className="sm:col-span-2 flex flex-col justify-end">
+                <label className={`flex items-center justify-between gap-2 text-xs uppercase tracking-wider font-semibold mb-2 ${
+                  isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                }`}>
+                  <span>Cargo ou Área</span>
+                  <span className={`text-[11px] font-normal normal-case tracking-normal ${isDark ? 'text-nc-warm/40' : 'text-slate-400'}`}>
+                    Opcional
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Recursos Humanos (RH), Diretoria, Compras, Presidência..."
+                  value={formData.cargo}
+                  onChange={e => setFormData({ ...formData, cargo: e.target.value })}
+                  className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none ${
+                    isDark
+                      ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
+                      : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
                   }`}
                 />
               </div>
             </div>
+          ) : (
+            <>
+              {/* GRADE SIMÉTRICA DE 2 COLUNAS PARA ALINHAMENTO PERFEITO */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="flex flex-col justify-end">
+                  <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
+                    isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                  }`}>
+                    Nome completo <span className="text-[#C8102E]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Seu nome completo"
+                    value={formData.nome}
+                    onChange={e => setFormData({ ...formData, nome: e.target.value })}
+                    className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none ${
+                      isDark
+                        ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
+                        : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
+                    }`}
+                  />
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
+                    isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                  }`}>
+                    E-mail corporativo / pessoal <span className="text-[#C8102E]">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="seu.email@empresa.com.br"
+                    value={formData.email}
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none ${
+                      isDark
+                        ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
+                        : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
+                    }`}
+                  />
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
+                    isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                  }`}>
+                    Telefone / WhatsApp <span className="text-[#C8102E]">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="(00) 00000-0000"
+                    value={formData.telefone}
+                    onChange={e => setFormData({ ...formData, telefone: e.target.value })}
+                    className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none ${
+                      isDark
+                        ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
+                        : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
+                    }`}
+                  />
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
+                    isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                  }`}>
+                    Empresa ou organização <span className="text-[#C8102E]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Nome da empresa ou entidade"
+                    value={formData.empresa}
+                    onChange={e => setFormData({ ...formData, empresa: e.target.value })}
+                    className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none ${
+                      isDark
+                        ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
+                        : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
+                    }`}
+                  />
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
+                    isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                  }`}>
+                    Cargo / Área <span className="text-[#C8102E]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: Diretor, RH, Gestor"
+                    value={formData.cargo}
+                    onChange={e => setFormData({ ...formData, cargo: e.target.value })}
+                    className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none ${
+                      isDark
+                        ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
+                        : 'bg-slate-50 border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E] focus:bg-white'
+                    }`}
+                  />
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
+                    isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                  }`}>
+                    Tenho interesse em: <span className="text-[#C8102E]">*</span>
+                  </label>
+                  <select
+                    value={formData.interesse}
+                    onChange={e => setFormData({ ...formData, interesse: e.target.value as LeadInteresse })}
+                    className={`w-full h-12 px-4 rounded-xl text-sm font-medium transition-all focus:outline-none cursor-pointer ${
+                      isDark
+                        ? 'bg-[#151A24] border border-white/10 text-white focus:border-[#DB8902]'
+                        : 'bg-slate-50 border border-slate-200 text-[#0F172A] focus:border-[#C8102E] focus:bg-white'
+                    }`}
+                  >
+                    <option value="gestao-viagens">Gestão de viagens corporativas</option>
+                    <option value="beneficios-parcerias">Benefícios e Parcerias (NC Partners)</option>
+                    <option value="eventos-mice">Eventos e grupos / MICE</option>
+                    <option value="viagens-lazer">Viagens de lazer</option>
+                    <option value="outro">Outro</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 4. CAMPOS CONDICIONAIS: Se o interesse for "Benefícios e Parcerias" */}
+              {formData.interesse === 'beneficios-parcerias' && (
+                <div className={`p-5 md:p-6 rounded-2xl border space-y-5 animate-in fade-in slide-in-from-top-2 duration-200 ${
+                  isDark
+                    ? 'bg-gradient-to-br from-amber-500/10 via-red-500/5 to-transparent border-[#DB8902]/30'
+                    : 'bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-white border-amber-300'
+                }`}>
+                  <div className="flex items-center gap-2 pb-1 border-b border-amber-500/20">
+                    <Sparkles size={16} className="text-[#DB8902]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#DB8902]">
+                      Informações sobre a Parceria / NC Partners
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {/* Tipo de organização */}
+                    <div className="flex flex-col justify-end">
+                      <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
+                        isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                      }`}>
+                        Tipo de organização <span className="text-[#C8102E]">*</span>
+                      </label>
+                      <select
+                        required
+                        value={formData.tipoOrganizacao}
+                        onChange={e => setFormData({ ...formData, tipoOrganizacao: e.target.value })}
+                        className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none cursor-pointer ${
+                          isDark
+                            ? 'bg-[#151A24] border border-white/10 text-white focus:border-[#DB8902]'
+                            : 'bg-white border border-slate-200 text-[#0F172A] focus:border-[#C8102E]'
+                        }`}
+                      >
+                        <option value="">Selecione o tipo</option>
+                        <option value="Empresa">Empresa Privada</option>
+                        <option value="Associação">Associação</option>
+                        <option value="Federação">Federação</option>
+                        <option value="Cooperativa">Cooperativa</option>
+                        <option value="Outra">Outra</option>
+                      </select>
+                    </div>
+
+                    {/* Público que pretende beneficiar */}
+                    <div className="flex flex-col justify-end">
+                      <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
+                        isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                      }`}>
+                        Público que pretende beneficiar <span className="text-[#C8102E]">*</span>
+                      </label>
+                      <select
+                        required
+                        value={formData.publicoBeneficiado}
+                        onChange={e => setFormData({ ...formData, publicoBeneficiado: e.target.value })}
+                        className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none cursor-pointer ${
+                          isDark
+                            ? 'bg-[#151A24] border border-white/10 text-white focus:border-[#DB8902]'
+                            : 'bg-white border border-slate-200 text-[#0F172A] focus:border-[#C8102E]'
+                        }`}
+                      >
+                        <option value="">Selecione o público</option>
+                        <option value="Colaboradores">Colaboradores (Empresa)</option>
+                        <option value="Associados">Associados</option>
+                        <option value="Cooperados">Cooperados</option>
+                        <option value="Membros">Membros / Filiados</option>
+                        <option value="Outro">Outro</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Quantidade aproximada de pessoas beneficiadas */}
+                  <div className="flex flex-col justify-end">
+                    <label className={`block text-xs uppercase tracking-wider font-semibold mb-2 ${
+                      isDark ? 'text-nc-warm/80' : 'text-slate-700'
+                    }`}>
+                      Quantidade aproximada de pessoas beneficiadas <span className="text-[#C8102E]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: 50 a 200 pessoas, 500 associados, etc."
+                      value={formData.quantidadePessoas}
+                      onChange={e => setFormData({ ...formData, quantidadePessoas: e.target.value })}
+                      className={`w-full h-12 px-4 rounded-xl text-sm transition-all focus:outline-none ${
+                        isDark
+                          ? 'bg-[#151A24] border border-white/10 text-white placeholder:text-nc-warm/30 focus:border-[#DB8902]'
+                          : 'bg-white border border-slate-200 text-[#0F172A] placeholder:text-slate-400 focus:border-[#C8102E]'
+                      }`}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* 5. Privacidade Simplificada (Texto e link obrigatórios solicitados) */}
@@ -521,7 +635,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
               </>
             ) : (
               <>
-                <span>Enviar Solicitação</span>
+                <span>{submitLabel || (variant === 'b2b-simple' ? 'Quero conhecer o programa' : 'Enviar Solicitação')}</span>
                 <ArrowRight size={16} />
               </>
             )}

@@ -54,7 +54,7 @@ export const MILESTONES: Milestone[] = [
     quoteAuthor: 'Neusa Culpi · Fundadora',
     icon: <Award className="w-6 h-6 text-[#C8102E]" />,
     highlightStat: {
-      value: '38+ Anos',
+      value: '37 Anos',
       label: 'De história contínua em Curitiba'
     },
     tags: ['Fundação Neusa Culpi', 'Sede Curitiba', 'Atendimento Consultivo'],
@@ -315,7 +315,7 @@ export const HistoryTimeline: React.FC<HistoryTimelineProps> = ({ onContactClick
         <div className="timeline-header max-w-3xl mx-auto text-center space-y-6 mb-16">
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/80 text-[#C8102E] text-xs font-bold uppercase tracking-[0.2em] shadow-2xs">
             <Clock size={15} className="text-[#DB8902]" />
-            <span>Linha do Tempo · 38 Anos de História</span>
+            <span>Linha do Tempo · 37 Anos de História</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-extrabold text-[#0F172A] tracking-tight leading-[1.12]">
