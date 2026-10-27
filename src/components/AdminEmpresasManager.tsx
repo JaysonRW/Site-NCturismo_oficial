@@ -559,7 +559,7 @@ export const AdminEmpresasManager: React.FC<AdminEmpresasManagerProps> = ({ noti
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Banco Sicredi, OAB Paraná, Renault..."
+                  placeholder="Ex: Nome da Empresa ou Entidade Parceira"
                   value={formData.nome}
                   onChange={e => setFormData({ ...formData, nome: e.target.value })}
                   className="w-full bg-[#13161c] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-nc-orange text-sm"
@@ -616,7 +616,7 @@ export const AdminEmpresasManager: React.FC<AdminEmpresasManagerProps> = ({ noti
                 <input
                   type="text"
                   required
-                  placeholder="Ex: NC-SICREDI-2026"
+                  placeholder="Ex: NC-PARCEIRO-2026"
                   value={formData.codigo_acesso}
                   onChange={e => setFormData({ ...formData, codigo_acesso: e.target.value.toUpperCase() })}
                   className="w-full bg-[#13161c] border border-amber-500/30 rounded-xl px-4 py-2.5 text-amber-400 font-mono font-bold focus:outline-none focus:border-amber-400 text-sm"

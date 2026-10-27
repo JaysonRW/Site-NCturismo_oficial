@@ -419,7 +419,7 @@ export const HistoryTimeline: React.FC<HistoryTimelineProps> = ({ onContactClick
                       {isActive && (
                         <span className="absolute inset-0 rounded-full bg-red-400/40 animate-ping" />
                       )}
-                      <span className="font-mono text-xs font-bold">{milestone.year === 'Hoje' ? '38a' : milestone.year.slice(2)}</span>
+                      <span className="font-mono text-xs font-bold">{milestone.year === 'Hoje' ? '37a' : milestone.year.slice(2)}</span>
                     </button>
                   </div>
 

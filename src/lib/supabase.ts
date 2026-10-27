@@ -458,56 +458,13 @@ const SOLICITACOES_STORAGE_KEY = 'nc_solicitacoes_codigo';
 export const INITIAL_EMPRESAS_CONVENIADAS: EmpresaConveniada[] = [
   {
     id: 'emp-nc-turismo',
-    nome: 'NC Turismo (Colaboradores & Familiares)',
-    codigo_acesso: 'NC-TURISMO-VIP',
+    nome: 'NC Turismo (Institucional)',
+    codigo_acesso: 'NC-TURISMO-OFICIAL',
     tipo: 'empresa',
     ativa: true,
-    desconto_percentual: 15,
+    desconto_percentual: 0,
     total_beneficiados_estimado: 50,
     created_at: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'emp-amapar',
-    nome: 'Associação dos Magistrados do Paraná (AMAPAR)',
-    codigo_acesso: 'NC-AMAPAR-2026',
-    tipo: 'associacao',
-    ativa: true,
-    desconto_percentual: 10,
-    total_beneficiados_estimado: 850,
-    contato_rh_nome: 'Secretaria Geral',
-    contato_rh_email: 'convenios@amapar.org.br',
-    created_at: '2026-01-10T00:00:00Z'
-  },
-  {
-    id: 'emp-sicredi',
-    nome: 'Cooperativa de Crédito Sicredi',
-    codigo_acesso: 'NC-SICREDI-2026',
-    tipo: 'cooperativa',
-    ativa: true,
-    desconto_percentual: 12,
-    total_beneficiados_estimado: 1200,
-    created_at: '2026-02-01T00:00:00Z'
-  },
-  {
-    id: 'emp-fiep',
-    nome: 'Federação das Indústrias do Paraná (FIEP)',
-    codigo_acesso: 'NC-FIEP-2026',
-    tipo: 'federacao',
-    ativa: true,
-    desconto_percentual: 10,
-    total_beneficiados_estimado: 2500,
-    created_at: '2026-02-15T00:00:00Z'
-  },
-  {
-    id: 'emp-renault',
-    nome: 'Renault do Brasil',
-    codigo_acesso: 'NC-RENAULT-2026',
-    tipo: 'empresa',
-    ativa: true,
-    desconto_percentual: 10,
-    total_beneficiados_estimado: 4000,
-    contato_rh_nome: 'Recursos Humanos / Benefícios',
-    created_at: '2026-03-01T00:00:00Z'
   }
 ];
 

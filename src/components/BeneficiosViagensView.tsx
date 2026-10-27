@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  ShieldCheck, 
   ArrowLeft, 
   ArrowRight, 
   ExternalLink, 
@@ -22,7 +21,7 @@ import {
   Ticket,
   Headphones
 } from 'lucide-react';
-import { recordTermsAcceptance } from '../lib/supabase';
+import { recordTermsAcceptance, validateEmpresaCodigo, EmpresaConveniada } from '../lib/supabase';
 import { LeadForm } from './LeadForm';
 
 interface BeneficiosViagensViewProps {
@@ -42,8 +41,8 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
   // Modal preview state for viewing legal documents inline
   const [modalDocument, setModalDocument] = useState<'termos' | 'privacidade' | null>(null);
 
-  // Parâmetro opcional caso o usuário venha por um link de parceiro na URL (?convenio= ou ?codigo=)
-  const [partnerRef, setPartnerRef] = useState<string>('');
+  // Parceria formalizada real (só exibe badge de convênio se vier de link oficial e validado no banco)
+  const [formalPartner, setFormalPartner] = useState<EmpresaConveniada | null>(null);
 
   const DOCUMENT_VERSION = 'Termos de Uso v1.1 e Política de Privacidade v1.1';
   const TARGET_URL = 'http://beneficios.ncturismo.com.br/b2c/';
@@ -53,7 +52,11 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
       const params = new URLSearchParams(window.location.search);
       const refCode = params.get('convenio') || params.get('codigo') || params.get('parceiro') || '';
       if (refCode) {
-        setPartnerRef(refCode.toUpperCase());
+        validateEmpresaCodigo(refCode).then(res => {
+          if (res.valid && res.empresa) {
+            setFormalPartner(res.empresa);
+          }
+        });
       }
 
       const lastAccepted = localStorage.getItem('nc_last_accepted_at');
@@ -84,8 +87,8 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
       // ignore localStorage errors
     }
 
-    const finalUrl = partnerRef
-      ? `${TARGET_URL}?convenio=${encodeURIComponent(partnerRef)}`
+    const finalUrl = formalPartner
+      ? `${TARGET_URL}?convenio=${encodeURIComponent(formalPartner.codigo_acesso)}`
       : TARGET_URL;
 
     try {
@@ -94,7 +97,7 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
         accepted_at: nowIso,
         user_agent: navigator.userAgent || 'unknown',
         target_url: finalUrl,
-        source: partnerRef ? `portal_beneficios_${partnerRef}` : 'portal_beneficios_acesso_livre'
+        source: formalPartner ? `parceria_formal_${formalPartner.codigo_acesso}` : 'portal_beneficios_acesso_direto'
       });
 
       setRedirectSuccess(true);
@@ -129,135 +132,294 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
           <div className="flex items-center gap-2 text-xs font-mono text-slate-600">
             <span>NC Turismo</span>
             <span aria-hidden="true">·</span>
-            <span className="font-semibold text-[#0F172A]">37 Anos de Atuação (2026)</span>
-            <span aria-hidden="true">·</span>
-            <span className="text-[#C8102E] font-semibold">B2B & B2C</span>
+            <span className="font-semibold text-[#0F172A]">Fundada em 1989 • 37 Anos de Atuação</span>
           </div>
         </div>
       </div>
 
       {/* =========================================================================
-          ETAPA 1: HERO SECTION & OS 3 PILARES DE VALOR
+          1. PRIMEIRA TELA: NOVO MOTE, 3 PILARES IMEDIATOS & ISCA DE CUPONS MENSAIS
          ========================================================================= */}
-      <div className="max-w-6xl mx-auto px-6 md:px-12 mb-12">
-        <div className="relative rounded-3xl bg-white border border-slate-200/90 p-8 md:p-14 shadow-xl shadow-slate-200/60 overflow-hidden">
+      <div className="max-w-6xl mx-auto px-6 md:px-12 mb-14">
+        <div className="relative rounded-3xl bg-white border border-slate-200/90 p-8 md:p-12 shadow-xl shadow-slate-200/60 overflow-hidden">
           <div className="absolute top-0 right-0 -mr-24 -mt-24 w-96 h-96 bg-red-500/5 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 -ml-24 -mb-24 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 space-y-6 max-w-4xl">
-            <div className="flex items-center gap-2 text-xs md:text-sm font-mono font-bold tracking-wider uppercase text-[#C8102E]">
-              <Sparkles size={15} className="text-[#C8102E]" />
-              <span>Benefícios em Viagens, Lazer & Soluções Corporativas</span>
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            
+            {/* Coluna Esquerda: Manchete, Subtítulo de Apoio e CTAs Principais */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-wider uppercase text-[#C8102E]">
+                <Sparkles size={15} className="text-[#C8102E]" />
+                <span>Soluções Corporativas, Benefícios & Parcerias</span>
+              </div>
+
+              <h1 className="text-3xl md:text-5xl font-display font-extrabold text-[#0F172A] tracking-tight leading-[1.12]">
+                Da primeira reserva à gestão completa. A solução certa para cada empresa.
+              </h1>
+
+              <p className="text-base md:text-lg text-slate-600 font-normal leading-relaxed">
+                <strong className="text-[#0F172A]">Sua empresa merece mais vantagens para viajar.</strong> A NC Turismo reúne condições comerciais competitivas, tecnologia e atendimento especializado para simplificar suas viagens — com 37 anos de atuação no mercado.
+              </p>
+
+              {/* CTA na esquerda focado no acesso livre ao portal (para viajantes individuais ou quem já tem acesso) */}
+              <div className="pt-2 space-y-3">
+                <div className="flex flex-wrap items-center gap-4">
+                  <a
+                    href="#portal-colaborador"
+                    className="inline-flex items-center gap-2.5 px-7 py-4 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-xs md:text-sm uppercase tracking-wider transition-all shadow-md"
+                  >
+                    <Compass size={16} className="text-[#DB8902]" />
+                    <span>Acessar Portal & Buscar Itinerários</span>
+                    <ArrowRight size={15} />
+                  </a>
+                </div>
+
+                <p className="text-xs text-slate-600 leading-relaxed max-w-xl">
+                  <strong className="text-[#0F172A]">Aberto para todos:</strong> Você não precisa ser uma empresa ou ter cadastro prévio. Qualquer pessoa buscando itinerários de viagem pode acessar o portal livremente — e quem já é cliente ou conveniado também entra por aqui.
+                </p>
+              </div>
+
+              {/* Espaço muito discreto reservado para a condição em estudo de 12 meses */}
+              <div className="pt-1 flex items-center gap-2 text-xs text-slate-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#DB8902]" />
+                <span>Condição especial: <strong>até 12 meses de benefícios para sua empresa</strong> (consulte elegibilidade).</span>
+              </div>
             </div>
 
-            <h1 className="text-3xl md:text-5xl font-display font-extrabold text-[#0F172A] tracking-tight leading-[1.15]">
-              Da primeira reserva à gestão completa. A solução certa para cada empresa.
-            </h1>
+            {/* Coluna Direita (Primeira Tela): Grande Destaque Visual dos Cupons Mensais como Isca de Cadastro */}
+            <div className="lg:col-span-5">
+              <div className="rounded-3xl bg-gradient-to-br from-[#C8102E] via-[#B71C1C] to-[#DB8902] p-7 md:p-8 text-white shadow-xl relative overflow-hidden">
+                <div className="space-y-4 relative z-10">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-widest text-amber-200 font-bold">
+                      <Ticket size={15} /> Destaque Exclusivo NC Turismo
+                    </span>
+                    <span className="text-[11px] font-mono bg-white/15 px-2.5 py-1 rounded-md text-white font-semibold">
+                      Ativo Mensalmente
+                    </span>
+                  </div>
 
-            <h2 className="text-xl md:text-2xl font-display font-bold text-[#C8102E] tracking-tight">
-              Sua empresa merece mais vantagens para viajar — e você também.
-            </h2>
+                  <h2 className="text-2xl md:text-3xl font-display font-extrabold tracking-tight leading-tight">
+                    Cupons Mensais para empresas e Viajantes
+                  </h2>
 
-            <p className="text-base md:text-lg text-slate-600 font-normal leading-relaxed">
-              Com <strong>37 anos de atuação no mercado em 2026</strong>, a <strong>NC Turismo</strong> conecta empresas, entidades parceiras, colaboradores e viajantes individuais a um portal completo para buscar itinerários, reservar viagens corporativas ou planejar férias com condições reais e suporte dedicado.
-            </p>
+                  <p className="text-xs md:text-sm text-white/90 leading-relaxed">
+                    Condições exclusivas liberadas todo mês pela <strong>NC Turismo</strong> para reduzir custos em reservas de hotéis, pacotes e serviços turísticos para sua empresa e equipe.
+                  </p>
 
-            <div className="pt-2 flex flex-wrap gap-4">
-              <a
-                href="#porta-de-entrada"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white font-bold text-xs uppercase tracking-wider hover:brightness-105 transition-all shadow-md shadow-red-500/20"
-              >
-                <span>Acessar Portal de Viagens & Benefícios</span>
-                <ArrowRight size={15} />
-              </a>
+                  <ul className="space-y-2 pt-1 text-xs text-white/95">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 size={15} className="text-amber-300 shrink-0" />
+                      <span>Lotes mensais exclusivos para empresas cadastradas</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 size={15} className="text-amber-300 shrink-0" />
+                      <span>Economia imediata para viagens corporativas ou lazer</span>
+                    </li>
+                  </ul>
 
-              <a
-                href="#formulario-parceria"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider transition-all border border-slate-200"
-              >
-                <span>Quero cadastrar minha empresa / entidade</span>
-              </a>
+                  <div className="pt-3">
+                    <a
+                      href="#formulario-parceria"
+                      className="w-full py-3.5 px-5 rounded-xl bg-white text-[#C8102E] hover:bg-amber-50 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md"
+                    >
+                      <span>Conhecer os benefícios da minha empresa</span>
+                      <ArrowRight size={15} />
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
+
           </div>
 
-          {/* OS 3 PILARES CENTRAIS: Economia, Facilidade e Assessoria */}
-          <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 pt-10 border-t border-slate-200">
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-              <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-200 text-[#C8102E] flex items-center justify-center">
-                <Ticket size={22} />
+          {/* OS 3 PILARES IMEDIATOS NA PRIMEIRA TELA: Economia, Facilidade e Assessoria */}
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-5 mt-10 pt-8 border-t border-slate-200">
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-4">
+              <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-200 text-[#C8102E] flex items-center justify-center shrink-0">
+                <Ticket size={20} />
               </div>
-              <h3 className="text-lg font-bold text-[#0F172A]">
-                1. Economia e Benefícios
-              </h3>
-              <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-                Acesso a <strong>cupons mensais da BRT</strong> e condições comerciais diferenciadas em hotelaria, pacotes e serviços para empresas cadastradas, entidades e viajantes.
-              </p>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-[#0F172A]">
+                  Economia (Cupons Mensais)
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Cupons mensais exclusivos da NC Turismo e tarifas competitivas para otimizar cada viagem.
+                </p>
+              </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-              <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 text-[#DB8902] flex items-center justify-center">
-                <Compass size={22} />
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-4">
+              <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 text-[#DB8902] flex items-center justify-center shrink-0">
+                <Compass size={20} />
               </div>
-              <h3 className="text-lg font-bold text-[#0F172A]">
-                2. Facilidade de Reserva
-              </h3>
-              <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-                Acesso simples, direto e transparente ao portal para pesquisar itinerários de viagens corporativas ou de lazer com total autonomia e rapidez.
-              </p>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-[#0F172A]">
+                  Facilidade (Reservas Simplificadas)
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Acesso rápido e descomplicado para pesquisar itinerários e concluir reservas sem burocracia.
+                </p>
+              </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center">
-                <Headphones size={22} />
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-4">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+                <Headphones size={20} />
               </div>
-              <h3 className="text-lg font-bold text-[#0F172A]">
-                3. Assessoria e Suporte 24/7
-              </h3>
-              <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-                Atendimento humano 24 horas por dia, 7 dias por semana, sustentado pelos <strong>37 anos de solidez</strong> da NC Turismo para apoiar cada etapa da sua jornada.
-              </p>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-[#0F172A]">
+                  Assessoria (Suporte 24/7)
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Equipe própria disponível 24 horas por dia, 7 dias por semana, com 37 anos de experiência.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* =========================================================================
-          ETAPA 2: PORTA DE ENTRADA (ACESSO LIVRE AO PORTAL B2B & B2C)
+          2. BLOCO COMPACTO COM 3 SOLUÇÕES (PROGRESSÃO DOS SERVIÇOS)
          ========================================================================= */}
-      <div id="porta-de-entrada" className="max-w-6xl mx-auto px-6 md:px-12 mb-16 scroll-mt-28">
-        <div className="mb-8 space-y-2">
-          <div className="text-xs font-mono uppercase tracking-[0.16em] text-[#C8102E] font-bold">
-            Porta de Entrada • Para Viajantes (B2C) e Empresas (B2B)
-          </div>
-          <h2 className="text-2xl md:text-4xl font-display font-extrabold text-[#0F172A] tracking-tight">
-            Acesse o portal de buscas ou escolha como deseja avançar
-          </h2>
-          <p className="text-sm md:text-base text-slate-600 max-w-3xl leading-relaxed">
-            Nosso ambiente de reservas e benefícios está liberado para você consultar itinerários, pacotes e tarifas — seja para uma viagem corporativa, pelo convênio da sua entidade ou para sua próxima viagem pessoal.
-          </p>
-        </div>
+      <div className="max-w-6xl mx-auto px-6 md:px-12 mb-14">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 md:p-10 shadow-lg space-y-7">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-1.5 max-w-2xl">
+              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold">
+                <Layers size={15} /> Portfólio NC Turismo
+              </div>
+              <h2 className="text-2xl md:text-3xl font-display font-extrabold text-[#0F172A] tracking-tight">
+                A evolução certa para a necessidade da sua empresa
+              </h2>
+            </div>
 
+            <span className="text-xs font-medium text-slate-500 bg-slate-100 border border-slate-200 px-3.5 py-1.5 rounded-lg">
+              Até 12 meses de benefícios para sua empresa
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* (1) Benefícios NC Turismo */}
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-2.5">
+                <div className="text-xs font-mono font-bold text-[#C8102E] uppercase tracking-wider">
+                  1. Benefícios NC Turismo
+                </div>
+                <h3 className="text-lg font-display font-bold text-[#0F172A]">
+                  PDV e Cupons Mensais
+                </h3>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                  Acesso direto ao portal de reservas e aos cupons mensais para garantir economia imediata em hospedagens, pacotes e viagens.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-slate-200/80 text-[11px] font-mono text-slate-500">
+                PDV Online · Cupons Mensais · Suporte 24/7
+              </div>
+            </div>
+
+            {/* (2) Gestão Corporativa */}
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-2.5">
+                <div className="text-xs font-mono font-bold text-[#DB8902] uppercase tracking-wider">
+                  2. Gestão Corporativa
+                </div>
+                <h3 className="text-lg font-display font-bold text-[#0F172A]">
+                  Organização e Controle
+                </h3>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                  Centralização das viagens a trabalho da sua empresa com faturamento organizado, centros de custo e relatórios gerenciais claros.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-slate-200/80 text-[11px] font-mono text-slate-500">
+                Controle Centralizado · Relatórios · Atendimento Dedicado
+              </div>
+            </div>
+
+            {/* (3) Gestão Integrada */}
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+              <div className="space-y-2.5">
+                <div className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider">
+                  3. Gestão Integrada
+                </div>
+                <h3 className="text-lg font-display font-bold text-[#0F172A]">
+                  T&E, Políticas e ERP
+                </h3>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                  Solução completa com controle de despesas (T&E), aplicação de políticas de viagem, fluxos de aprovação e integração com ERP.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-slate-200/80 text-[11px] font-mono text-slate-500">
+                Travel & Expense · Políticas · Integração ERP
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          3. ACESSO AO PORTAL (BASE ATUAL & BUSCA DE ITINERÁRIOS - FASE 1 LIVRE)
+         ========================================================================= */}
+      <div id="portal-colaborador" className="max-w-6xl mx-auto px-6 md:px-12 mb-14 scroll-mt-28">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           
-          {/* COLUNA PRINCIPAL: ACESSO DIRETO E LIVRE AO PORTAL (SEM TRAVAMENTO DE CÓDIGO) */}
-          <div id="portal-colaborador" className="lg:col-span-7 rounded-3xl bg-white border-2 border-[#C8102E]/20 p-7 md:p-10 shadow-xl shadow-slate-200/60 flex flex-col justify-between space-y-6">
+          {/* COLUNA PRINCIPAL: ACESSO LIVRE AO PORTAL PARA VIAJANTES INDIVIDUAIS E CLIENTES */}
+          <div className="lg:col-span-7 rounded-3xl bg-white border-2 border-[#C8102E]/20 p-7 md:p-10 shadow-xl shadow-slate-200/60 flex flex-col justify-between space-y-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <span className="text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold flex items-center gap-1.5">
-                  <Lock size={14} /> Acesso Direto ao Portal de Benefícios & Itinerários
+                  <Compass size={15} /> Portal de Viagens & Busca de Itinerários
                 </span>
                 <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg">
-                  Acesso Livre • Sem bloqueio de cadastro
+                  Acesso Livre • Sem exigir cadastro ou vínculo
                 </span>
               </div>
 
               <h3 className="text-2xl md:text-3xl font-display font-bold text-[#0F172A]">
-                Buscar itinerários e acessar benefícios em viagens
+                Busque itinerários de viagem ou utilize seu benefício
               </h3>
 
               <p className="text-sm text-slate-600 leading-relaxed">
-                Consulte disponibilidade, compare opções e faça suas buscas diretamente no portal <strong>beneficios.ncturismo.com.br</strong>. Para prosseguir com transparência e segurança, basta revisar os termos abaixo e confirmar a ciência.
+                <strong>Não é uma empresa nem possui cadastro? Sem problema.</strong> Qualquer viajante pode entrar livremente no portal <strong>beneficios.ncturismo.com.br</strong> para consultar itinerários, comparar opções e planejar sua viagem — e quem já possui benefício corporativo também acessa por aqui.
               </p>
+
+              {/* Explicação clara para os dois perfis (Pessoa Física sem cadastro vs. Beneficiário/Empresa) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 space-y-1">
+                  <div className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
+                    <Compass size={14} className="text-[#C8102E]" />
+                    <span>Para Viajantes (Sem Cadastro)</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Entre direto para pesquisar roteiros, hotéis e passagens sem precisar de código ou vínculo empresarial.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 space-y-1">
+                  <div className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
+                    <CheckCircle2 size={14} className="text-emerald-600" />
+                    <span>Já possui acesso / Beneficiário</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Se sua empresa ou entidade já é parceira, acesse o portal normalmente para utilizar suas vantagens.
+                  </p>
+                </div>
+              </div>
+
+              {/* Exibe identificação apenas se for uma parceria real e formalizada validada no banco */}
+              {formalPartner && (
+                <div className="flex items-center gap-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs">
+                  <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                  <div>
+                    <strong>Parceria Formalizada Identificada:</strong> {formalPartner.nome}
+                    {formalPartner.desconto_percentual && formalPartner.desconto_percentual > 0
+                      ? ` • Condição comercial de ${formalPartner.desconto_percentual}% habilitada.`
+                      : ''}
+                  </div>
+                </div>
+              )}
 
               {/* Documentação & Termos Ativos */}
               <div className="rounded-2xl bg-slate-50 border border-slate-200 p-5 space-y-4">
@@ -331,7 +493,7 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                   {consentWarning && !accepted && (
                     <div className="mt-2.5 flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs animate-in fade-in">
                       <AlertCircle size={15} className="shrink-0 text-amber-600" />
-                      <span>Por favor, marque a caixa acima confirmando a ciência dos termos para abrir o portal.</span>
+                      <span>Por favor, marque a caixa acima confirmando a ciência dos termos para entrar no portal.</span>
                     </div>
                   )}
                 </div>
@@ -361,7 +523,7 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                   </>
                 ) : (
                   <>
-                    <span>ACESSAR BENEFÍCIOS EM VIAGENS (NOVA ABA)</span>
+                    <span>ACESSAR PORTAL E BUSCAR ITINERÁRIOS (NOVA ABA)</span>
                     <ExternalLink size={17} />
                   </>
                 )}
@@ -372,30 +534,30 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                   <Lock size={12} className="text-[#C8102E]" />
                   Ambiente Oficial: <strong className="text-[#0F172A]">beneficios.ncturismo.com.br</strong>
                 </span>
-                <span className="text-slate-400 font-mono">
-                  Aberto para buscas B2B e B2C
+                <span className="text-slate-500 font-mono">
+                  Livre para Viajantes Individuais e Empresas
                 </span>
               </div>
             </div>
           </div>
 
-          {/* COLUNA LATERAL: CAMINHOS DIRECIONADOS ("Quero viajar" & "Quero oferecer benefícios") */}
+          {/* COLUNA LATERAL: NOVOS CLIENTES E ROTEIROS DE LAZER */}
           <div className="lg:col-span-5 flex flex-col justify-between gap-6">
             
-            {/* Caminho 1: Quero oferecer benefícios para minha empresa ou entidade */}
+            {/* Caminho 1: Novos Clientes Corporativos */}
             <div className="rounded-3xl bg-white border border-slate-200 p-7 shadow-lg flex-1 flex flex-col justify-between space-y-5">
               <div className="space-y-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 text-[#DB8902] flex items-center justify-center">
                   <Building2 size={20} />
                 </div>
                 <div className="text-xs font-mono uppercase tracking-wider text-[#DB8902] font-bold">
-                  Para Empresas, RH e Entidades (B2B)
+                  Para Empresas & Gestores
                 </div>
                 <h4 className="text-xl font-display font-bold text-[#0F172A]">
-                  Quer oferecer este benefício para sua empresa ou entidade?
+                  Sua empresa ainda não tem os benefícios da NC?
                 </h4>
                 <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-                  Disponibilize cupons mensais da BRT, condições diferenciadas e suporte 24/7 para seus colaboradores, associados ou cooperados sem custo de adesão.
+                  Habilite cupons mensais, reservas simplificadas e suporte 24/7 para sua equipe ou estruture a gestão das viagens corporativas da sua organização.
                 </p>
               </div>
 
@@ -403,25 +565,25 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                 href="#formulario-parceria"
                 className="w-full py-3.5 px-5 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
               >
-                <span>Quero oferecer benefícios para minha empresa ou entidade</span>
+                <span>Conhecer os benefícios da minha empresa</span>
                 <ArrowRight size={15} />
               </a>
             </div>
 
-            {/* Caminho 2: Quero viajar (Roteiros & Lazer) */}
+            {/* Caminho 2: Roteiros & Lazer */}
             <div className="rounded-3xl bg-white border border-slate-200 p-7 shadow-lg flex-1 flex flex-col justify-between space-y-5">
               <div className="space-y-3">
                 <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-200 text-[#C8102E] flex items-center justify-center">
                   <Compass size={20} />
                 </div>
                 <div className="text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold">
-                  Para Viajantes & Famílias (B2C)
+                  Viagens Pessoais & Férias
                 </div>
                 <h4 className="text-xl font-display font-bold text-[#0F172A]">
-                  Planejando sua próxima viagem ou férias?
+                  Buscando pacotes e roteiros de lazer?
                 </h4>
                 <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-                  Além de pesquisar diretamente no portal ao lado, você também pode conferir nossos pacotes selecionados, cruzeiros e roteiros personalizados de lazer.
+                  Além de utilizar o portal ao lado para pesquisar itinerários, você também pode conferir nossa vitrine de pacotes, resorts e cruzeiros selecionados.
                 </p>
               </div>
 
@@ -429,7 +591,7 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                 href="#lazer"
                 className="w-full py-3.5 px-5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#0F172A] border border-slate-200 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
               >
-                <span>Quero viajar (Ver Roteiros & Lazer)</span>
+                <span>Ver Roteiros & Lazer</span>
                 <ArrowRight size={15} />
               </a>
             </div>
@@ -439,136 +601,7 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
       </div>
 
       {/* =========================================================================
-          ETAPA 4 (PARTE A): VITRINE DE CUPONS MENSAIS BRT (ISCA DE CONVERSÃO)
-         ========================================================================= */}
-      <div className="max-w-6xl mx-auto px-6 md:px-12 mb-16">
-        <div className="rounded-3xl bg-gradient-to-r from-[#C8102E] via-[#B71C1C] to-[#DB8902] p-8 md:p-12 text-white shadow-xl relative overflow-hidden">
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-8 space-y-4">
-              <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-amber-200 font-bold">
-                <Ticket size={16} /> Vitrine de Campanhas & Vantagens Exclusivas
-              </div>
-              <h2 className="text-2xl md:text-4xl font-display font-extrabold tracking-tight">
-                Cupons Mensais para empresas e Viajantes
-              </h2>
-              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl">
-                Em parceria estratégica com a <strong>BRT</strong>, disponibilizamos lotes mensais de cupons promocionais e condições especiais em hospedagens nacionais e internacionais, pacotes completos e serviços turísticos no portal.
-              </p>
-              <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-medium text-white/90">
-                <span className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-amber-300" />
-                  Campanhas renovadas mensalmente
-                </span>
-                <span className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-amber-300" />
-                  Aplicação direta nas reservas elegíveis
-                </span>
-                <span className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-amber-300" />
-                  Curadoria com 37 anos de experiência NC
-                </span>
-              </div>
-            </div>
-
-            <div className="lg:col-span-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-center space-y-4">
-              <div className="text-xs font-mono uppercase tracking-wider text-amber-200">
-                Benefício Recorrente
-              </div>
-              <div className="text-2xl font-display font-extrabold text-white">
-                Cupons Mensais BRT
-              </div>
-              <p className="text-xs text-white/80 leading-relaxed">
-                Cadastre sua empresa no final desta página para habilitar o recebimento recorrente das campanhas mensais para sua equipe.
-              </p>
-              <a
-                href="#formulario-parceria"
-                className="inline-flex items-center justify-center gap-2 w-full py-3 px-5 rounded-xl bg-white text-[#C8102E] hover:bg-amber-50 font-bold text-xs uppercase tracking-wider transition-all shadow-md"
-              >
-                <span>Habilitar para minha empresa</span>
-                <ArrowRight size={14} />
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* =========================================================================
-          ETAPA 4 (PARTE B): PORTFÓLIO UNIFICADO (3 NÍVEIS DE SERVIÇO NA MESMA TELA)
-         ========================================================================= */}
-      <div className="max-w-6xl mx-auto px-6 md:px-12 mb-16">
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 md:p-12 shadow-lg space-y-8">
-          <div className="max-w-3xl space-y-2">
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold">
-              <Layers size={15} /> Evolução Contínua • Portfólio Unificado NC Turismo
-            </div>
-            <h2 className="text-2xl md:text-3xl font-display font-extrabold text-[#0F172A] tracking-tight">
-              Três níveis de serviço que acompanham o momento da sua empresa
-            </h2>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              A NC Turismo escala junto com a sua operação: desde a primeira reserva com benefícios imediatos até a governança corporativa integrada.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Nível 1 */}
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <div className="text-xs font-mono font-bold text-[#C8102E] uppercase tracking-wider">
-                  01. Entrada & Vantagens
-                </div>
-                <h3 className="text-xl font-display font-bold text-[#0F172A]">
-                  Benefícios NC Turismo
-                </h3>
-                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-                  Acesso imediato ao PDV de viagens e aos <strong>cupons mensais BRT</strong>. Ideal para colaboradores, associados e empresas que buscam economia rápida em reservas pontuais e viagens de lazer.
-                </p>
-              </div>
-              <div className="pt-3 border-t border-slate-200/80 text-[11px] font-mono text-slate-500">
-                PDV Online · Cupons Mensais · Suporte 24/7
-              </div>
-            </div>
-
-            {/* Nível 2 */}
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <div className="text-xs font-mono font-bold text-[#DB8902] uppercase tracking-wider">
-                  02. Controle & Performance
-                </div>
-                <h3 className="text-xl font-display font-bold text-[#0F172A]">
-                  Gestão Corporativa
-                </h3>
-                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-                  Estruturação completa das viagens a trabalho da sua empresa, com faturamento centralizado, organização por centros de custo, relatórios gerenciais e atendimento consultivo dedicado.
-                </p>
-              </div>
-              <div className="pt-3 border-t border-slate-200/80 text-[11px] font-mono text-slate-500">
-                Centros de Custo · Faturamento · BI & Relatórios
-              </div>
-            </div>
-
-            {/* Nível 3 */}
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <div className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider">
-                  03. Governança & Escala
-                </div>
-                <h3 className="text-xl font-display font-bold text-[#0F172A]">
-                  Gestão Integrada
-                </h3>
-                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-                  Operação avançada com integração direta ao seu ERP, aplicação automatizada de políticas de viagem (compliance), fluxos multinível de aprovação e acordos corporativos globais.
-                </p>
-              </div>
-              <div className="pt-3 border-t border-slate-200/80 text-[11px] font-mono text-slate-500">
-                Integração ERP · Políticas & Compliance · SLA Dedicado
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* =========================================================================
-          ETAPA 4 (PARTE C): NC PARTNERS (ISOLADO VISUALMENTE PARA PARCERIAS INSTITUCIONAIS)
+          4. NC PARTNERS (DISTINÇÃO VISUAL CLARA PARA PARCERIAS INSTITUCIONAIS)
          ========================================================================= */}
       <div className="max-w-6xl mx-auto px-6 md:px-12 mb-16">
         <div className="rounded-3xl bg-gradient-to-br from-[#0C0F17] via-[#141824] to-[#0A0D14] p-8 md:p-12 text-white border border-white/10 shadow-2xl relative overflow-hidden">
@@ -581,13 +614,13 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
               <div className="space-y-3 max-w-2xl">
                 <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">
                   <Handshake size={15} className="text-[#DB8902]" />
-                  <span>Programa Institucional • NC Partners</span>
+                  <span>Programa de Parcerias Institucionais • NC Partners</span>
                 </div>
                 <h2 className="text-2xl md:text-4xl font-display font-bold text-white tracking-tight">
-                  Parcerias estratégicas para Entidades, Associações e RH
+                  Convênios para Associações, Entidades de Classe e Clubes de Benefícios
                 </h2>
                 <p className="text-xs md:text-sm text-nc-warm/80 leading-relaxed">
-                  Diferente da gestão tradicional de viagens a trabalho, o <strong>NC Partners</strong> é o programa institucional desenhado para que sindicatos, federações, cooperativas (como SINDIFAR, FPCG e entidades de classe) e departamentos de RH agreguem valor direto aos seus associados e colaboradores em viagens pessoais e familiares.
+                  Distinto da contratação padrão de gestão de viagens corporativas, o <strong>NC Partners</strong> é uma frente dedicada exclusivamente a <strong>parcerias institucionais</strong> (sindicatos, federações, cooperativas, associações profissionais e programas de benefícios para colaboradores), oferecendo vantagens em viagens pessoais para membros e associados.
                 </p>
               </div>
               <div className="shrink-0">
@@ -595,7 +628,7 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                   href="#formulario-parceria"
                   className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/15 font-bold text-xs uppercase tracking-wider transition-all"
                 >
-                  <span>Tornar-se Entidade Parceira</span>
+                  <span>Propor Parceria Institucional</span>
                   <ArrowRight size={14} />
                 </a>
               </div>
@@ -607,9 +640,9 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                 <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 flex items-center justify-center">
                   <Tag size={20} />
                 </div>
-                <h3 className="text-base font-bold text-white">Condições de Clube</h3>
+                <h3 className="text-base font-bold text-white">Clube de Vantagens</h3>
                 <p className="text-xs text-nc-warm/70 leading-relaxed">
-                  Acesso ao portal e campanhas de cupons mensais sem custo de implantação ou mensalidade para a entidade parceira.
+                  Acesso aos cupons mensais e condições diferenciadas sem custo de adesão para a entidade parceira.
                 </p>
               </div>
 
@@ -617,9 +650,9 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                 <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center">
                   <Clock size={20} />
                 </div>
-                <h3 className="text-base font-bold text-white">Suporte 24/7 Real</h3>
+                <h3 className="text-base font-bold text-white">Atendimento 24/7</h3>
                 <p className="text-xs text-nc-warm/70 leading-relaxed">
-                  Assistência completa para o associado ou colaborador antes, durante e após a viagem em qualquer destino.
+                  Suporte especializado da equipe NC diretamente ao associado ou colaborador em todas as etapas da viagem.
                 </p>
               </div>
 
@@ -627,9 +660,9 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                 <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center">
                   <Briefcase size={20} />
                 </div>
-                <h3 className="text-base font-bold text-white">Zero Sobrecarga</h3>
+                <h3 className="text-base font-bold text-white">Zero Operação Interna</h3>
                 <p className="text-xs text-nc-warm/70 leading-relaxed">
-                  A NC Turismo assume toda a operação e o atendimento ao viajante, sem gerar trabalho operacional para o seu RH ou secretaria.
+                  A NC Turismo conduz o atendimento diretamente com o viajante, sem gerar demanda operacional para a entidade.
                 </p>
               </div>
 
@@ -637,23 +670,23 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
                   <Award size={20} />
                 </div>
-                <h3 className="text-base font-bold text-white">37 Anos de Solidez</h3>
+                <h3 className="text-base font-bold text-white">37 Anos de Credibilidade</h3>
                 <p className="text-xs text-nc-warm/70 leading-relaxed">
-                  Em 2026, celebramos 37 anos de atuação e credibilidade cuidando das viagens das maiores organizações do país.
+                  Fundada em 1989, a NC Turismo entrega segurança e solidez para valorizar a marca da sua instituição.
                 </p>
               </div>
             </div>
 
             <div className="pt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-nc-warm/70 border-t border-white/10">
-              <span className="font-semibold text-white">Perfis que integram o NC Partners:</span>
+              <span className="font-semibold text-white">Foco exclusivo do NC Partners:</span>
               <div className="flex flex-wrap items-center gap-2 text-nc-warm/80">
-                <span>Empresas Privadas & RH</span>
-                <span aria-hidden="true">·</span>
                 <span>Sindicatos & Federações</span>
                 <span aria-hidden="true">·</span>
-                <span>Associações Profissionais</span>
+                <span>Associações de Classe</span>
                 <span aria-hidden="true">·</span>
                 <span>Cooperativas</span>
+                <span aria-hidden="true">·</span>
+                <span>Clubes de Benefícios (RH)</span>
               </div>
             </div>
           </div>
@@ -661,42 +694,42 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
       </div>
 
       {/* =========================================================================
-          ETAPA 3: FORMULÁRIO SIMPLIFICADO DE CADASTRO DE EMPRESAS (ÚLTIMA PARTE DA PÁGINA)
+          5. FORMULÁRIO SIMPLIFICADO NO RODAPÉ DA PÁGINA
          ========================================================================= */}
       <div id="formulario-parceria" className="max-w-6xl mx-auto px-6 md:px-12 scroll-mt-28">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           
           <div className="lg:col-span-5 space-y-6">
             <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-[#DB8902]">
-              <Users size={15} /> Cadastro de Empresas & Entidades (B2B)
+              <Users size={15} /> Primeiro Contato Simplificado
             </div>
 
             <h2 className="text-2xl md:text-4xl font-display font-extrabold text-[#0F172A] tracking-tight leading-tight">
-              Leve os benefícios da NC Turismo para a sua organização.
+              Conhecer os benefícios da minha empresa
             </h2>
 
             <p className="text-sm md:text-base text-slate-600 leading-relaxed">
-              Quer oferecer <strong>cupons mensais BRT</strong>, condições especiais em viagens de lazer ou estruturar a gestão de viagens corporativas da sua empresa? Preencha os dados essenciais ao lado para conhecer o programa.
+              Preencha apenas seus dados essenciais de contato. Nossa equipe apresentará as condições comerciais, os <strong>cupons mensais exclusivos</strong> e a solução ideal para o momento da sua empresa ou entidade.
             </p>
 
-            <div className="space-y-4 pt-2">
+            <div className="space-y-3 pt-1">
               <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-slate-200">
                 <CheckCircle2 size={18} className="text-[#DB8902] shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  <strong>Adesão rápida e descomplicada:</strong> Sem burocracia inicial. Nossa equipe apresentará o formato ideal para o perfil da sua empresa ou entidade.
+                  <strong>Sem burocracia no primeiro contato:</strong> Não solicitamos CNPJ ou volume detalhado de viagens nesta etapa inicial.
                 </p>
               </div>
 
               <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-slate-200">
                 <CheckCircle2 size={18} className="text-[#DB8902] shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  <strong>Atendimento consultivo 24/7:</strong> Suporte dedicado tanto para o gestor quanto para cada viajante beneficiado.
+                  <strong>Condição especial:</strong> Consulte a disponibilidade de <strong>até 12 meses de benefícios para sua empresa</strong>.
                 </p>
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-slate-100 border border-slate-200 space-y-2">
-              <p className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Canal direto de parcerias e atendimento:</p>
+            <div className="p-5 rounded-2xl bg-slate-100 border border-slate-200 space-y-1.5">
+              <p className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Atendimento direto NC Turismo:</p>
               <p className="text-xs text-slate-600 font-mono">
                 WhatsApp: (41) 99683-0144 | E-mail: atendimento@ncturismo.com.br
               </p>
@@ -710,9 +743,9 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
               sourceContext="pagina_beneficios_parcerias_b2b"
               onOpenLegal={onOpenLegalTab}
               theme="light"
-              title="Quero oferecer este benefício na minha empresa"
-              subtitle="Preencha seus dados de contato para receber a apresentação do programa."
-              submitLabel="Quero conhecer o programa"
+              title="Conhecer os benefícios da minha empresa"
+              subtitle="Informe seus dados básicos para falar com nossos especialistas."
+              submitLabel="Conhecer os benefícios"
             />
           </div>
 
