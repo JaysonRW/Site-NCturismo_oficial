@@ -449,7 +449,7 @@ export const BeneficiosViagensView: React.FC<BeneficiosViagensViewProps> = ({
                 <Ticket size={16} /> Vitrine de Campanhas & Vantagens Exclusivas
               </div>
               <h2 className="text-2xl md:text-4xl font-display font-extrabold tracking-tight">
-                Cupons Mensais BRT para Empresas e Viajantes
+                Cupons Mensais para empresas e Viajantes
               </h2>
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl">
                 Em parceria estratégica com a <strong>BRT</strong>, disponibilizamos lotes mensais de cupons promocionais e condições especiais em hospedagens nacionais e internacionais, pacotes completos e serviços turísticos no portal.
