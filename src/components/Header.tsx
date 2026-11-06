@@ -93,22 +93,22 @@ export const Header: React.FC<HeaderProps> = ({
     }, 200);
   };
 
-  const navigateTo = (hash: string, viewName?: string) => {
+  const navigateTo = (targetPath: string, viewName?: string) => {
     setActiveDropdown(null);
     setMobileMenuOpen(false);
     
     if (onNavigate) {
-      onNavigate(viewName || hash);
-    } else {
-      window.location.hash = hash;
-      // If it's an anchor on the current page, scroll into view
-      if (hash.startsWith('#')) {
-        const elementId = hash.replace('#', '');
-        const element = document.getElementById(elementId);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }
+      onNavigate(viewName || targetPath);
+    } else if (targetPath.startsWith('/#') || targetPath.startsWith('#')) {
+      const hashOnly = targetPath.startsWith('/#') ? targetPath.slice(1) : targetPath;
+      window.location.hash = hashOnly;
+      const elementId = hashOnly.replace('#', '');
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
       }
+    } else {
+      window.location.href = targetPath || '/';
     }
   };
 
@@ -128,13 +128,13 @@ export const Header: React.FC<HeaderProps> = ({
         
         {/* Brand Logo */}
         <a 
-          href="#" 
+          href="/" 
           onClick={(e) => {
             e.preventDefault();
             if (onHomeClick) {
               onHomeClick();
             } else {
-              navigateTo('');
+              navigateTo('/');
             }
           }}
           className="flex items-center gap-3 shrink-0 focus:outline-none focus:ring-2 focus:ring-nc-orange/50 rounded-lg p-1"
@@ -193,10 +193,10 @@ export const Header: React.FC<HeaderProps> = ({
                     </span>
                   </div>
                   <a
-                    href="#viagens-corporativas"
+                    href="/viagens-corporativas"
                     onClick={(e) => {
                       e.preventDefault();
-                      navigateTo('#viagens-corporativas', 'viagens-corporativas');
+                      navigateTo('/viagens-corporativas', 'viagens-corporativas');
                     }}
                     className="text-xs text-nc-warm/60 hover:text-white transition-colors flex items-center gap-1"
                   >
@@ -215,10 +215,10 @@ export const Header: React.FC<HeaderProps> = ({
                     <ul className="space-y-2.5 text-xs text-nc-warm/75">
                       <li>
                         <a 
-                          href="#gestao-de-viagens"
+                          href="/gestao-de-viagens"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#gestao-de-viagens', 'gestao-de-viagens');
+                            navigateTo('/gestao-de-viagens', 'gestao-de-viagens');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
@@ -227,10 +227,10 @@ export const Header: React.FC<HeaderProps> = ({
                       </li>
                       <li>
                         <a 
-                          href="#gestao-de-despesas"
+                          href="/gestao-de-despesas"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#gestao-de-despesas', 'gestao-de-despesas');
+                            navigateTo('/gestao-de-despesas', 'gestao-de-despesas');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
@@ -239,7 +239,7 @@ export const Header: React.FC<HeaderProps> = ({
                       </li>
                       <li>
                         <a 
-                          href="#solucoes"
+                          href="/#solucoes"
                           onClick={(e) => {
                             e.preventDefault();
                             navigateTo('#solucoes');
@@ -262,10 +262,10 @@ export const Header: React.FC<HeaderProps> = ({
                     <ul className="space-y-2.5 text-xs text-nc-warm/75">
                       <li>
                         <a 
-                          href="#tecnologia-obt"
+                          href="/tecnologia-obt"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#tecnologia-obt', 'tecnologia-obt');
+                            navigateTo('/tecnologia-obt', 'tecnologia-obt');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
@@ -274,10 +274,10 @@ export const Header: React.FC<HeaderProps> = ({
                       </li>
                       <li>
                         <a 
-                          href="#bi-e-relatorios"
+                          href="/bi-e-relatorios"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#bi-e-relatorios', 'bi-e-relatorios');
+                            navigateTo('/bi-e-relatorios', 'bi-e-relatorios');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
@@ -297,10 +297,10 @@ export const Header: React.FC<HeaderProps> = ({
                     <ul className="space-y-2.5 text-xs text-nc-warm/75">
                       <li>
                         <a 
-                          href="#atendimento-24h"
+                          href="/atendimento-24h"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#atendimento-24h', 'atendimento-24h');
+                            navigateTo('/atendimento-24h', 'atendimento-24h');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
@@ -309,10 +309,10 @@ export const Header: React.FC<HeaderProps> = ({
                       </li>
                       <li>
                         <a 
-                          href="#compliance-esg"
+                          href="/compliance-esg"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigateTo('#compliance-esg', 'compliance-esg');
+                            navigateTo('/compliance-esg', 'compliance-esg');
                           }}
                           className="hover:text-nc-orange hover:translate-x-1 transition-all inline-block py-1 font-medium"
                         >
@@ -321,7 +321,7 @@ export const Header: React.FC<HeaderProps> = ({
                       </li>
                       <li>
                         <a 
-                          href="#faq"
+                          href="/#faq"
                           onClick={(e) => {
                             e.preventDefault();
                             navigateTo('#faq');
@@ -349,10 +349,10 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
 
                     <a 
-                      href="#viagens-corporativas"
+                      href="/viagens-corporativas"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigateTo('#viagens-corporativas', 'viagens-corporativas');
+                        navigateTo('/viagens-corporativas', 'viagens-corporativas');
                       }}
                       className="inline-flex items-center gap-1.5 text-xs font-bold text-nc-orange hover:text-white transition-colors"
                     >
@@ -368,10 +368,10 @@ export const Header: React.FC<HeaderProps> = ({
                       Conteúdo em Destaque:
                     </span>
                     <a 
-                      href="#artigo/sla-suporte-viagens-corporativas-atendimento"
+                      href="/artigo/sla-suporte-viagens-corporativas-atendimento"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigateTo('#artigo/sla-suporte-viagens-corporativas-atendimento', 'blog-post');
+                        navigateTo('artigo/sla-suporte-viagens-corporativas-atendimento', 'artigo/sla-suporte-viagens-corporativas-atendimento');
                       }}
                       className="text-nc-warm/85 hover:text-nc-orange transition-colors font-medium flex items-center gap-1"
                     >
@@ -380,10 +380,10 @@ export const Header: React.FC<HeaderProps> = ({
                   </div>
 
                   <a 
-                    href="#conhecimento"
+                    href="/conhecimento"
                     onClick={(e) => {
                       e.preventDefault();
-                      navigateTo('#conhecimento', 'blog');
+                      navigateTo('/conhecimento', 'blog');
                     }}
                     className="text-nc-orange hover:underline font-mono text-[11px]"
                   >
@@ -397,10 +397,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* 2. BENEFÍCIOS E PARCERIAS (Direct Link) */}
           <a
-            href="#beneficios"
+            href="/beneficios"
             onClick={(e) => {
               e.preventDefault();
-              navigateTo('#beneficios', 'beneficios');
+              navigateTo('/beneficios', 'beneficios');
             }}
             className={`text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 ${
               currentView === 'beneficios'
@@ -413,10 +413,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* 4. LAZER (Direct Link) */}
           <a 
-            href="#lazer"
+            href="/lazer"
             onClick={(e) => {
               e.preventDefault();
-              navigateTo('#lazer', 'lazer');
+              navigateTo('/lazer', 'lazer');
             }}
             className={`text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 ${
               currentView === 'lazer' ? 'text-nc-orange font-semibold' : 'text-nc-warm/80 hover:text-white'
@@ -427,10 +427,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* 5. CONHECIMENTO NC (Direct Link) */}
           <a 
-            href="#conhecimento"
+            href="/conhecimento"
             onClick={(e) => {
               e.preventDefault();
-              navigateTo('#conhecimento', 'blog');
+              navigateTo('/conhecimento', 'blog');
             }}
             className={`text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 ${
               currentView === 'blog' || currentView === 'blog-post' ? 'text-nc-orange font-semibold' : 'text-nc-warm/80 hover:text-white'
@@ -441,10 +441,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* 6. QUEM SOMOS (Direct Link) */}
           <a 
-            href="#quem-somos"
+            href="/quem-somos"
             onClick={(e) => {
               e.preventDefault();
-              navigateTo('#quem-somos', 'quem-somos');
+              navigateTo('/quem-somos', 'quem-somos');
             }}
             className={`text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 ${
               currentView === 'quem-somos' ? 'text-nc-orange font-semibold' : 'text-nc-warm/80 hover:text-white'
@@ -455,7 +455,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action CTA Button */}
           <a 
-            href="#diagnostico" 
+            href="/#diagnostico" 
             onClick={(e) => {
               e.preventDefault();
               navigateTo('#diagnostico');
@@ -525,10 +525,10 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="pt-2 space-y-2 border-t border-white/5 animate-in fade-in duration-200">
                   {/* Destaque 1: Gestão de Viagens */}
                   <a
-                    href="#gestao-de-viagens"
+                    href="/gestao-de-viagens"
                     onClick={(e) => {
                       e.preventDefault();
-                      navigateTo('#gestao-de-viagens', 'gestao-de-viagens');
+                      navigateTo('/gestao-de-viagens', 'gestao-de-viagens');
                     }}
                     className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-red-500/15 via-orange-500/10 to-transparent border border-red-500/40 hover:border-red-500/70 transition-all text-white group cursor-pointer"
                   >
@@ -547,10 +547,10 @@ export const Header: React.FC<HeaderProps> = ({
 
                   {/* Destaque 2: Viagens Corporativas Visão Geral */}
                   <a
-                    href="#viagens-corporativas"
+                    href="/viagens-corporativas"
                     onClick={(e) => {
                       e.preventDefault();
-                      navigateTo('#viagens-corporativas', 'viagens-corporativas');
+                      navigateTo('/viagens-corporativas', 'viagens-corporativas');
                     }}
                     className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-nc-orange/40 transition-all text-white group cursor-pointer"
                   >
@@ -564,10 +564,10 @@ export const Header: React.FC<HeaderProps> = ({
                   {/* Sub-grid with direct anchors */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <a
-                      href="#gestao-de-despesas"
+                      href="/gestao-de-despesas"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigateTo('#gestao-de-despesas', 'gestao-de-despesas');
+                        navigateTo('/gestao-de-despesas', 'gestao-de-despesas');
                       }}
                       className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
                     >
@@ -575,7 +575,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <span className="text-[9px] text-nc-warm/50">Controle financeiro</span>
                     </a>
                     <a
-                      href="#solucoes"
+                      href="/#solucoes"
                       onClick={(e) => {
                         e.preventDefault();
                         navigateTo('#solucoes');
@@ -586,10 +586,10 @@ export const Header: React.FC<HeaderProps> = ({
                       <span className="text-[9px] text-nc-warm/50">Compliance e regras</span>
                     </a>
                     <a
-                      href="#tecnologia-obt"
+                      href="/tecnologia-obt"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigateTo('#tecnologia-obt', 'tecnologia-obt');
+                        navigateTo('/tecnologia-obt', 'tecnologia-obt');
                       }}
                       className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
                     >
@@ -597,10 +597,10 @@ export const Header: React.FC<HeaderProps> = ({
                       <span className="text-[9px] text-nc-warm/50">Plataformas ágeis</span>
                     </a>
                     <a
-                      href="#bi-e-relatorios"
+                      href="/bi-e-relatorios"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigateTo('#bi-e-relatorios', 'bi-e-relatorios');
+                        navigateTo('/bi-e-relatorios', 'bi-e-relatorios');
                       }}
                       className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
                     >
@@ -608,10 +608,10 @@ export const Header: React.FC<HeaderProps> = ({
                       <span className="text-[9px] text-nc-warm/50">Métricas de saving</span>
                     </a>
                     <a
-                      href="#atendimento-24h"
+                      href="/atendimento-24h"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigateTo('#atendimento-24h', 'atendimento-24h');
+                        navigateTo('/atendimento-24h', 'atendimento-24h');
                       }}
                       className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
                     >
@@ -619,10 +619,10 @@ export const Header: React.FC<HeaderProps> = ({
                       <span className="text-[9px] text-emerald-400">Plantão próprio</span>
                     </a>
                     <a
-                      href="#compliance-esg"
+                      href="/compliance-esg"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigateTo('#compliance-esg', 'compliance-esg');
+                        navigateTo('/compliance-esg', 'compliance-esg');
                       }}
                       className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/20 text-left block cursor-pointer"
                     >
@@ -636,10 +636,10 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* 2. BENEFÍCIOS E PARCERIAS (NC PARTNERS) */}
             <a
-              href="#beneficios"
+              href="/beneficios"
               onClick={(e) => {
                 e.preventDefault();
-                navigateTo('#beneficios', 'beneficios');
+                navigateTo('/beneficios', 'beneficios');
               }}
               className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-amber-400/40 transition-all text-white group cursor-pointer"
             >
@@ -660,10 +660,10 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* 4. LAZER & TURISMO EXCLUSIVO */}
             <a
-              href="#lazer"
+              href="/lazer"
               onClick={(e) => {
                 e.preventDefault();
-                navigateTo('#lazer', 'lazer');
+                navigateTo('/lazer', 'lazer');
               }}
               className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-nc-orange/40 transition-all text-white group cursor-pointer"
             >
@@ -683,10 +683,10 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* 5. CONHECIMENTO NC (BLOG) */}
             <a
-              href="#conhecimento"
+              href="/conhecimento"
               onClick={(e) => {
                 e.preventDefault();
-                navigateTo('#conhecimento', 'blog');
+                navigateTo('/conhecimento', 'blog');
               }}
               className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-blue-400/40 transition-all text-white group cursor-pointer"
             >
@@ -707,10 +707,10 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* 6. QUEM SOMOS */}
             <a
-              href="#quem-somos"
+              href="/quem-somos"
               onClick={(e) => {
                 e.preventDefault();
-                navigateTo('#quem-somos', 'quem-somos');
+                navigateTo('/quem-somos', 'quem-somos');
               }}
               className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-slate-400/40 transition-all text-white group cursor-pointer"
             >
@@ -730,7 +730,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* 7. DÚVIDAS FREQUENTES (FAQ) */}
             <a
-              href="#faq"
+              href="/#faq"
               onClick={(e) => {
                 e.preventDefault();
                 navigateTo('#faq');
@@ -753,10 +753,10 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* 8. ÁREA DO CLIENTE */}
             <a
-              href="#area-cliente"
+              href="/area-cliente"
               onClick={(e) => {
                 e.preventDefault();
-                navigateTo('#area-cliente', 'area-cliente');
+                navigateTo('/area-cliente', 'area-cliente');
               }}
               className="flex items-center justify-between p-3.5 rounded-2xl border border-nc-orange/30 bg-gradient-to-r from-nc-orange/15 to-transparent hover:border-nc-orange/60 transition-all text-white group cursor-pointer"
             >

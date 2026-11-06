@@ -5,9 +5,19 @@ import { LeadForm } from '../LeadForm';
 interface ConversaoProps {
   onOpenLegal?: (tab: 'privacidade' | 'beneficios' | 'termos') => void;
   onOpenAreaCliente?: () => void;
+  onNavigate?: (target: string) => void;
 }
 
-export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCliente }) => {
+export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCliente, onNavigate }) => {
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, target: string) => {
+    e.preventDefault();
+    if (onNavigate) {
+      onNavigate(target);
+    } else {
+      window.location.href = target;
+    }
+  };
+
   return (
     <>
       <section id="diagnostico" className="py-24 md:py-32 bg-[#0c0e12] relative z-20">
@@ -65,23 +75,55 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCli
             <div>
               <h4 className="text-white font-semibold mb-6">Acesso Rápido</h4>
               <ul className="space-y-4 text-sm text-nc-warm/60">
-                <li><a href="#viagens-corporativas" className="hover:text-nc-orange transition-colors">Corporativo</a></li>
+                <li>
+                  <a
+                    href="/viagens-corporativas"
+                    onClick={(e) => handleLinkClick(e, '/viagens-corporativas')}
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Corporativo
+                  </a>
+                </li>
                 <li>
                   <a 
-                    href="#beneficios" 
+                    href="/beneficios" 
                     onClick={(e) => {
                       e.preventDefault();
                       if (onOpenLegal) onOpenLegal('beneficios');
-                      else window.location.hash = '#beneficios';
+                      else handleLinkClick(e, '/beneficios');
                     }} 
                     className="hover:text-nc-orange transition-colors"
                   >
                     Benefícios e Parcerias
                   </a>
                 </li>
-                <li><a href="#lazer" className="hover:text-nc-orange transition-colors">Lazer</a></li>
-                <li><a href="#conhecimento" className="hover:text-nc-orange transition-colors">Conhecimento NC</a></li>
-                <li><a href="#quem-somos" className="hover:text-nc-orange transition-colors">Quem Somos</a></li>
+                <li>
+                  <a
+                    href="/lazer"
+                    onClick={(e) => handleLinkClick(e, '/lazer')}
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Lazer
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/conhecimento"
+                    onClick={(e) => handleLinkClick(e, '/conhecimento')}
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Conhecimento NC
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/quem-somos"
+                    onClick={(e) => handleLinkClick(e, '/quem-somos')}
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Quem Somos
+                  </a>
+                </li>
               </ul>
             </div>
             
@@ -90,7 +132,8 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCli
               <ul className="space-y-4 text-sm text-nc-warm/60">
                 <li>
                   <a 
-                    href="#gestao-de-viagens"
+                    href="/gestao-de-viagens"
+                    onClick={(e) => handleLinkClick(e, '/gestao-de-viagens')}
                     className="hover:text-nc-orange transition-colors"
                   >
                     Gestão de Viagens
@@ -98,13 +141,13 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCli
                 </li>
                 <li>
                   <a 
-                    href="#area-cliente" 
+                    href="/area-cliente" 
                     onClick={(e) => {
                       e.preventDefault();
                       if (onOpenAreaCliente) {
                         onOpenAreaCliente();
                       } else {
-                        window.location.hash = '#area-cliente';
+                        handleLinkClick(e, '/area-cliente');
                       }
                     }}
                     className="hover:text-nc-orange transition-colors flex items-center gap-1.5"
@@ -114,26 +157,33 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCli
                 </li>
                 <li>
                   <a 
-                    href="#plantao" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.hash = '#plantao';
-                      const el = document.getElementById('plantao');
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }}
+                    href="/atendimento-24h" 
+                    onClick={(e) => handleLinkClick(e, '/atendimento-24h')}
                     className="hover:text-nc-orange transition-colors"
                   >
-                    Plantão Emergencial
+                    Atendimento 24h
                   </a>
                 </li>
                 <li>
                   <a 
-                    href="#faq" 
+                    href="/compliance-esg" 
+                    onClick={(e) => handleLinkClick(e, '/compliance-esg')}
+                    className="hover:text-nc-orange transition-colors"
+                  >
+                    Compliance e ESG
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/#faq" 
                     onClick={(e) => {
                       e.preventDefault();
-                      window.location.hash = '#faq';
-                      const el = document.getElementById('faq');
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      if (onNavigate) {
+                        onNavigate('#faq');
+                      } else {
+                        const el = document.getElementById('faq');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }
                     }}
                     className="hover:text-nc-orange transition-colors"
                   >
@@ -148,13 +198,13 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCli
               <ul className="space-y-4 text-sm text-nc-warm/60">
                 <li>
                   <a 
-                    href="#privacidade" 
+                    href="/privacidade" 
                     onClick={(e) => {
                       e.preventDefault();
                       if (onOpenLegal) {
                         onOpenLegal('privacidade');
                       } else {
-                        window.location.hash = '#privacidade';
+                        handleLinkClick(e, '/privacidade');
                       }
                     }}
                     className="hover:text-nc-orange transition-colors"
@@ -164,13 +214,13 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCli
                 </li>
                 <li>
                   <a 
-                    href="#beneficios" 
+                    href="/beneficios" 
                     onClick={(e) => {
                       e.preventDefault();
                       if (onOpenLegal) {
                         onOpenLegal('beneficios');
                       } else {
-                        window.location.hash = '#beneficios';
+                        handleLinkClick(e, '/beneficios');
                       }
                     }}
                     className="hover:text-nc-orange transition-colors"
@@ -180,13 +230,13 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCli
                 </li>
                 <li>
                   <a 
-                    href="#termos" 
+                    href="/termos" 
                     onClick={(e) => {
                       e.preventDefault();
                       if (onOpenLegal) {
                         onOpenLegal('termos');
                       } else {
-                        window.location.hash = '#termos';
+                        handleLinkClick(e, '/termos');
                       }
                     }}
                     className="hover:text-nc-orange transition-colors"
@@ -196,7 +246,8 @@ export const Conversao: React.FC<ConversaoProps> = ({ onOpenLegal, onOpenAreaCli
                 </li>
                 <li className="pt-1">
                   <a 
-                    href="#admin" 
+                    href="/admin" 
+                    onClick={(e) => handleLinkClick(e, '/admin')}
                     className="text-nc-warm/30 hover:text-nc-orange text-xs transition-colors flex items-center gap-1.5"
                   >
                     <span>Área Administrativa</span>

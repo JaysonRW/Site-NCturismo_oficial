@@ -37,9 +37,15 @@ import { PropostaApresentacaoView } from './components/PropostaApresentacaoView'
 import { RodoviarioView } from './components/RodoviarioView';
 import { BackToTopButton } from './components/BackToTopButton';
 import { supabase, getPropostaComercialById, PropostaComercial, INITIAL_PROPOSTAS_COMERCIAIS } from './lib/supabase';
+import {
+  AppViewName,
+  resolveBrowserLocation,
+  resolveTokenToRoute,
+  applyClientSeoMetadata,
+} from './lib/seoRoutes';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post' | 'viagens-corporativas' | 'gestao-de-viagens' | 'gestao-de-despesas' | 'tecnologia-obt' | 'atendimento-24h' | 'bi-e-relatorios' | 'compliance-esg' | 'lazer' | 'area-cliente' | 'proposta' | 'rodoviario'>('home');
+  const [currentView, setCurrentView] = useState<AppViewName>('home');
   const [session, setSession] = useState<any>(null);
   const [activeSlug, setActiveSlug] = useState<string>('sla-suporte-viagens-corporativas-atendimento');
   const [activeProposta, setActiveProposta] = useState<PropostaComercial>(INITIAL_PROPOSTAS_COMERCIAIS[0]);
@@ -60,328 +66,130 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const handleHash = () => {
-      const hash = window.location.hash.toLowerCase();
-      if (hash === '#quem-somos' || hash === '#quemsomos') {
-        setCurrentView('quem-somos');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash === '#viagens-corporativas' || hash === '#corporativo') {
-        setCurrentView('viagens-corporativas');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (
-        hash === '#gestao-de-viagens' || 
-        hash === '#gestao-viagens' || 
-        hash === '#gestaoviagens' || 
-        hash === '#gestao'
-      ) {
-        setCurrentView('gestao-de-viagens');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (
-        hash === '#gestao-de-despesas' || 
-        hash === '#gestao-despesas' || 
-        hash === '#despesas' || 
-        hash === '#despesas-corporativas' ||
-        hash === '#gestaodespesas'
-      ) {
-        setCurrentView('gestao-de-despesas');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (
-        hash === '#tecnologia-obt' || 
-        hash === '#tecnologia-e-obt' || 
-        hash === '#tecnologia' || 
-        hash === '#tecnologia-e-integracoes' || 
-        hash === '#tecnologia-integracoes' || 
-        hash === '#obt'
-      ) {
-        setCurrentView('tecnologia-obt');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (
-        hash === '#atendimento-24h' || 
-        hash === '#atendimento-24-horas' || 
-        hash === '#atendimento24h' || 
-        hash === '#atendimento24horas' || 
-        hash === '#suporte-24h' || 
-        hash === '#plantao-24h'
-      ) {
-        setCurrentView('atendimento-24h');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (
-        hash === '#bi-e-relatorios' || 
-        hash === '#bi-relatorios' || 
-        hash === '#bi' || 
-        hash === '#relatorios' || 
-        hash === '#relatorios-gerenciais' ||
-        hash === '#bie-relatorios'
-      ) {
-        setCurrentView('bi-e-relatorios');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (
-        hash === '#compliance-esg' || 
-        hash === '#compliance' || 
-        hash === '#esg' || 
-        hash === '#compliance-e-esg' || 
-        hash === '#governanca-compliance'
-      ) {
-        setCurrentView('compliance-esg');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash === '#lazer') {
-        setCurrentView('lazer');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (
-        hash === '#rodoviario' ||
-        hash === '#passagens-rodoviarias' ||
-        hash === '#onibus'
-      ) {
-        setCurrentView('rodoviario');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash === '#privacidade') {
-        setCurrentView('privacidade');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (
-        hash === '#beneficios' || 
-        hash === '#beneficios-viagens' || 
-        hash === '#beneficios-em-viagens' || 
-        hash === '#beneficios-e-parcerias' ||
-        hash === '#beneficios-e-viagens' ||
-        hash === '#nc-partners' ||
-        hash === '#ncpartners' ||
-        hash === '#partners' ||
-        hash === '#parcerias'
-      ) {
-        setCurrentView('beneficios');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash === '#termos') {
-        setCurrentView('termos');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash === '#legal-beneficios') {
-        setCurrentView('termos');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash.startsWith('#proposta/')) {
-        const propCode = window.location.hash.replace('#proposta/', '');
-        setCurrentView('proposta');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        getPropostaComercialById(propCode).then((found) => {
+    const syncRouteFromLocation = () => {
+      const match = resolveBrowserLocation(window.location.pathname, window.location.hash);
+
+      // Se acessou uma página dedicada via hash legado (ex.: /#gestao-de-viagens ou /#rodoviario),
+      // converte silenciosamente a URL para o caminho limpo (/gestao-de-viagens) sem recarregar
+      if (match.wasLegacyHash && !match.homeAnchorId && match.canonicalPath.startsWith('/')) {
+        window.history.replaceState(null, '', match.canonicalPath);
+      }
+
+      if (match.slug) {
+        setActiveSlug(match.slug);
+      }
+
+      if (match.propostaCode) {
+        getPropostaComercialById(match.propostaCode).then((found) => {
           if (found) setActiveProposta(found);
         });
-      } else if (hash.startsWith('#admin')) {
-        setCurrentView('admin');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash.startsWith('#artigo/')) {
-        const slug = window.location.hash.replace('#artigo/', '');
-        setActiveSlug(slug);
-        setCurrentView('blog-post');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash.startsWith('#blog/') || hash.startsWith('#conhecimento/')) {
-        const slug = window.location.hash.replace(/^#(blog|conhecimento)\//, '');
-        setActiveSlug(slug);
-        setCurrentView('blog-post');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash === '#conhecimento' || hash === '#blog') {
-        setCurrentView('blog');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (
-        hash === '#area-cliente' || 
-        hash === '#areadocliente' || 
-        hash === '#portal-cliente' || 
-        hash === '#portal' || 
-        hash === '#cliente'
-      ) {
-        setCurrentView('area-cliente');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash === '#plantao' || hash === '#suporte') {
-        setCurrentView('home');
+      }
+
+      setCurrentView(match.view);
+      applyClientSeoMetadata(
+        match.view,
+        match.homeAnchorId ? '/' : match.canonicalPath
+      );
+
+      if (match.homeAnchorId) {
         setTimeout(() => {
-          const el = document.getElementById('plantao') || document.getElementById('suporte') || document.getElementById('diagnostico');
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
+          const el =
+            document.getElementById(match.homeAnchorId!) ||
+            (match.homeAnchorId === 'plantao' ? document.getElementById('diagnostico') : null);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+          }
         }, 100);
-      } else if (
-        hash === '#solucoes' || 
-        hash === '#diagnostico' || 
-        hash === '#estrutura' || 
-        hash === '#transformacao' ||
-        hash === '#faq' ||
-        hash === '#duvidas' ||
-        hash === '#perguntas-frequentes'
-      ) {
-        setCurrentView('home');
-        setTimeout(() => {
-          const targetId = (hash === '#duvidas' || hash === '#perguntas-frequentes') ? 'faq' : hash.replace('#', '');
-          const el = document.getElementById(targetId);
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      } else if (hash === '' || hash === '#') {
-        setCurrentView('home');
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     };
 
-    handleHash();
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
+    syncRouteFromLocation();
+    window.addEventListener('popstate', syncRouteFromLocation);
+    window.addEventListener('hashchange', syncRouteFromLocation);
+    return () => {
+      window.removeEventListener('popstate', syncRouteFromLocation);
+      window.removeEventListener('hashchange', syncRouteFromLocation);
+    };
   }, []);
 
+  const pushCleanUrl = (path: string) => {
+    if (window.location.pathname + window.location.hash !== path) {
+      window.history.pushState(null, '', path);
+    }
+  };
+
   const handleOpenLegal = (tab: 'privacidade' | 'beneficios' | 'termos') => {
-    window.location.hash = tab;
+    const targetPath = `/${tab}`;
+    pushCleanUrl(targetPath);
     setCurrentView(tab);
+    applyClientSeoMetadata(tab, targetPath);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBackToHome = () => {
-    window.location.hash = '';
+    pushCleanUrl('/');
     setCurrentView('home');
+    applyClientSeoMetadata('home', '/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenBlog = () => {
-    window.location.hash = 'conhecimento';
+    pushCleanUrl('/conhecimento');
     setCurrentView('blog');
+    applyClientSeoMetadata('blog', '/conhecimento');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSelectPost = (slug: string) => {
-    window.location.hash = `artigo/${slug}`;
+    const targetPath = `/artigo/${slug}`;
+    pushCleanUrl(targetPath);
     setActiveSlug(slug);
     setCurrentView('blog-post');
+    applyClientSeoMetadata('blog-post', targetPath);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleNavigate = (target: string) => {
-    const cleanTarget = target.startsWith('#') ? target.slice(1) : target;
-    const lower = cleanTarget.toLowerCase();
+    const match = resolveTokenToRoute(target, false);
 
-    if (lower === 'quem-somos' || lower === 'quemsomos') {
-      window.location.hash = '#quem-somos';
-      setCurrentView('quem-somos');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (lower === 'viagens-corporativas' || lower === 'corporativo') {
-      window.location.hash = '#viagens-corporativas';
-      setCurrentView('viagens-corporativas');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (
-      lower === 'gestao-de-viagens' || 
-      lower === 'gestao-viagens' || 
-      lower === 'gestaoviagens' || 
-      lower === 'gestao'
-    ) {
-      window.location.hash = '#gestao-de-viagens';
-      setCurrentView('gestao-de-viagens');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (
-      lower === 'gestao-de-despesas' || 
-      lower === 'gestao-despesas' || 
-      lower === 'despesas' || 
-      lower === 'despesas-corporativas' || 
-      lower === 'gestaodespesas'
-    ) {
-      window.location.hash = '#gestao-de-despesas';
-      setCurrentView('gestao-de-despesas');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (
-      lower === 'tecnologia-obt' || 
-      lower === 'tecnologia-e-obt' || 
-      lower === 'tecnologia' || 
-      lower === 'tecnologia-e-integracoes' || 
-      lower === 'tecnologia-integracoes' || 
-      lower === 'obt'
-    ) {
-      window.location.hash = '#tecnologia-obt';
-      setCurrentView('tecnologia-obt');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (
-      lower === 'atendimento-24h' || 
-      lower === 'atendimento-24-horas' || 
-      lower === 'atendimento24h' || 
-      lower === 'atendimento24horas' || 
-      lower === 'atendimento-24' ||
-      lower === 'suporte-24h' || 
-      lower === 'plantao-24h'
-    ) {
-      window.location.hash = '#atendimento-24h';
-      setCurrentView('atendimento-24h');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (
-      lower === 'bi-e-relatorios' || 
-      lower === 'bi-relatorios' || 
-      lower === 'bi' || 
-      lower === 'relatorios' || 
-      lower === 'relatorios-gerenciais' || 
-      lower === 'bie-relatorios'
-    ) {
-      window.location.hash = '#bi-e-relatorios';
-      setCurrentView('bi-e-relatorios');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (
-      lower === 'compliance-esg' || 
-      lower === 'compliance' || 
-      lower === 'esg' || 
-      lower === 'compliance-e-esg' || 
-      lower === 'governanca-compliance'
-    ) {
-      window.location.hash = '#compliance-esg';
-      setCurrentView('compliance-esg');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (lower === 'lazer') {
-      window.location.hash = '#lazer';
-      setCurrentView('lazer');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (
-      lower === 'rodoviario' ||
-      lower === 'passagens-rodoviarias' ||
-      lower === 'onibus'
-    ) {
-      window.location.hash = '#rodoviario';
-      setCurrentView('rodoviario');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (
-      lower === 'beneficios' || 
-      lower === 'beneficios-viagens' || 
-      lower === 'beneficios-em-viagens' || 
-      lower === 'beneficios-e-parcerias'
-    ) {
-      window.location.hash = '#beneficios';
-      setCurrentView('beneficios');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (lower === 'conhecimento' || lower === 'blog') {
-      window.location.hash = '#conhecimento';
-      setCurrentView('blog');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (
-      lower === 'area-cliente' || 
-      lower === 'areadocliente' || 
-      lower === 'portal-cliente' || 
-      lower === 'portal' || 
-      lower === 'cliente'
-    ) {
-      window.location.hash = '#area-cliente';
-      setCurrentView('area-cliente');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (lower === 'privacidade' || lower === 'termos') {
-      window.location.hash = `#${lower}`;
-      setCurrentView(lower as any);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (lower.startsWith('artigo/')) {
-      const slug = lower.replace('artigo/', '');
-      setActiveSlug(slug);
-      window.location.hash = `#artigo/${slug}`;
-      setCurrentView('blog-post');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (lower === '' || lower === 'home') {
+    if (!match) {
       handleBackToHome();
-    } else {
-      // Target is an anchor section on the home page
-      window.location.hash = `#${cleanTarget}`;
+      return;
+    }
+
+    if (match.slug) {
+      setActiveSlug(match.slug);
+    }
+
+    if (match.propostaCode) {
+      getPropostaComercialById(match.propostaCode).then((found) => {
+        if (found) setActiveProposta(found);
+      });
+    }
+
+    if (match.homeAnchorId) {
+      pushCleanUrl(`/#${match.homeAnchorId}`);
       setCurrentView('home');
+      applyClientSeoMetadata('home', '/');
       setTimeout(() => {
-        const targetId = (cleanTarget === 'duvidas' || cleanTarget === 'perguntas-frequentes') 
-          ? 'faq' 
-          : (cleanTarget === 'suporte' ? 'plantao' : cleanTarget);
-        const el = document.getElementById(targetId);
+        const el =
+          document.getElementById(match.homeAnchorId!) ||
+          (match.homeAnchorId === 'plantao' ? document.getElementById('diagnostico') : null);
         if (el) {
           el.scrollIntoView({ behavior: 'smooth' });
         } else {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }, 120);
+      return;
     }
+
+    pushCleanUrl(match.canonicalPath);
+    setCurrentView(match.view);
+    applyClientSeoMetadata(match.view, match.canonicalPath);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (currentView === 'admin') {
@@ -675,10 +483,9 @@ export default function App() {
         <FAQSection />
         <Conversao 
           onOpenLegal={handleOpenLegal} 
+          onNavigate={handleNavigate}
           onOpenAreaCliente={() => {
-            window.location.hash = 'area-cliente';
-            setCurrentView('area-cliente');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            handleNavigate('area-cliente');
           }}
         />
       </main>

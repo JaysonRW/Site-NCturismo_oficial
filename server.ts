@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { SEO_ROUTES, resolveTokenToRoute } from './src/lib/seoRoutes.ts';
 
 dotenv.config();
 
@@ -2221,18 +2222,160 @@ async function startServer() {
     res.type('text/html').send('google-site-verification: googlee3ac6d137dc9f055.html');
   });
 
+  const resolvePublicBaseUrl = (req: express.Request): string => {
+    const envUrl = String(process.env.APP_URL || '').trim().replace(/\/+$/, '');
+    if (envUrl.startsWith('http')) return envUrl;
+    const forwardedProto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+    const forwardedHost = String(req.headers['x-forwarded-host'] || req.get('host') || 'ncturismo.com.br')
+      .split(',')[0]
+      .trim();
+    const proto = forwardedHost.includes('localhost') ? 'http' : forwardedProto || 'https';
+    return `${proto}://${forwardedHost}`;
+  };
+
+  // robots.txt oficial para indexação e indicação do Sitemap
+  app.get('/robots.txt', (req, res) => {
+    const baseUrl = resolvePublicBaseUrl(req);
+    const robots = [
+      'User-agent: *',
+      'Allow: /',
+      'Disallow: /admin',
+      'Disallow: /rodoviario',
+      'Disallow: /proposta/',
+      'Disallow: /api/',
+      '',
+      `Sitemap: ${baseUrl}/sitemap.xml`,
+    ].join('\n');
+    res.type('text/plain').send(robots);
+  });
+
+  // sitemap.xml dinâmico para o Google Search Console e Sitelinks
+  app.get('/sitemap.xml', (req, res) => {
+    const baseUrl = resolvePublicBaseUrl(req);
+    const today = new Date().toISOString().slice(0, 10);
+
+    const indexableRoutes = Object.values(SEO_ROUTES).filter(
+      (r) => r.indexable && r.canonicalPath !== '/artigo'
+    );
+
+    const featuredArticles = [
+      '/artigo/sla-suporte-viagens-corporativas-atendimento',
+      '/artigo/como-reduzir-custos-viagens-corporativas-sem-perder-qualidade',
+      '/artigo/politica-de-viagens-corporativas-guia-definitivo',
+    ];
+
+    const urlEntries = [
+      ...indexableRoutes.map(
+        (route) => `  <url>
+    <loc>${baseUrl}${route.canonicalPath === '/' ? '/' : route.canonicalPath}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${route.changefreq}</changefreq>
+    <priority>${route.priority.toFixed(2)}</priority>
+  </url>`
+      ),
+      ...featuredArticles.map(
+        (artPath) => `  <url>
+    <loc>${baseUrl}${artPath}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>`
+      ),
+    ];
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urlEntries.join('\n')}
+</urlset>`;
+
+    res.type('application/xml').send(xml);
+  });
+
+  // Injeção Server-Side de Meta Tags SEO por rota (para Googlebot, WhatsApp e LinkedIn)
+  const injectSeoMetaIntoHtml = (rawHtml: string, req: express.Request): string => {
+    const match = resolveTokenToRoute(req.path, false) || {
+      view: 'home' as const,
+      canonicalPath: '/',
+    };
+    const def = SEO_ROUTES[match.view] || SEO_ROUTES.home;
+    const baseUrl = resolvePublicBaseUrl(req);
+    const canonicalUrl = `${baseUrl}${match.canonicalPath === '/' ? '/' : match.canonicalPath}`;
+    const escapeAttr = (s: string) => s.replace(/"/g, '&quot;');
+
+    return rawHtml
+      .replace(/<title>.*?<\/title>/i, `<title>${escapeAttr(def.title)}</title>`)
+      .replace(
+        /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
+        `<meta name="description" content="${escapeAttr(def.description)}" />`
+      )
+      .replace(
+        /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i,
+        `<meta property="og:title" content="${escapeAttr(def.title)}" />`
+      )
+      .replace(
+        /<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i,
+        `<meta property="og:description" content="${escapeAttr(def.description)}" />`
+      )
+      .replace(
+        /<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i,
+        `<meta property="og:url" content="${escapeAttr(canonicalUrl)}" />`
+      )
+      .replace(
+        /<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i,
+        `<meta name="twitter:title" content="${escapeAttr(def.title)}" />`
+      )
+      .replace(
+        /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i,
+        `<meta name="twitter:description" content="${escapeAttr(def.description)}" />`
+      )
+      .replace(
+        /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i,
+        `<link rel="canonical" href="${escapeAttr(canonicalUrl)}" />`
+      );
+  };
+
   // Vite middleware in development or static serving in production
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
+
+    // Intercepta navegação de rotas limpas de páginas para injetar as Meta Tags SEO antes do Vite
+    app.get('*', async (req, res, next) => {
+      if (
+        req.path.startsWith('/api/') ||
+        req.path.startsWith('/src/') ||
+        req.path.startsWith('/@') ||
+        req.path.startsWith('/node_modules/') ||
+        req.path.includes('.')
+      ) {
+        return next();
+      }
+      try {
+        const indexPath = path.join(__dirname, 'index.html');
+        const template = fs.readFileSync(indexPath, 'utf8');
+        const seoHtml = injectSeoMetaIntoHtml(template, req);
+        const transformed = await vite.transformIndexHtml(req.originalUrl, seoHtml);
+        res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).end(transformed);
+      } catch (err) {
+        next(err);
+      }
+    });
+
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(__dirname, 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (_req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    app.use(express.static(distPath, { index: false }));
+    app.get('*', (req, res) => {
+      const distIndexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(distIndexPath)) {
+        const rawHtml = fs.readFileSync(distIndexPath, 'utf8');
+        const seoHtml = injectSeoMetaIntoHtml(rawHtml, req);
+        res.status(200).type('text/html').send(seoHtml);
+      } else {
+        res.sendFile(distIndexPath);
+      }
     });
   }
 
