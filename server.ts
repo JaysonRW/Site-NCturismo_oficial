@@ -2216,6 +2216,11 @@ async function startServer() {
   app.get('/api/rodoviario/connection-suggestions', handleConnectionSuggestions);
   app.post('/api/rodoviario/connection-suggestions', handleConnectionSuggestions);
 
+  // Google Search Console HTML file verification
+  app.get('/googlee3ac6d137dc9f055.html', (_req, res) => {
+    res.type('text/html').send('google-site-verification: googlee3ac6d137dc9f055.html');
+  });
+
   // Vite middleware in development or static serving in production
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
