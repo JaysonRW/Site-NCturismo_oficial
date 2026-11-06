@@ -411,7 +411,7 @@ export const Header: React.FC<HeaderProps> = ({
             Benefícios e Parcerias
           </a>
 
-          {/* 3. LAZER (Direct Link) */}
+          {/* 4. LAZER (Direct Link) */}
           <a 
             href="#lazer"
             onClick={(e) => {
@@ -658,7 +658,7 @@ export const Header: React.FC<HeaderProps> = ({
               <ArrowRight size={15} className="text-white/40 group-hover:text-amber-400 group-hover:translate-x-1 transition-all shrink-0" />
             </a>
 
-            {/* 3. LAZER & TURISMO EXCLUSIVO */}
+            {/* 4. LAZER & TURISMO EXCLUSIVO */}
             <a
               href="#lazer"
               onClick={(e) => {

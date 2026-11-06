@@ -34,11 +34,12 @@ import { LazerView } from './components/LazerView';
 import { BeneficiosViagensView } from './components/BeneficiosViagensView';
 import { AreaDoClienteView } from './components/AreaDoClienteView';
 import { PropostaApresentacaoView } from './components/PropostaApresentacaoView';
+import { RodoviarioView } from './components/RodoviarioView';
 import { BackToTopButton } from './components/BackToTopButton';
 import { supabase, getPropostaComercialById, PropostaComercial, INITIAL_PROPOSTAS_COMERCIAIS } from './lib/supabase';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post' | 'viagens-corporativas' | 'gestao-de-viagens' | 'gestao-de-despesas' | 'tecnologia-obt' | 'atendimento-24h' | 'bi-e-relatorios' | 'compliance-esg' | 'lazer' | 'area-cliente' | 'proposta'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'quem-somos' | 'privacidade' | 'beneficios' | 'termos' | 'admin' | 'blog' | 'blog-post' | 'viagens-corporativas' | 'gestao-de-viagens' | 'gestao-de-despesas' | 'tecnologia-obt' | 'atendimento-24h' | 'bi-e-relatorios' | 'compliance-esg' | 'lazer' | 'area-cliente' | 'proposta' | 'rodoviario'>('home');
   const [session, setSession] = useState<any>(null);
   const [activeSlug, setActiveSlug] = useState<string>('sla-suporte-viagens-corporativas-atendimento');
   const [activeProposta, setActiveProposta] = useState<PropostaComercial>(INITIAL_PROPOSTAS_COMERCIAIS[0]);
@@ -125,6 +126,13 @@ export default function App() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '#lazer') {
         setCurrentView('lazer');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (
+        hash === '#rodoviario' ||
+        hash === '#passagens-rodoviarias' ||
+        hash === '#onibus'
+      ) {
+        setCurrentView('rodoviario');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '#privacidade') {
         setCurrentView('privacidade');
@@ -314,6 +322,14 @@ export default function App() {
     } else if (lower === 'lazer') {
       window.location.hash = '#lazer';
       setCurrentView('lazer');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (
+      lower === 'rodoviario' ||
+      lower === 'passagens-rodoviarias' ||
+      lower === 'onibus'
+    ) {
+      window.location.hash = '#rodoviario';
+      setCurrentView('rodoviario');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (
       lower === 'beneficios' || 
@@ -537,6 +553,20 @@ export default function App() {
         <LazerView 
           onBackToHome={handleBackToHome}
           onOpenLegal={handleOpenLegal}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'rodoviario') {
+    return (
+      <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white">
+        <ScrollProgressBar />
+        <Header onHomeClick={handleBackToHome} onNavigate={handleNavigate} currentView="rodoviario" />
+        <RodoviarioView
+          onBackToHome={handleBackToHome}
+          onOpenDiagnosis={() => handleNavigate('#diagnostico')}
+          onOpenBeneficios={() => handleNavigate('beneficios')}
         />
       </div>
     );

@@ -1,0 +1,2292 @@
+openapi: 3.0.0
+info:
+  title: Quero Passagem - API Rodoviária
+  version: 1.0.0
+  description: Acesse nosso [FAQ](https://queropassagem.com.br/api/faq) para tirar dúvidas.
+  contact:
+    name: Quero Passagem
+    email: suporte.ti@queropassagem.com.br
+
+servers:
+  - url: https://queropassagem.qpdevs.com/ws_v4
+    description: Sandbox server
+  - url: https://queropassagem.com.br/ws_v4
+    description: Production server
+
+tags:
+  - name: Companies
+    description: Operations related to companies resources
+  - name: Stops
+    description: Operations related to stops resources
+  - name: New Order
+    description: Operations related to the main flow, used to create a purchase
+  - name: Order
+    description: Operations related to purchase resources
+  - name: Payment
+    description: If your chosen payment method is credit card, you can just provide the encryptedCard token, which can be created following the [pagseguro documentation](https://dev.pagbank.uol.com.br/reference/criar-pagar-pedido-com-cartao).
+  - name: Connection
+    description: Operations related to connections resources
+
+paths:
+  #Company
+  /companies:
+    get:
+      summary: Retrieve a list of companies
+      operationId: listCompanies
+      tags:
+        - Companies
+      responses:
+        '200':
+          description: An array of companies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompaniesListSchema'
+  /companies/{companyId}:
+    get:
+      summary: Display details from a specific company.
+      operationId: detailCompany
+      tags:
+        - Companies
+      parameters:
+        - name: companyId
+          in: path
+          description: Company ID to get details
+          required: true
+          schema:
+            $ref: '#/components/schemas/IntegerSchema'
+      responses:
+        '200':
+          description: An object with company details
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CompanyDetailSchema'
+        '400':
+          description: An error
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CompanyDetailError400Schema'
+        '404':
+          description: An error
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/CompanyDetailError404Schema'
+
+  #Stop
+  /stops:
+    get:
+      summary: Retrieve a list of stops
+      operationId: listStops
+      tags:
+        - Stops
+      responses:
+        '200':
+          description: An array of stops
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StopsListSchema'
+  /stops/{stopId}:
+    get:
+      summary: Display details from a specific stops.
+      operationId: detailStop
+      tags:
+        - Stops
+      parameters:
+        - name: stopId
+          in: path
+          description: Stop ID to get details
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: An object with stop details
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/StopDetailSchema'
+        '400':
+          description: An error
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/StopDetailError400Schema'
+        '404':
+          description: An error
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/StopDetailError404Schema'
+
+  #New order
+  /new/search:
+    post:
+      deprecated: true
+      summary: | 
+        [DEPRECATED] In this endpoint you can search for travels. They are valid for up to 1 hour after the search; after they expire you need to redo the search.
+      description: |
+        **DEPRECATED:** Use GET route instead of this endpoint.
+      operationId: newSearch
+      tags:
+        - New Order
+      requestBody:
+        description: The data to search.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/requests/SearchRequestSchema'
+      responses:
+        '200':
+          description: An array with available results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Parameter 'travelDate' is missing or invalid."
+                  - "Parameter 'from' is missing or invalid."
+                  - "Parameter 'to' is missing or invalid."
+                  - "Parameter 'affiliateCode' is invalid or is not associated with the supplied user."
+                  - "Parameter 'affiliateCode' is missing."
+  /new/search/{from}/{to}/{travelDate}/{affiliateCode}:
+    get:
+      summary: In this endpoint you can search for single travels, they are valid for up to 1 hour after the search, after they expire you need to redo the search.
+      operationId: newSearchGet
+      tags:
+        - New Order
+      parameters:
+        - $ref: '#/components/parameters/FromParam'
+        - $ref: '#/components/parameters/ToParam'
+        - $ref: '#/components/parameters/TravelDateParam'
+        - $ref: '#/components/parameters/AffiliateCodeParam'
+      responses:
+        '200':
+          description: An array with available results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Parameter 'travelDate' is missing or invalid."
+                  - "Parameter 'from' is missing or invalid."
+                  - "Parameter 'to' is missing or invalid."
+                  - "Parameter 'affiliateCode' is invalid or is not associated with the supplied user."
+                  - "Parameter 'affiliateCode' is missing."
+  /new/search-connections/{from}/{to}/{travelDate}/{affiliateCode}:
+    get:
+      summary: In this endpoint you can search for connection travels, they are valid for up to 1 hour after the search, after they expire you need to redo the search.
+      operationId: newSearchConnectionGet
+      tags:
+        - New Order
+      parameters:
+        - $ref: '#/components/parameters/FromParam'
+        - $ref: '#/components/parameters/ToParam'
+        - $ref: '#/components/parameters/TravelDateParam'
+        - $ref: '#/components/parameters/AffiliateCodeParam'
+      responses:
+        '200':
+          description: An array with available results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchConnectionSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Parameter 'travelDate' is missing or invalid."
+                  - "Parameter 'from' is missing or invalid."
+                  - "Parameter 'to' is missing or invalid."
+                  - "Parameter 'affiliateCode' is invalid or is not associated with the supplied user."
+                  - "Parameter 'affiliateCode' is missing."
+  /new/seats:
+    post:
+      summary: Retrieve the list of seats available on a given travel. If a connection is supplied an array of response is returned instead
+      operationId: newSeats
+      tags:
+        - New Order
+      requestBody:
+        description: The bus data to get the seats.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/requests/SeatsRequestSchema'
+      responses:
+        '200':
+          description: An array with bus seats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SeatsSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Parameter 'travelId' is missing."
+                  - "Parameter 'travelId' is invalid or expired."
+        '503':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "This travel search failed to return seats, please try again later."
+                  - "There's no empty seats on this travel."
+  /new/booking:
+    post:
+      summary: This will check all data from travel and the passengers and will build it into a Booking object, that will be used later in the checkout method.
+      operationId: newBooking
+      tags:
+        - New Order
+      requestBody:
+        description: The data to generate booking object.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/requests/BookingRequestSchema'
+      responses:
+        '200':
+          description: An object with booking data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/bookingSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Parameter 'affiliateCode' is invalid or is not associated with the supplied user."
+                  - "Parameter 'affiliateCode' is missing."
+                  - "Travel object is required."
+                  - "The parameter 'travelId' is required in each travel object [indexOfTravel]."
+                  - "Travel ID is invalid or expired [indexOfTravel]."
+                  - "Passengers must be supplied for each travel [indexOfTravel]."
+                  - "Seat number not found or is occupied [indexOfTravel,indexOfPassenger]."
+                  - "Connection Seat number not found or is occupied [indexOfTravel,indexOfPassenger]."
+                  - "Seat number is either missing or invalid [indexOfTravel,indexOfPassenger]."
+                  - "Connection Seat number is either missing or invalid [indexOfTravel,indexOfPassenger]."
+                  - "Name of passenger is invalid or was not supplied [indexOfTravel,indexOfPassenger]."
+                  - "Travel Document is invalid or was not supplied [indexOfTravel,indexOfPassenger]."
+                  - "Insured passenger error: CPF is invalid or was not supplied [indexOfTravel,indexOfPassenger]."
+                  - "Insured passenger error: Date of Birth is invalid or was not supplied [indexOfTravel,indexOfPassenger]."
+                  - "Insured passenger error: CEP is invalid or was not supplied [indexOfTravel,indexOfPassenger]."
+                  - "You can only book up to 2 travels at once."
+                  - "You can only book one way travel or a round trip."
+                  - "Passenger already has a similar trip booked: [ passenger.travelDocument ]."
+                  - "You have selected more passengers than allowed on one or more travels. Check the 'maximumAllowedPassengers' parameter of the search response."
+        '503':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Failed to book travels with the company."
+  /new/booking/{bookingID}:
+    get:
+      summary: This will check if your booking is still active, note that it will return 404 after expiration.
+      operationId: getBooking
+      tags:
+        - New Order
+      parameters:
+        - name: bookingID
+          in: path
+          description: Required booking code returned by the create booking method.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: An object with booking data
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/bookingSchema'
+        '404':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Booking was not found."
+    delete:
+      summary: This will check if your booking is still active, and remove it.
+      operationId: deleteBooking
+      tags:
+        - New Order
+      parameters:
+        - name: bookingID
+          in: path
+          description: Required booking code returned by the create booking method.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: An empty array
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { }
+                example: [ ]
+        '404':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Booking was not found."
+  /new/checkout:
+    post:
+      summary: This method will receive and process your booking payment resulting in a purchase object or error.
+      operationId: newCheckout
+      tags:
+        - New Order
+      requestBody:
+        description: The data to generate booking object.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/requests/CheckoutRequestSchema'
+      responses:
+        '200':
+          description: An object with booking data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "bookingId is mandatory."
+                  - "bookingId is either invalid or expired."
+                  - "The buyer object is mandatory."
+                  - "buyer.name is mandatory."
+                  - "A valid buyer.cpf is mandatory."
+                  - "A valid buyer.phone is mandatory."
+                  - "A valid email is mandatory."
+                  - "The supplied callbackURL is invalid."
+                  - "The payment object is mandatory"
+                  - "A valid payment.method is mandatory. Available methods for this purchase: [ List of methods available for you ]"
+                  - "The payment.installment supplied was not found"
+                  - "A valid payment.cardNumber is mandatory for creditCard method."
+                  - "A valid payment.expiresAt (YYYY-MM) is mandatory for creditCard method."
+                  - "A valid payment.securityCode is mandatory for creditCard method."
+                  - "Failed to verify your creditCard data."
+                  - "A valid buyer.cnpj is required."
+        '503':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "CreditCard: Failed to authorize the transaction."
+                  - "CreditCard: Failed to validate your credit card."
+                  - "CreditCard: Failed to process the payment."
+                  - "Failed to process checkout."
+
+
+  #Order
+  /purchase/list:
+    post:
+      summary: This method return the list of purchases made by the affiliate code.
+      operationId: getPurchaseList
+      tags:
+        - Order
+      requestBody:
+        description: The data to search for purchases.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/requests/PurchaseListRequestSchema'
+      responses:
+        '200':
+          description: A list of object with purchase details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseListSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Parameter affiliateCode is mandatory."
+                  - "Parameter purchaseDate->start is missing or invalid"
+                  - "Parameter purchaseDate->end is missing or invalid"
+                  - "Parameter purchaseDate range must be less than 90 days."
+                  - "Parameter travelDate->start is missing or invalid"
+                  - "Parameter travelDate->end is missing or invalid"
+                  - "Parameter travelDate range must be less than 90 days."
+                  - "Parameter card->lastFourDigits is missing or invalid."
+                  - "Parameter paymentMethod is missing or invalid."
+                  - "Parameter status is missing or invalid."
+                  - "Parameter 'affiliateCode' is invalid or is not associated with the supplied user."
+  /purchase/get:
+    post:
+      summary: This method return the updated state of your order.
+      operationId: getPurchase
+      tags:
+        - Order
+      requestBody:
+        description: The ID, external ID, and email of the purchase to retrieve.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/requests/PurchaseRequestSchema'
+      responses:
+        '200':
+          description: An object with purchase details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Parameter id is mandatory."
+                  - "Parameter email is mandatory."
+        '401':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Fail to validate access to this purchase."
+        '404':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "The supplied id was not found."
+  /purchase/voucher/cancel:
+    post:
+      summary: This method tries to return a voucher to the selling company and if able returns the payment to the customer.
+      operationId: returnVoucher
+      tags:
+        - Order
+      requestBody:
+        description: The purchase and voucher data to cancel.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/requests/ReturnVoucherRequestSchema'
+      responses:
+        '200':
+          description: An object with purchase details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Parameter id is mandatory."
+                  - "Parameter email is mandatory."
+                  - "The parameter passengerId is mandatory."
+                  - "The supplied passengerId can not be modified."
+        '401':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Fail to validate access to this purchase."
+        '404':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "The supplied id was not found."
+                  - "The parameter passengerId was not found."
+        '503':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "No active tickets found to return."
+                  - "Fail to process the refund, tickets was successfully returned, our sac was informed to make a manual refund."
+  /purchase/cancel:
+    post:
+      summary: This method tries to return all vouchers to the selling company and if able returns the payment to the customer.
+      operationId: returnPurchase
+      tags:
+        - Order
+      requestBody:
+        description: The purchase data to cancel.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/requests/ReturnPurchaseRequestSchema'
+      responses:
+        '200':
+          description: An object with purchase details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Parameter id is mandatory."
+                  - "Parameter email is mandatory."
+        '401':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Fail to validate access to this purchase."
+        '404':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "The supplied id was not found."
+        '503':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "No active tickets found to return."
+                  - "Fail to process the refund, tickets was successfully returned, our sac was informed to make a manual refund."
+                  - "This purchase can't be fulled refunded check the modifiable attribute for passengers."
+                  - "Pending tickets can be cancelled after 30 minutes."
+  /purchase/updateExternalId:
+    post:
+      summary: This method updates the purchase external id.
+      operationId: updatePurchaseExternalId
+      tags:
+        - Order
+      requestBody:
+        description: The purchase data to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/requests/UpdatePurchaseExternalIdRequestSchema'
+      responses:
+        '200':
+          description: An object with purchase details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Parameter id is mandatory."
+                  - "Parameter externalId is mandatory."
+        '401':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Fail to validate access to this purchase."
+        '404':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "The supplied id was not found."
+
+  #Payment
+  /new/payment/key:
+    get:
+      summary: This method return the pagseguro public key that is required if you choose to pay the order with a credit card token.
+      operationId: paymentKey
+      tags:
+        - Payment
+      responses:
+        '200':
+          description: A key to use on Pagseguro flow
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/PaymentKeySchema'
+
+  #Connection
+  /connection/suggestions:
+    post:
+      summary: This will suggest connection options for your travel.
+      operationId: connectionSuggestions
+      tags:
+        - Connection
+      requestBody:
+        description: The travel parameters to suggest connections.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/requests/ConnectionSuggestionRequestSchema'
+      responses:
+        '200':
+          description: An array of suggestions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConnectionSuggestionsSchema'
+        '400':
+          description: A collection of errors
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/DefaultErrorSchema'
+              example:
+                errors:
+                  - "Parameter 'from' is missing or invalid."
+                  - "Parameter 'to' is missing or invalid."
+                  - "Parameter 'travelDate' is missing or invalid."
+
+security:
+  - basicAuth: []
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+  requests:
+    ConnectionSuggestionRequestSchema:
+      type: object
+      properties:
+        from:
+          type: string
+          description: Stop ID in the format CIT_Number or ROD_Number.
+          example: ROD_1
+        to:
+          type: string
+          description: Stop ID in the format CIT_Number or ROD_Number.
+          example: ROD_55
+        travelDate:
+          type: string
+          format: date
+          description: The date of the travel format yyyy-mm-dd.
+          example: '2025-08-11'
+      required:
+        - from
+        - to
+        - travelDate
+    SearchRequestSchema:
+      allOf:
+        - $ref: '#/components/requests/ConnectionSuggestionRequestSchema'
+        - type: object
+          properties:
+            affiliateCode:
+              type: string
+              description: Your affiliate code to get the correct TaxValue.
+              example: "ABC"
+            include-connections:
+              type: boolean
+              description: Set to true to include connection results.
+              example: false
+    CheckoutRequestSchema:
+      type: object
+      properties:
+        bookingId:
+          type: string
+          description: The unique identifier for the booking.
+          example: "746e07ba4b74841bf585e8bf4a2bd7b1"
+        email:
+          type: string
+          format: email
+          description: The buyer's email address.
+          example: "email@email.com"
+        buyer:
+          oneOf:
+            - type: object
+              properties:
+                name:
+                  type: string
+                  description: The name of the buyer.
+                  example: "Nome da Empresa / Comprador"
+                cpf:
+                  type: string
+                  description: The CPF of the buyer.
+                  example: "012.345.678-90"
+                cnpj:
+                  type: string
+                  description: The CNPJ of the buyer.
+                  example: "99.999.999/9999-99"
+                phone:
+                  type: string
+                  description: The phone number of the buyer.
+                  example: "(99) 9999-9999"
+            - type: boolean
+              description: Set to `true` if the payment method is preApproved.
+              example: true
+        payment:
+          oneOf:
+            - type: object
+              description: Use token if you want to pay with a credit card using a token generated on pagseguro api.
+              properties:
+                method:
+                  type: string
+                  description: The payment method used.
+                  enum:
+                    - "preApproved"
+                    - "pix"
+                    - "creditCard"
+                  example: "creditCard"
+                token:
+                  type: string
+                  description: The credit card token generated on pagseguro api (required for 'creditCard' method).
+                  example: "ABC123"
+                holder:
+                  type: string
+                  description: The credit card holder name (required for 'creditCard' method with token).
+                  example: "John Doe"
+                lastFourDigits:
+                  type: string
+                  description: The credit card last four digits (required for 'creditCard' method with token).
+                  example: "1234"
+            - type: object
+              properties:
+                method:
+                  type: string
+                  description: The payment method used.
+                  enum:
+                    - "preApproved"
+                    - "pix"
+                    - "creditCard"
+                  example: "preApproved"
+            - type: object
+              properties:
+                method:
+                  type: string
+                  description: The payment method used.
+                  enum:
+                    - "preApproved"
+                    - "pix"
+                    - "creditCard"
+                  example: "pix"
+            - type: object
+              properties:
+                method:
+                  type: string
+                  description: The payment method used.
+                  enum:
+                    - "preApproved"
+                    - "pix"
+                    - "creditCard"
+                  example: "creditCard"
+                cardNumber:
+                  type: string
+                  description: The credit card number (required for 'creditCard' method).
+                  example: "1234 1234 1234 1234"
+                holder:
+                  type: string
+                  description: The credit card holder name (required for 'creditCard' method).
+                  example: "John Doe"
+                expiresAt:
+                  type: string
+                  description: The expiration date of the credit card (required for 'creditCard' method).
+                  example: "2030-10"
+                securityCode:
+                  type: string
+                  description: The CVV or security code of the credit card (required for 'creditCard' method).
+                  example: "123"
+        callbackURL:
+          type: string
+          format: uri
+          description: The callback URL to receive purchase modification notifications.
+          example: "https://www.example.com/callback"
+        externalId:
+          type: string
+          description: The external ID of the purchase. Just used to refer on your system.
+          example: "ABC123"
+    SeatsRequestSchema:
+      type: object
+      properties:
+        travelId:
+          type: string
+          description: The id of travel that you want to list the seats.
+          example: '1_1ebb8120607b600a436a7488f2853922'
+        orientation:
+          type: string
+          description: The desired ordination in which the seats are returned, supported values are 'vertical' (default 5 columns layout) and 'horizontal' (5 rows layout).
+          example: "horizontal"
+          enum:
+            - vertical
+            - horizontal
+        type:
+          type: string
+          description: The desired type of return, supported values are 'matrix' and 'list'
+          example: "matrix"
+          enum:
+            - matrix
+            - list
+    BookingRequestSchema:
+      type: object
+      properties:
+        affiliateCode:
+          type: string
+          description: The affiliate code for the purchase.
+          example: "ABC"
+        travels:
+          type: array
+          items:
+            type: object
+            properties:
+              travelId:
+                type: string
+                description: The unique identifier for the travel.
+                example: "1_1ebb8120607b600a436a7488f2853922"
+              passengers:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: The passenger's full name.
+                      example: "John Doe"
+                    travelDocument:
+                      type: string
+                      description: The passenger's travel document number.
+                      example: "123456"
+                    travelDocumentType:
+                      type: string
+                      description: The type of travel document.
+                      example: "RG"
+                    seatNumber:
+                      type: string
+                      description: The seat number for the primary travel segment.
+                      example: "10"
+                    connectionSeatNumber:
+                      type: string
+                      description: The seat number for the connecting travel segment.
+                      example: "01 (just for connection)"
+                    birthDate:
+                      type: string
+                      format: date
+                      description: The passenger's date of birth (YYYY-MM-DD).
+                      example: "2000-01-01"
+                    insurance:
+                      type: object
+                      properties:
+                        cpf:
+                          type: string
+                          description: The CPF number for insurance.
+                          example: "01234567890"
+                        birthDate:
+                          type: string
+                          format: date
+                          description: The birth date for insurance (YYYY-MM-DD).
+                          example: "2000-01-01"
+                        cep:
+                          type: string
+                          description: The CEP (postal code) for insurance.
+                          example: "99999-999"
+    PurchaseListRequestSchema:
+      type: object
+      required:
+        - affiliateCode
+      properties:
+        affiliateCode:
+          type: string
+          description: Your affiliate code to get the purchase list..
+          example: "ABC"
+        filters:
+          type: object
+          description: (Optional) The filters to be used. If no filter is provided, we will apply a default purchase date filter of 30 days.
+          properties:
+            showAllPurchases:
+              type: boolean
+              description: Define if show all purchases or only the purchases that are made by current API user. (default is false)
+              example: "false"
+            ticket:
+              type: string
+              description: A passenger's ticket (localizador) from the purchase.
+              example: "ABC123"
+            externalReference:
+              type: string
+              description: The purchase's external reference.
+              example: "ABC123"
+            paymentMethod:
+              oneOf:
+                - type: string
+                  example: 'pix'
+                - type: string
+                  example: 'creditCard'
+                - type: string
+                  example: 'preApproved'
+            status:
+              oneOf:
+                - type: string
+                  example: 'awaiting_payment'
+                - type: string
+                  example: 'paid'
+                - type: string
+                  example: 'canceled'
+                - type: string
+                  example: 'in_refund_process'
+                - type: string
+                  example: 'refund'
+                - type: string
+                  example: 'refund_partial'
+                - type: string
+                  example: 'in_confirmation_process'
+                - type: string
+                  example: 'canceled_partial'
+            purchaseDate:
+              $ref: '#/components/requests/PurchaseListDatesRequestSchema'
+            travelDate:
+              $ref: '#/components/requests/PurchaseListDatesRequestSchema'
+            passenger:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The passenger's name (queried as 'LIKE').
+                  example: John Doe
+                document:
+                  type: string
+                  description: The passenger's document (Dots, dashes and etc. don't matter, they will be removed).
+                  example: 012.345.789-09
+            card:
+              type: object
+              properties:
+                lastFourDigits:
+                  type: integer
+                  description: The last four digits of the card number.
+                  example: 1234
+    PurchaseListDatesRequestSchema:
+      type: object
+      description: Range limited to 90 days
+      properties:
+        start:
+          type: string
+          format: date
+          description: The start of range to filter (format yyyy-mm-dd).
+          example: '2025-08-01'
+        end:
+          type: string
+          format: date
+          description: The end of range to filter (format yyyy-mm-dd).
+          example: '2025-08-30'
+    PurchaseRequestSchema:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/IntegerSchema'
+          description: The id of your purchase (required if externalId is not provided).
+          example: 123456
+        externalId:
+          type: string
+          description: The external id of your purchase (required if ID is not provided).
+          example: "ABC123"
+        email:
+          type: string
+          format: email
+          description: The email of the buyer.
+          example: "email@email.com"
+    ReturnVoucherRequestSchema:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/IntegerSchema'
+          description: The id of your purchase.
+          example: 123456
+        passengerId:
+          $ref: '#/components/schemas/IntegerSchema'
+          description: The id of the passenger that you want to return.
+          example: "ABC123"
+        email:
+          type: string
+          format: email
+          description: The email of the buyer (optional).
+          required: false
+          example: "email@email.com (optional)"
+    ReturnPurchaseRequestSchema:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/IntegerSchema'
+          description: The id of your purchase.
+          example: 123456
+        email:
+          type: string
+          format: email
+          description: The email of the buyer (optional).
+          required: false
+          example: "email@email.com (optional)"
+    UpdatePurchaseExternalIdRequestSchema:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/IntegerSchema'
+          description: The id of your purchase.
+          example: 123456
+        externalId:
+          type: string
+          description: The new external id.
+          example: "ABC123"
+  schemas:
+    #Company
+    CompaniesListSchema:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+            format: int64
+            description: The unique identifier for the bus company.
+            example: 1
+          name:
+            type: string
+            description: The name of the bus company.
+            example: Expresso Luxo
+    CompanyDetailSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The unique identifier for the company.
+          example: 1
+        name:
+          type: string
+          description: The name of the company.
+          example: Expresso Luxo
+        logo:
+          type: object
+          description: A collection of image URLs for the company's logo.
+          properties:
+            svg:
+              type: string
+              format: uri
+              nullable: true
+              description: The SVG URL for the logo.
+              example: "https://assets.queropassagem.com.br/public/Upload/autoviacao/viacao-expresso-luxo.svg"
+            jpg:
+              type: string
+              format: uri
+              nullable: true
+              description: The JPG URL for the logo.
+              example: "https://assets.queropassagem.com.br/public/Upload/autoviacao/viacao-expresso-luxo.jpg"
+        phone:
+          type: string
+          nullable: true
+          description: The company's primary contact phone number.
+          example: "(99) 9999-9999"
+        cnpj:
+          type: string
+          nullable: true
+          description: The company's CNPJ (Cadastro Nacional da Pessoa Jurídica) number.
+          example: "99.999.999/9999-99"
+        description:
+          type: object
+          description: A detailed description of the company in different languages.
+          properties:
+            pt:
+              type: string
+              nullable: true
+              description: Description in Portuguese, formatted with HTML, which can be null.
+              example: String or null.
+            en:
+              type: string
+              nullable: true
+              description: Description in English, formatted with HTML, which can be null.
+              example: String or null.
+            es:
+              type: string
+              nullable: true
+              description: Description in Spanish, formatted with HTML, which can be null.
+              example: String or null.
+    CompanyDetailError400Schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Invalid company ID"
+    CompanyDetailError404Schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Company not found."
+
+    #Stop
+    StopsListSchema:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            description: The unique identifier for the location (city or station).
+            example: "CIT_1"
+          name:
+            type: string
+            description: The name of the location.
+            example: "São Paulo, SP - TODOS"
+          url:
+            type: string
+            description: A URL-friendly slug for the location.
+            example: "sao-paulo-sp"
+          type:
+            type: string
+            enum:
+              - city
+              - station
+            description: The type of location.
+          substops:
+            type: array
+            nullable: true
+            description: A list of sub-locations (stations) for a city.
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: The unique identifier for the substop station.
+                  example: "ROD_898"
+                name:
+                  type: string
+                  description: The name of the substop station.
+                  example: "São Paulo, SP - Barra Funda"
+                url:
+                  type: string
+                  description: A URL-friendly slug for the substop station.
+                  example: "sao-paulo-barra-funda-sp"
+                type:
+                  type: string
+                  enum:
+                    - station
+                  description: The type of substop location.
+                sub_type:
+                  type: string
+                  enum:
+                    - others
+                    - station
+                    - gas_station
+                    - hotel
+                    - airport
+                    - restaurant
+                  description: The detailed type of substop location.
+    StopDetailSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "ROD_1"
+        displayName:
+          type: string
+          example: "São Paulo, SP - Tietê"
+        name:
+          type: string
+          example: "São Paulo - Tietê"
+        state:
+          type: string
+          example: "SP"
+        country:
+          type: string
+          nullable: true
+          example: "Brasil"
+        url:
+          type: string
+          example: "tiete-sp"
+        latitude:
+          type: string
+          example: "-23.51620000"
+        longitude:
+          type: string
+          example: "-46.62695940"
+        address:
+          type: string
+          nullable: true
+          example: "Av. Cruzeiro do Sul, 1800 - Santana São Paulo, SP - 02030-000 (11) 3866-1100"
+        zipcode:
+          type: string
+          example: "99999-999"
+          nullable: true
+        type:
+          type: string
+          enum:
+            - station
+            - city
+        sub_type:
+          type: string
+          enum:
+            - others
+            - station
+            - gas_station
+            - hotel
+            - airport
+            - restaurant
+          description: The detailed type of this location (only for stations).
+        station:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/StopDetailStationSchema'
+          description: The list of stations within this city.
+        city:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/StopDetailCitySchema'
+          description: The city this station belongs to.
+        images:
+          type: array
+          nullable: true
+          items:
+            type: string
+            example: "https://queropassagem.com.br/image_path.jpg"
+    StopDetailError400Schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "The supplied ID is invalid"
+    StopDetailError404Schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Station was not found on our server"
+
+    #New order
+    SearchSchema:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            description: A unique identifier for the travel option.
+            example: "1_1ebb8120607b600a436a7488f2853922"
+          company:
+            $ref: '#/components/schemas/CompanySchema'
+          from:
+            $ref: '#/components/schemas/SearchLocationSchema'
+          to:
+            $ref: '#/components/schemas/SearchLocationSchema'
+          availableSeats:
+            type: integer
+            description: The number of available seats.
+            example: 0
+          seatsLayout:
+            type: string
+            description: The layout of the seats (possible values are numbered or quantity).
+            example: "numbered"
+            enum:
+              - numbered
+              - quantity
+          withBPE:
+            type: boolean
+            description: Indicates if a BPE (electronic ticket) is available.
+            example: false
+          departure:
+            $ref: '#/components/schemas/DateTimeSchema'
+          arrival:
+            $ref: '#/components/schemas/DateTimeSchema'
+          travelDuration:
+            type: integer
+            description: The travel duration in seconds.
+            example: 27000
+          travelDistance:
+            type: string
+            description: The travel distance.
+            example: "487.501"
+          seatClass:
+            type: string
+            description: The class of the seat.
+            example: "LEITO CAMA"
+          price:
+            $ref: '#/components/schemas/SearchPriceSchema'
+          insurance:
+            type: number
+            format: float
+            description: The insurance price.
+            example: 18
+          allowCanceling:
+            type: boolean
+            description: Indicates if cancellation is allowed.
+            example: true
+          travelCancellationLimitDate:
+            type: string
+            format: date-time
+            description: The deadline for travel cancellation.
+            example: "2025-08-20 19:30:00"
+          travelCancellationFee:
+            type: integer
+            description: The fee for travel cancellation.
+            example: 0
+          manualConfirmation:
+            type: boolean
+            description: Indicates if manual confirmation is required.
+            example: false
+          CPFRequired:
+            type: boolean
+            description: Indicates if a CPF is required for the passenger.
+            example: false
+          loungeVipAvailable:
+            type: boolean
+            description: Indicates if a VIP lounge is available.
+            example: false
+          amenities:
+            $ref: '#/components/schemas/AmenitiesDetailsSchema'
+          maximumAllowedPassengers:
+            type: object
+            nullable: true
+            description: The maximum allowed number of passengers, can be null.
+            example: null
+    SearchConnectionSchema:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            description: A unique identifier for the travel option.
+            example: "9_812a1e6aba9967ea604db28b2722ea54|29_5293f581738254dc552e87483d63b46a"
+          company:
+            $ref: '#/components/schemas/CompanySchema'
+          from:
+            $ref: '#/components/schemas/SearchLocationSchema'
+          to:
+            $ref: '#/components/schemas/SearchLocationSchema'
+          availableSeats:
+            type: integer
+            description: The number of available seats.
+            example: 0
+          seatsLayout:
+            type: string
+            description: The layout of the seats (possible values are numbered or quantity).
+            example: "numbered"
+            enum:
+              - numbered
+              - quantity
+          withBPE:
+            type: boolean
+            description: Indicates if a BPE (electronic ticket) is available.
+            example: false
+          departure:
+            $ref: '#/components/schemas/DateTimeSchema'
+          arrival:
+            $ref: '#/components/schemas/DateTimeSchema'
+          travelDuration:
+            type: integer
+            description: The travel duration in seconds.
+            example: 27000
+          travelDistance:
+            type: string
+            description: The travel distance.
+            example: "487.501"
+          seatClass:
+            type: string
+            description: The class of the seat.
+            example: "LEITO CAMA"
+          price:
+            $ref: '#/components/schemas/SearchPriceSchema'
+          insurance:
+            type: number
+            format: float
+            description: The insurance price.
+            example: 18
+          allowCanceling:
+            type: boolean
+            description: Indicates if cancellation is allowed.
+            example: true
+          travelCancellationLimitDate:
+            type: string
+            format: date-time
+            description: The deadline for travel cancellation.
+            example: "2025-08-20 19:30:00"
+          travelCancellationFee:
+            type: integer
+            description: The fee for travel cancellation.
+            example: 0
+          manualConfirmation:
+            type: boolean
+            description: Indicates if manual confirmation is required.
+            example: false
+          CPFRequired:
+            type: boolean
+            description: Indicates if a CPF is required for the passenger.
+            example: false
+          loungeVipAvailable:
+            type: boolean
+            description: Indicates if a VIP lounge is available.
+            example: false
+          amenities:
+            $ref: '#/components/schemas/AmenitiesDetailsSchema'
+          maximumAllowedPassengers:
+            type: object
+            nullable: true
+            description: The maximum allowed number of passengers, can be null.
+            example: null
+          connection:
+            type: object
+            description: Information about a connecting travel segment.
+            properties:
+              node:
+                type: object
+                properties:
+                $ref: '#/components/schemas/SearchLocationSchema'
+              waitingInformation:
+                $ref: '#/components/schemas/WaitingInformationSchema'
+              company:
+                $ref: '#/components/schemas/CompanySchema'
+              seatClass:
+                type: string
+                description: The seat class for the connection.
+                example: "CONVENCIONAL"
+              availableSeats:
+                type: integer
+                description: The number of available seats for the connection.
+                example: 44
+              seatsLayout:
+                type: string
+                description: The seat layout for the connection (possible values are numbered or quantity).
+                example: "numbered"
+                enum:
+                  - numbered
+                  - quantity
+              withBPE:
+                type: boolean
+                description: Indicates if a BPE (electronic ticket) is available for the connection.
+                example: false
+              loungeVipAvailable:
+                type: boolean
+                description: Indicates if a VIP lounge is available for the connection.
+                example: false
+              amenities:
+                $ref: '#/components/schemas/AmenitiesDetailsSchema'
+    SearchPriceSchema:
+      type: object
+      properties:
+        seatPrice:
+          type: number
+          format: float
+          description: The price of the seat.
+          example: 18.67
+        taxPrice:
+          type: number
+          format: float
+          description: The tax price.
+          example: 3.73
+        price:
+          type: number
+          format: float
+          description: The total price.
+          example: 22.4
+        ccTaxPrice:
+          type: number
+          format: float
+          description: The credit card tax price.
+          example: 2.02
+    SearchLocationSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the location.
+          example: "ROD_3"
+        name:
+          type: string
+          description: The human-readable name of the location.
+          example: "Campinas, SP - Terminal Ramos de Azevedo"
+        customName:
+          type: string
+          description: The custom human-readable name of the location for this company. If it does not exist null is provided.
+          example: "Campinas, SP - Terminal Ramos de Azevedo"
+        customAddress:
+          type: string
+          description: The custom human-readable address of the location for this company. If it does not exist null is provided.
+          example: "Endereço: Rod. Anhanguera, Km 99, S/n - Jardim Eulina, Campinas - SP, 13063-000."
+    WaitingInformationSchema:
+      type: object
+      description: The arrival and departure details for the connecting segment.
+      properties:
+        arrival:
+          type: string
+          format: date-time
+          description: The arrival date and time.
+          example: '2025-08-21 07:00:00'
+        departure:
+          $ref: '#/components/schemas/DateTimeSchema'
+    SeatsSchema:
+      type: array
+      items:
+        type: object
+        properties:
+          orientation:
+            type: string
+            description: The orientation of the seat map (possible values are horizontal or vertical).
+            example: "horizontal"
+            enum:
+              - vertical
+              - horizontal
+          floor:
+            type: integer
+            description: The floor number of the bus.
+            example: 0
+          seatsLayout:
+            type: string
+            description: The layout style of the seats (possible values are numbered or quantity).
+            example: "numbered"
+            enum:
+              - numbered
+              - quantity
+          seats:
+            type: array
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/SeatSchema'
+    SeatSchema:
+      type: object
+      properties:
+        seat:
+          type: string
+          nullable: true
+          description: The seat number.
+          example: "1"
+        position:
+          type: object
+          properties:
+            x:
+              type: integer
+              description: The x-coordinate of the seat's position.
+              example: 1
+            y:
+              type: integer
+              description: The y-coordinate of the seat's position.
+              example: 0
+            z:
+              type: integer
+              description: The z-coordinate of the seat's position.
+              example: 0
+        occupied:
+          type: boolean
+          description: Indicates if the seat is occupied.
+          example: true
+        type:
+          type: string
+          description: The type of element in the seat map (possible values are seat or emptyOrReservedSpace).
+          enum:
+            - seat
+            - emptyOrReservedSpace
+          example: "seat"
+    bookingSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for this booking.
+          example: "746e07ba4b74841bf585e8bf4a2bd7b1"
+        expiresAt:
+          type: string
+          format: date-time
+          description: The expiration date and time of this booking.
+          example: "2025-08-11T15:19:54-03:00"
+        paymentMethods:
+          $ref: '#/components/schemas/PaymentMethodsSchema'
+        travels:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelDetailsSchema'
+    PaymentMethodsSchema:
+      type: object
+      properties:
+        preApproved:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentOptionSchema'
+          description: A list of payment options for pre-approved payments.
+        creditCard:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentOptionSchema'
+          description: A list of payment options for credit card payments.
+        pix:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentOptionSchema'
+          description: A list of payment options for pix payments.
+    PaymentOptionSchema:
+      type: object
+      properties:
+        instalment:
+          $ref: '#/components/schemas/InstalmentSchema'
+        seatPrice:
+          type: number
+          format: float
+          description: The price of the seat(s).
+          example: 100
+        taxPrice:
+          type: number
+          format: float
+          description: The tax amount.
+          example: 20
+        insurancePrice:
+          type: number
+          format: float
+          description: The insurance price.
+          example: 18
+        total:
+          type: number
+          format: float
+          description: The total price.
+          example: 138
+    InstalmentSchema:
+      type: object
+      properties:
+        instalments:
+          type: integer
+          description: The number of instalments.
+          example: 1
+        value:
+          type: number
+          format: float
+          description: The value of each instalment.
+          example: 138
+    TravelDetailsSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the travel segment.
+          example: "1_cbeeaccf9bc476d5360759d78610dc29"
+        passengers:
+          type: array
+          items:
+            $ref: '#/components/schemas/PassengerDetailsSchema'
+    PassengerDetailsSchema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The passenger's name.
+          example: "John Doe"
+        travelDocument:
+          type: string
+          description: The passenger's travel document number.
+          example: "123456"
+        travelDocumentType:
+          type: string
+          description: The type of travel document.
+          example: "RG"
+        seatNumber:
+          type: string
+          description: The assigned seat number.
+          example: "10"
+        birthDate:
+          type: string
+          format: date
+          description: The passenger's date of birth.
+          example: "2000-01-01"
+        cpf:
+          type: string
+          description: The passenger's CPF number.
+          example: "012.345.678-90"
+        insurance:
+          $ref: '#/components/schemas/InsuranceDetailsSchema'
+        cancellation:
+          $ref: '#/components/schemas/CancellationDetailsSchema'
+    InsuranceDetailsSchema:
+      type: object
+      properties:
+        cpf:
+          type: string
+          description: The CPF number associated with the insurance.
+          example: "012.345.678-90"
+        birthDate:
+          type: string
+          description: "The birth date for the insurance policy. Note: the format here is DD/MM/YYYY."
+          example: "01/01/2000"
+        cep:
+          type: string
+          description: The postal code.
+          example: "99999-999"
+    CancellationDetailsSchema:
+      type: object
+      properties:
+        limitDate:
+          type: string
+          format: date-time
+          description: The deadline for cancellation.
+          example: "2025-08-20 19:30:00"
+        allowed:
+          type: boolean
+          description: Indicates if cancellation is allowed.
+          example: true
+        fee:
+          type: number
+          format: float
+          description: The cancellation fee.
+          example: 0
+    AmenitiesDetailsSchema:
+      type: object
+      properties:
+        icon:
+          type: string
+          description: Icon name or url if type is svg
+          example: ac_unit
+        type:
+          type: string
+          description: Icon type
+          example: material
+        title:
+          type: string
+          description: Icon title
+          example: Ar-condicionado
+
+    #Payment
+    PaymentKeySchema:
+      type: object
+      properties:
+        key:
+          type: string
+          example: "2FuCtG5KTYDa6C2i9hs74Nolw8q8E9ZJErnrCsB..."
+
+    #Connection
+    ConnectionSuggestionsSchema:
+      type: array
+      items:
+        type: object
+        properties:
+          from:
+            type: string
+            description: Station ID where the connection starts.
+            example: ROD_1
+          node:
+            type: string
+            description: Station ID where the connection occurs.
+            example: ROD_7
+          to:
+            type: string
+            description: Station ID where the connection finishes.
+            example: ROD_55
+
+    #Default
+    DefaultErrorSchema:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+          example:
+            - "Error X"
+            - "Error Y"
+    PurchaseListSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for the reservation.
+          example: 123456
+        email:
+          type: string
+          format: email
+          description: The email address associated with the reservation.
+          example: "email@email.com"
+        status:
+          type: string
+          description: The current status of the reservation.
+          example: "paid"
+        date:
+          type: string
+          format: date-time
+          description: The date and time the reservation was made.
+          example: "2025-08-11 13:54:21"
+        payment:
+          type: object
+          properties:
+            total:
+              type: number
+              format: float
+              description: The total amount paid.
+              example: 545.01
+            method:
+              type: string
+              description: The payment method.
+              example: "preApproved"
+            installment:
+              type: integer
+              description: The number of payment installments.
+              example: 1
+        externalId:
+          type: string
+          description: An external identifier for the reservation.
+          example: "ABC123"
+    PurchaseSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for the reservation.
+          example: 123456
+        externalId:
+          type: string
+          description: An external identifier for the reservation.
+          example: "ABC123"
+        email:
+          type: string
+          format: email
+          description: The email address associated with the reservation.
+          example: "email@email.com"
+        buyer:
+          $ref: '#/components/schemas/BuyerSchema'
+        payment:
+          $ref: '#/components/schemas/PaymentSchema'
+        status:
+          type: string
+          description: The current status of the reservation.
+          example: "paid"
+        date:
+          type: string
+          format: date-time
+          description: The date and time the reservation was made.
+          example: "2025-08-11 13:54:21"
+        travels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Travel'
+    BuyerSchema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The buyer name.
+          example: "John Doe"
+    PaymentSchema:
+      type: object
+      properties:
+        total:
+          type: number
+          format: float
+          description: The total amount paid.
+          example: 545.01
+        tax:
+          type: number
+          format: float
+          description: The tax amount.
+          example: 81.46
+        insurance:
+          type: number
+          format: float
+          description: The insurance amount.
+          example: 10.95
+        tickets:
+          type: number
+          format: float
+          description: The ticket amount.
+          example: 452.6
+        discount:
+          type: number
+          format: float
+          description: The discount amount.
+          example: 0
+        method:
+          type: string
+          description: The payment method.
+          example: "preApproved"
+        refunded:
+          type: number
+          format: float
+          description: The amount refunded.
+          example: 0
+        installment:
+          type: integer
+          description: The number of payment installments.
+          example: 1
+        toll:
+          type: number
+          format: float
+          description: The toll amount.
+          example: 0
+        authorizationCode:
+          type: string
+          description: The authorization code from credit card.
+          example: "401466"
+    Travel:
+      type: object
+      properties:
+        from:
+          $ref: '#/components/schemas/LocationSchema'
+        to:
+          $ref: '#/components/schemas/LocationSchema'
+        departure:
+          $ref: '#/components/schemas/DateTimeSchema'
+        arrival:
+          $ref: '#/components/schemas/DateTimeSchema'
+        company:
+          $ref: '#/components/schemas/CompanySchema'
+        passengers:
+          type: array
+          items:
+            $ref: '#/components/schemas/PassengerSchema'
+        travelCancellationLimitDate:
+          type: string
+          format: date-time
+          description: The cancellation deadline for the travel segment.
+          example: "2025-08-11 15:00:00"
+    LocationSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the location.
+          example: "ROD_3"
+        label:
+          type: string
+          description: The human-readable name of the location.
+          example: "Campinas, SP - Terminal Ramos de Azevedo"
+        customLabel:
+          type: string
+          description: The custom human-readable name of the location for this company. If it does not exist null is provided.
+          example: "Campinas, SP - Terminal Ramos de Azevedo"
+        customAddress:
+          type: string
+          description: The custom human-readable address of the location for this company. If it does not exist null is provided.
+          example: "Endereço: Rod. Anhanguera, Km 99, S/n - Jardim Eulina, Campinas - SP, 13063-000."
+    DateTimeSchema:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: The date of departure or arrival.
+          example: "2025-08-26"
+        time:
+          type: string
+          format: time
+          description: The time of departure or arrival.
+          example: "19:00:00"
+    CompanySchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the company.
+          example: "12"
+        name:
+          type: string
+          description: The name of the company.
+          example: "Garcia"
+    PassengerSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for the passenger.
+          example: 123456
+        name:
+          type: string
+          description: The passenger's name.
+          example: "Jane Doe"
+        travelDocument:
+          type: string
+          description: The passenger's travel document number.
+          example: "123456"
+        travelDocumentType:
+          type: string
+          description: The type of travel document.
+          example: "RG"
+        seatNumber:
+          type: string
+          description: The passenger's seat number.
+          example: "73"
+        seatClass:
+          type: string
+          description: The class of the seat.
+          example: "LEITO CAMA"
+        bpe:
+          type: string
+          format: uri
+          description: The URL for the electronic ticket (BPE).
+          example: "https://queropassagem.com.br/..."
+        ticket:
+          type: string
+          description: The ticket number.
+          example: "ABC123"
+        state:
+          type: string
+          description: The state of the ticket (e.g., emitted).
+          example: "emitted"
+        canceled_by:
+          type: string
+          nullable: true
+          description: The entity that canceled the ticket, if applicable.
+          example: null
+        modifiable:
+          type: boolean
+          description: Indicates if the ticket can be modified.
+          example: false
+        birthDate:
+          type: string
+          format: date
+          description: The passenger's birth date.
+          example: "1998-08-11"
+        insurance:
+          $ref: '#/components/schemas/InsuranceSchema'
+        cancellation:
+          $ref: '#/components/schemas/CancellationSchema'
+    InsuranceSchema:
+      type: object
+      properties:
+        cpf:
+          type: string
+          description: The CPF number.
+          example: "012.345.678-90"
+        birthDate:
+          type: string
+          format: date
+          description: The birth date for the insurance policy.
+          example: "1998-08-11"
+        cep:
+          type: string
+          description: The CEP number.
+          example: "99999-999"
+        state:
+          type: string
+          description: The state of the insurance policy.
+          example: "emitted"
+        voucher:
+          type: string
+          description: The insurance voucher number.
+          example: "123456"
+    CancellationSchema:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+          description: Indicates if cancellation is allowed.
+          example: false
+        fee:
+          type: number
+          format: float
+          description: The cancellation fee.
+          example: 0
+    StopDetailStationSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the station.
+          example: "ROD_1"
+        name:
+          type: string
+          description: The name of the station.
+          example: "São Paulo, SP - Tietê"
+    StopDetailCitySchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the city.
+          example: "CIT_1"
+        name:
+          type: string
+          description: The name of the city.
+          example: "São Paulo, SP"
+    IntegerSchema:
+      type: integer
+      format: int32
+      minimum: 1
+  parameters:
+    FromParam:
+      name: from
+      in: path
+      required: true
+      description: Origin station or city id
+      schema:
+        type: string
+      example: ROD_1
+    ToParam:
+      name: to
+      in: path
+      required: true
+      description: Destination station or city id
+      schema:
+        type: string
+      example: CIT_15
+    TravelDateParam:
+      name: travelDate
+      in: path
+      required: true
+      description: Date of travel in YYYY-MM-DD format
+      schema:
+        type: string
+        format: date
+      example: "2026-09-15"
+    AffiliateCodeParam:
+      name: affiliateCode
+      in: path
+      required: true
+      description: Your affiliate code
+      schema:
+        type: string
+      example: ABC

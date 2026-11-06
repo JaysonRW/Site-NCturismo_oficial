@@ -1,6 +1,6 @@
 {
-  "summary":  "Plano de implementação detalhado com arquitetura de leads, validação de códigos corporativos de empresas conveniadas, recuperação de código para beneficiários e integração com Painel Administrativo, e-mail (atendimento@ncturismo.com.br), WhatsApp (41 99683-0144) e scripts SQL para o Supabase.",
-  "updatedAt":  "2026-10-21T14:12:59.893557501Z",
+  "summary":  "Plano de implementação da Fase 1 do Módulo Rodoviário NC Turismo (Etapas A, B e C da especificação Quero Passagem: Base Executável + Proxy Backend Demo/Sandbox + Busca de Viagens Diretas/Conexões + Mapa Interativo de Poltronas), integrado ao menu principal e seguindo a identidade visual da NC Turismo.",
+  "updatedAt":  "2026-10-28T14:06:00.145889573Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

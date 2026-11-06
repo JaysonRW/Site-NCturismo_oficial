@@ -1,0 +1,215 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 600" width="100%" height="100%">
+  <defs>
+    <!-- Brazilian Highway Surface (BR-116 / Via Dutra) -->
+    <linearGradient id="roadGradFg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#334155" stop-opacity="0.96" />
+      <stop offset="50%" stop-color="#1E293B" stop-opacity="0.96" />
+      <stop offset="100%" stop-color="#334155" stop-opacity="0.96" />
+    </linearGradient>
+
+    <!-- Bus Body Pearl White -->
+    <linearGradient id="busBodyFg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="70%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+
+    <!-- NC Turismo Crimson Livery -->
+    <linearGradient id="ncCrimsonFg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#990A22" />
+      <stop offset="55%" stop-color="#C8102E" />
+      <stop offset="100%" stop-color="#E11D48" />
+    </linearGradient>
+
+    <!-- NC Turismo Gold Accent -->
+    <linearGradient id="ncGoldFg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D97706" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#FBBF24" />
+    </linearGradient>
+
+    <!-- Panoramic Tinted Daylight Glass -->
+    <linearGradient id="glassGradFg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0EA5E9" stop-opacity="0.35" />
+      <stop offset="45%" stop-color="#38BDF8" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0.42" />
+    </linearGradient>
+
+    <filter id="busShadowFg" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#0F172A" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Modern Brazilian Highway Viaduct Guardrail & Asphalt -->
+  <rect x="0" y="458" width="1800" height="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5" opacity="0.95" />
+  <path d="M0,472 L1800,472 L1800,600 L0,600 Z" fill="url(#roadGradFg)" />
+
+  <!-- Highway Lane Markings -->
+  <line x1="0" y1="484" x2="1800" y2="484" stroke="#F8FAFC" stroke-width="3" opacity="0.75" />
+  <line x1="0" y1="536" x2="1800" y2="536" stroke="#FBBF24" stroke-width="4.5" stroke-dasharray="64 48" opacity="0.95" />
+  <line x1="0" y1="586" x2="1800" y2="586" stroke="#F8FAFC" stroke-width="4" opacity="0.85" />
+
+  <!-- High-Standard Double Decker Coach Bus Positioned on Right/Center of 3:1 Frame -->
+  <g filter="url(#busShadowFg)" transform="translate(560, 142) scale(0.95)">
+    <!-- Ground Contact Shadow -->
+    <ellipse cx="560" cy="378" rx="520" ry="18" fill="#0F172A" opacity="0.42" />
+
+    <!-- Main Aerodynamic Double Decker Body Shell -->
+    <path
+      d="M 45,65
+         Q 45,20 95,18
+         L 955,18
+         Q 1025,18 1060,68
+         L 1095,175
+         Q 1112,230 1110,295
+         L 1110,332
+         Q 1110,350 1090,350
+         L 55,350
+         Q 30,350 30,325
+         L 30,110
+         Q 30,75 45,65 Z"
+      fill="url(#busBodyFg)"
+      stroke="#CBD5E1"
+      stroke-width="2"
+    />
+
+    <!-- Upper Deck Panoramic Windows (Piso 2 - Semileito / Executivo) -->
+    <path
+      d="M 70,46
+         Q 70,34 90,34
+         L 965,34
+         Q 1012,34 1038,76
+         L 1060,132
+         L 70,132 Z"
+      fill="#0F172A"
+    />
+    <path
+      d="M 74,38
+         L 962,38
+         Q 1008,38 1032,76
+         L 1054,128
+         L 74,128 Z"
+      fill="url(#glassGradFg)"
+    />
+
+    <!-- Upper Deck Window Pillars -->
+    <g stroke="#0F172A" stroke-width="6">
+      <line x1="210" y1="34" x2="210" y2="132" />
+      <line x1="355" y1="34" x2="355" y2="132" />
+      <line x1="500" y1="34" x2="500" y2="132" />
+      <line x1="645" y1="34" x2="645" y2="132" />
+      <line x1="790" y1="34" x2="790" y2="132" />
+      <line x1="930" y1="34" x2="945" y2="132" />
+    </g>
+
+    <!-- Upper Deck Sunlight Reflection Strip -->
+    <path d="M 85,46 L 955,46 L 975,62 L 85,62 Z" fill="#FFFFFF" opacity="0.32" />
+
+    <!-- Lower Deck Leito Cama Lounge Windows (Piso 1) -->
+    <path
+      d="M 615,172
+         L 935,172
+         Q 965,172 978,195
+         L 995,242
+         L 615,242 Z"
+      fill="#0F172A"
+    />
+    <path
+      d="M 620,176
+         L 932,176
+         Q 960,176 972,196
+         L 988,238
+         L 620,238 Z"
+      fill="url(#glassGradFg)"
+    />
+    <line x1="745" y1="172" x2="745" y2="242" stroke="#0F172A" stroke-width="6" />
+    <line x1="865" y1="172" x2="865" y2="242" stroke="#0F172A" stroke-width="6" />
+
+    <!-- Driver Front Cabin Windshield -->
+    <path
+      d="M 1005,168
+         L 1072,168
+         L 1098,255
+         L 1018,255 Z"
+      fill="#0F172A"
+    />
+    <path
+      d="M 1010,173
+         L 1068,173
+         L 1092,250
+         L 1022,250 Z"
+      fill="url(#glassGradFg)"
+    />
+
+    <!-- Dynamic NC Turismo Crimson & Gold Aerodynamic Livery -->
+    <path
+      d="M 30,225
+         L 540,165
+         L 975,165
+         L 940,145
+         L 30,145 Z"
+      fill="url(#ncCrimsonFg)"
+    />
+    <path
+      d="M 30,248
+         L 565,182
+         L 605,248
+         L 30,295 Z"
+      fill="url(#ncGoldFg)"
+      opacity="0.92"
+    />
+
+    <!-- Chrome Metallic Beltline Accent -->
+    <path d="M 30,142 L 1063,142 L 1066,149 L 30,149 Z" fill="#CBD5E1" />
+
+    <!-- Brand Identity On Coach Side -->
+    <text x="115" y="198" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="800" letter-spacing="3">
+      NC TURISMO
+    </text>
+    <text x="117" y="218" fill="#FEF3C7" font-family="monospace" font-size="11" font-weight="700" letter-spacing="2.2">
+      CURITIBA • SÃO PAULO • RIO DE JANEIRO
+    </text>
+
+    <!-- Luggage Compartment Doors Lines -->
+    <g stroke="#CBD5E1" stroke-width="2" fill="none">
+      <rect x="330" y="252" width="135" height="82" rx="4" />
+      <rect x="475" y="252" width="135" height="82" rx="4" />
+      <rect x="620" y="252" width="135" height="82" rx="4" />
+      <rect x="765" y="252" width="110" height="82" rx="4" />
+    </g>
+
+    <!-- Aerodynamic Rear View Mirror -->
+    <path d="M 1055,148 Q 1118,145 1122,192 L 1108,195 Q 1105,160 1055,158 Z" fill="#C8102E" />
+    <rect x="1106" y="182" width="16" height="28" rx="5" fill="#1E293B" />
+
+    <!-- LED Matrix Destination Sign (Front Top) -->
+    <rect x="1008" y="133" width="52" height="14" rx="3" fill="#0F172A" />
+    <text x="1014" y="143" fill="#FBBF24" font-family="monospace" font-size="7.5" font-weight="700">
+      BRASIL
+    </text>
+
+    <!-- Full LED Headlights & DRLs -->
+    <path d="M 1084,302 L 1110,295 L 1110,322 L 1080,322 Z" fill="#FEF08A" />
+    <path d="M 1082,300 L 1112,293" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Rear LED Tail Light Bar -->
+    <rect x="30" y="255" width="10" height="68" rx="3" fill="#E11D48" />
+
+    <!-- 8x2 Double Decker Wheels -->
+    <g transform="translate(155, 345)">
+      <circle cx="0" cy="0" r="42" fill="#1E293B" />
+      <circle cx="0" cy="0" r="26" fill="#E2E8F0" stroke="#94A3B8" stroke-width="3" />
+      <circle cx="0" cy="0" r="11" fill="#C8102E" />
+    </g>
+    <g transform="translate(260, 345)">
+      <circle cx="0" cy="0" r="42" fill="#1E293B" />
+      <circle cx="0" cy="0" r="26" fill="#E2E8F0" stroke="#94A3B8" stroke-width="3" />
+      <circle cx="0" cy="0" r="11" fill="#C8102E" />
+    </g>
+    <g transform="translate(945, 345)">
+      <circle cx="0" cy="0" r="42" fill="#1E293B" />
+      <circle cx="0" cy="0" r="26" fill="#E2E8F0" stroke="#94A3B8" stroke-width="3" />
+      <circle cx="0" cy="0" r="11" fill="#C8102E" />
+    </g>
+  </g>
+</svg>

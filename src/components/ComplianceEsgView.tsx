@@ -53,13 +53,13 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
       icon: Scale,
       badge: 'Alçadas & Processos',
       title: 'Processos, responsabilidades e controles',
-      desc: 'Estruturação formal de alçadas de decisão, documentação rastreável e segregação rigorosa de funções operacionais.',
+      desc: 'Estruturação formal de alçadas de decisão, documentação rastreável e definição de responsabilidades e controles operacionais.',
       whatsappMsg: 'Olá, gostaria de saber mais sobre governança corporativa na gestão de viagens com a NC Turismo.',
       items: [
         'Processos operacionais e financeiros estruturados',
-        'Transparência e prestação de contas integral',
-        'Definição clara de papéis e responsabilidades',
-        'Controles internos para mitigação de fraudes e desvios'
+        'Transparência e prestação de contas nas operações',
+        'Definição de responsabilidades e controles operacionais',
+        'Controles internos para mitigação de riscos e desvios'
       ]
     },
     {
@@ -67,15 +67,15 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
       tag: 'Proteção de Dados e Privacidade',
       category: 'seguranca',
       icon: Fingerprint,
-      badge: 'LGPD Compliance',
+      badge: 'Privacidade e Segurança',
       title: 'Tratamento responsável das informações',
-      desc: 'Adequação irrestrita à Lei Geral de Proteção de Dados (Lei 13.709/2018), com guarda segura de dados sensíveis de viajantes.',
-      whatsappMsg: 'Olá, gostaria de saber mais sobre as práticas de privacidade e LGPD da NC Turismo.',
+      desc: 'Compromisso com a conformidade à LGPD (Lei Geral de Proteção de Dados — Lei 13.709/2018), com guarda segura de dados de viajantes.',
+      whatsappMsg: 'Olá, gostaria de saber mais sobre as práticas de privacidade e proteção de dados da NC Turismo.',
       items: [
-        'Conformidade técnica e jurídica com a LGPD',
+        'Compromisso com a conformidade à LGPD',
         'Tratamento responsável e justificado das informações pessoais',
-        'Criptografia na guarda de documentos e dados cadastrais',
-        'Boas práticas de privacidade incorporadas ao dia a dia'
+        'Proteção na guarda de documentos e dados cadastrais',
+        'Boas práticas de privacidade e segurança incorporadas ao dia a dia'
       ]
     },
     {
@@ -83,16 +83,16 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
       tag: 'Segurança da Informação',
       category: 'seguranca',
       icon: Lock,
-      badge: 'PCI DSS Certificado',
+      badge: 'Segurança de Pagamentos',
       title: 'Controle, monitoramento e continuidade',
-      desc: 'Ambiente tecnológico homologado com os mais altos padrões de segurança de pagamentos e tráfego de dados.',
-      whatsappMsg: 'Olá, gostaria de saber mais sobre a certificação PCI DSS e segurança da informação da NC Turismo.',
+      desc: 'Ambiente tecnológico alinhado aos padrões de segurança de pagamentos (PCI DSS) e proteção no tráfego de informações.',
+      whatsappMsg: 'Olá, gostaria de saber mais sobre segurança de pagamentos e segurança da informação da NC Turismo.',
       items: [
-        'Ambiente transacional com certificação PCI DSS',
-        'Processos contínuos de controle e monitoramento de rede',
-        'Proteção ativa de dados corporativos e financeiros',
+        'Ambiente transacional alinhado ao padrão PCI DSS de segurança de pagamentos',
+        'Processos contínuos de controle e monitoramento operacional',
+        'Proteção de dados corporativos e financeiros',
         'Planos de contingência e atenção à continuidade operacional',
-        'Gestão responsável e confidencialidade estrita de dados'
+        'Gestão responsável e confidencialidade de informações'
       ]
     },
     {
@@ -100,15 +100,15 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
       tag: 'Compliance Corporativo',
       category: 'governanca',
       icon: FileCheck2,
-      badge: 'Auditoria Pronta',
+      badge: 'Apoio à Auditoria',
       title: 'Conformidade, auditoria e rastreabilidade',
-      desc: 'Histórico auditável de cada reserva, alteração e aprovação para comitês internos, conselhos e auditorias externas.',
+      desc: 'Rastreabilidade das operações para apoiar consultas de comitês internos, gestores e processos de auditoria.',
       whatsappMsg: 'Olá, quero entender o suporte a processos de auditoria e compliance oferecido pela NC Turismo.',
       items: [
         'Conformidade com políticas e limites internos de cada cliente',
-        'Apoio técnico ágil em processos de auditoria interna e externa',
-        'Rastreabilidade total das operações com logs imutáveis',
-        'Mais segurança jurídica para clientes corporativos e parceiros'
+        'Apoio à auditoria interna e externa com informações estruturadas',
+        'Rastreabilidade das operações com registros e históricos de operações nos sistemas utilizados',
+        'Mais segurança e previsibilidade para clientes corporativos e parceiros'
       ]
     },
     {
@@ -116,15 +116,15 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
       tag: 'Responsabilidade ESG',
       category: 'esg',
       icon: Leaf,
-      badge: 'Sustentabilidade & Ética',
-      title: 'Sustentabilidade, pessoas e ética',
-      desc: 'Compromisso com o meio ambiente, valorização dos colaboradores e conduta ética em todas as relações com fornecedores.',
-      whatsappMsg: 'Olá, quero conhecer as iniciativas de ESG e relatórios de carbono da NC Turismo.',
+      badge: 'Ética, Pessoas & Sustentabilidade',
+      title: 'Ética, pessoas, sustentabilidade e melhoria contínua',
+      desc: 'Compromisso permanente com a ética nos negócios, valorização das pessoas, práticas de sustentabilidade e melhoria contínua.',
+      whatsappMsg: 'Olá, quero conhecer os compromissos de Responsabilidade ESG da NC Turismo.',
       items: [
-        'Compromisso com práticas sustentáveis e mensuração de impacto',
-        'Valorização contínua das pessoas e diversidade no ambiente de trabalho',
-        'Relacionamento ético, transparente e íntegro com fornecedores',
-        'Evolução contínua em governança e responsabilidade socioambiental'
+        'Compromisso com práticas responsáveis e conscientização socioambiental',
+        'Valorização das pessoas, respeito e desenvolvimento no ambiente de trabalho',
+        'Relacionamento ético, transparente e íntegro com clientes e fornecedores',
+        'Foco em melhoria contínua em governança e responsabilidade socioambiental'
       ]
     }
   ];
@@ -137,26 +137,26 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
   const beneficios = [
     {
       title: 'Mais segurança na contratação',
-      desc: 'Processos e práticas auditadas que respaldam decisões corporativas com tranquilidade jurídica e operacional.',
-      badge: 'Segurança Jurídica',
+      desc: 'Processos estruturados e documentados que respaldam decisões corporativas com tranquilidade jurídica e operacional.',
+      badge: 'Segurança Operacional',
       icon: ShieldCheck
     },
     {
       title: 'Maior transparência operacional',
-      desc: 'Clareza cristalina nos fluxos, aprovações, responsabilidades e controles financeiros sem zonas cinzentas.',
+      desc: 'Clareza nos fluxos, aprovações, definição de responsabilidades e controles operacionais e financeiros.',
       badge: 'Transparência',
       icon: Eye
     },
     {
       title: 'Apoio a processos de auditoria e homologação',
-      desc: 'Documentação, rastreabilidade e conformidade prontas para aprovar seu processo de homologação em grandes empresas multinacionais.',
-      badge: 'Homologação Rápida',
+      desc: 'Documentação e informações para apoiar processos de homologação em empresas e clientes corporativos.',
+      badge: 'Apoio à Homologação',
       icon: FileCheck2
     },
     {
       title: 'Proteção das informações corporativas',
-      desc: 'Conformidade estrita com requisitos de privacidade, segurança da informação, certificação PCI DSS e LGPD.',
-      badge: 'Blindagem de Dados',
+      desc: 'Compromisso com a conformidade à LGPD, privacidade e segurança da informação e de pagamentos (PCI DSS).',
+      badge: 'Privacidade e Segurança',
       icon: Lock
     },
     {
@@ -167,35 +167,63 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
     }
   ];
 
-  // 4 Pilares de Certificação e Conformidade
+  // 4 Indicadores / Quadros de Governança, Compliance e Responsabilidade
   const selosConformidade = [
     {
-      nome: 'PCI DSS Compliant',
+      nome: 'PCI DSS',
       tag: 'Segurança de Pagamentos',
-      desc: 'Padrão internacional de segurança da informação para organizações que lidam com cartões de crédito e pagamentos virtuais.',
+      desc: 'Padrão de segurança da informação voltado à proteção de transações e meios de pagamento corporativos, conforme documentação vigente.',
       icon: Lock,
-      status: 'Certificado & Ativo'
+      status: 'Segurança de Pagamentos'
     },
     {
-      nome: 'Conformidade LGPD',
-      tag: 'Privacidade de Dados',
-      desc: 'Adequação total à Lei Geral de Proteção de Dados (Lei 13.709/2018), com encarregado DPO e política de privacidade transparente.',
+      nome: 'Proteção de Dados',
+      tag: 'Privacidade e Segurança',
+      desc: 'Compromisso com a conformidade à LGPD (Lei 13.709/2018), com diretrizes de privacidade e tratamento responsável das informações.',
       icon: Fingerprint,
-      status: 'Homologado'
+      status: 'Privacidade & LGPD'
     },
     {
-      nome: 'Trilha de Auditoria 100%',
-      tag: 'Governança & Rastreabilidade',
-      desc: 'Todos os registros de emissões, alterações, cancelamentos e aprovações contam com carimbo de tempo e usuário responsável.',
+      nome: 'Rastreabilidade das operações',
+      tag: 'Trilha de Auditoria',
+      desc: 'Registros e históricos de operações nos sistemas utilizados para apoiar a conferência de emissões, alterações e aprovações.',
       icon: FileCheck2,
-      status: 'Auditável'
+      status: 'Apoio à Auditoria'
     },
     {
-      nome: 'Indicadores ESG & CO₂',
-      tag: 'Responsabilidade Ambiental',
-      desc: 'Relatórios gerenciais com estimativa de emissão de carbono por trecho aéreo para apoiar o balanço de sustentabilidade do cliente.',
+      nome: 'Compromisso ESG',
+      tag: 'Responsabilidade Socioambiental',
+      desc: 'Atuação pautada pela ética, valorização das pessoas, sustentabilidade e melhoria contínua nas relações corporativas.',
       icon: Leaf,
-      status: 'Relatórios Disponíveis'
+      status: 'Melhoria Contínua'
+    }
+  ];
+
+  // Políticas e Documentos Institucionais (em revisão e aprovação)
+  const documentosInstitucionais = [
+    {
+      titulo: 'Código de Conduta e Ética',
+      categoria: 'Governança & Integridade',
+      desc: 'Diretrizes de conduta ética, transparência, prevenção a conflitos de interesse e relacionamento íntegro com clientes, parceiros e fornecedores.',
+      status: 'Em revisão e aprovação'
+    },
+    {
+      titulo: 'Política de Privacidade e Proteção de Dados',
+      categoria: 'Privacidade & LGPD',
+      desc: 'Princípios e regras para coleta, tratamento, armazenamento seguro e direitos dos titulares em conformidade com a LGPD.',
+      status: 'Em revisão e aprovação'
+    },
+    {
+      titulo: 'Política de Segurança da Informação e Controles',
+      categoria: 'Segurança & Operações',
+      desc: 'Normas internas de controle de acesso, proteção de informações corporativas e registros operacionais nos sistemas utilizados.',
+      status: 'Em revisão e aprovação'
+    },
+    {
+      titulo: 'Diretrizes de Responsabilidade Socioambiental (ESG)',
+      categoria: 'Pessoas, Ética & Sustentabilidade',
+      desc: 'Compromissos institucionais voltados à valorização de pessoas, boas práticas socioambientais e evolução contínua da gestão.',
+      status: 'Em revisão e aprovação'
     }
   ];
 
@@ -278,27 +306,27 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
                 onClick={onOpenDiagnosis}
                 className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-[#C8102E] py-2 px-3 transition-colors cursor-pointer"
               >
-                Solicitar Parecer de Homologação &rarr;
+                Solicitar Informações de Homologação &rarr;
               </button>
             </div>
 
-            {/* Micro Metrics Bar */}
-            <div className="pt-8 border-t border-slate-200/80 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {/* Micro Metrics Bar (1. Indicadores no topo da página) */}
+            <div className="pt-8 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div>
-                <div className="text-2xl md:text-3xl font-extrabold text-[#0F172A] tracking-tight">PCI DSS</div>
-                <div className="text-xs text-slate-500 uppercase tracking-wider mt-0.5">Certificação Global</div>
+                <div className="text-xl md:text-2xl font-extrabold text-[#0F172A] tracking-tight">PCI DSS</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wider mt-0.5">Segurança de Pagamentos</div>
               </div>
               <div>
-                <div className="text-2xl md:text-3xl font-extrabold text-[#C8102E] tracking-tight">100% LGPD</div>
-                <div className="text-xs text-slate-500 uppercase tracking-wider mt-0.5">Conformidade Legal</div>
+                <div className="text-xl md:text-2xl font-extrabold text-[#C8102E] tracking-tight">Proteção de Dados</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wider mt-0.5">Privacidade e Segurança</div>
               </div>
               <div>
-                <div className="text-2xl md:text-3xl font-extrabold text-[#DB8902] tracking-tight">Rastreável</div>
+                <div className="text-xl md:text-2xl font-extrabold text-[#DB8902] tracking-tight">Rastreável</div>
                 <div className="text-xs text-slate-500 uppercase tracking-wider mt-0.5">Trilha de Auditoria</div>
               </div>
               <div>
-                <div className="text-2xl md:text-3xl font-extrabold text-[#0F172A] tracking-tight">ESG Ready</div>
-                <div className="text-xs text-slate-500 uppercase tracking-wider mt-0.5">Relatório de Emissões</div>
+                <div className="text-xl md:text-2xl font-extrabold text-[#0F172A] tracking-tight">Compromisso ESG</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wider mt-0.5">Responsabilidade Socioambiental</div>
               </div>
             </div>
           </div>
@@ -330,7 +358,7 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
             </p>
           </div>
 
-          {/* Grid de 4 Pilares de Homologação */}
+          {/* Grid de 4 Quadros de Governança e Compliance */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
             {selosConformidade.map((selo, idx) => {
               const IconComp = selo.icon;
@@ -374,7 +402,7 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
                 Práticas que fortalecem a confiança na operação
               </h2>
               <p className="text-slate-600 text-sm md:text-base">
-                Conheça as diretrizes operacionais, tecnológicas e éticas implementadas pela NC Turismo para proteger sua empresa.
+                Conheça as diretrizes operacionais, tecnológicas e éticas adotadas pela NC Turismo para apoiar sua empresa.
               </p>
             </div>
 
@@ -478,7 +506,7 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
               Mais segurança, transparência e confiança na contratação
             </h2>
             <p className="text-slate-600 text-sm md:text-base leading-relaxed">
-              Entenda como uma governança madura protege seu departamento de compras e garante aprovações ágeis nos comitês de homologação.
+              Entenda como processos estruturados e documentados apoiam seu departamento de compras, controladoria e processos de homologação.
             </p>
           </div>
 
@@ -512,6 +540,80 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
             })}
           </div>
 
+        </div>
+      </section>
+
+      {/* 4. DOCUMENTOS E POLÍTICAS INSTITUCIONAIS */}
+      <section id="documentos-institucionais" className="max-w-[1240px] mx-auto px-6 md:px-12 mb-16 scroll-mt-28">
+        <div className="bg-white border border-slate-200/90 rounded-[28px] p-8 md:p-12 shadow-sm space-y-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-4 border-b border-slate-200/80">
+            <div className="space-y-3 max-w-2xl">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#C8102E] block">
+                Documentos Institucionais · Transparência e Governança
+              </span>
+              <h2 className="text-2xl md:text-4xl font-bold text-[#0F172A] tracking-tight">
+                Políticas e diretrizes institucionais
+              </h2>
+              <p className="text-slate-600 text-sm md:text-base leading-relaxed">
+                Espaço dedicado à consulta das políticas institucionais da NC Turismo. Nossos documentos passam por ciclo formal de revisão e aprovação interna e serão disponibilizados para acesso direto nesta seção assim que finalizados.
+              </p>
+            </div>
+
+            <a
+              href="mailto:corporativo@ncturismo.com.br?subject=Solicita%C3%A7%C3%A3o%20de%20Documenta%C3%A7%C3%A3o%20Institucional%20-%20Compliance%20e%20Homologa%C3%A7%C3%A3o"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-red-50 hover:bg-red-100/80 text-[#C8102E] border border-red-200/80 text-xs font-bold uppercase tracking-wider transition-colors shrink-0"
+            >
+              <Mail size={15} />
+              <span>Solicitar Apoio à Homologação</span>
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {documentosInstitucionais.map((doc, idx) => (
+              <div
+                key={idx}
+                className="p-6 rounded-2xl bg-[#FAFCFF] border border-slate-200/90 hover:border-slate-300 transition-all flex flex-col justify-between gap-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#DB8902]">
+                      {doc.categoria}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                      <AlertCircle size={12} className="text-[#DB8902]" />
+                      {doc.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 text-[#C8102E] flex items-center justify-center shrink-0 mt-0.5">
+                      <FileText size={18} />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-[#0F172A] leading-snug">
+                        {doc.titulo}
+                      </h3>
+                      <p className="text-xs text-slate-600 leading-relaxed mt-1">
+                        {doc.desc}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium">
+                    Publicação digital prevista após conclusão da revisão vigente
+                  </span>
+                  <a
+                    href="mailto:corporativo@ncturismo.com.br?subject=Informa%C3%A7%C3%B5es%20sobre%20Pol%C3%ADticas%20Institucionais%20NC%20Turismo"
+                    className="font-bold text-[#C8102E] hover:underline shrink-0 ml-2"
+                  >
+                    Consultar &rarr;
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -584,15 +686,15 @@ export const ComplianceEsgView: React.FC<ComplianceEsgViewProps> = ({
               onClick={onOpenDiagnosis}
               className="inline-flex items-center gap-2 px-8 py-4 bg-white hover:bg-slate-50 text-[#0F172A] font-bold text-sm uppercase tracking-wider rounded-xl border border-slate-300 hover:border-slate-400 transition-all shadow-md cursor-pointer"
             >
-              <span>Solicitar Kit de Homologação</span>
+              <span>Solicitar Informações de Homologação</span>
               <ArrowRight size={16} className="text-[#C8102E]" />
             </button>
           </div>
 
-          {/* Micro Footer */}
+          {/* 5. Micro Footer (Telefone corrigido para (41) 3281-1167 e e-mail corporativo@ncturismo.com.br mantido) */}
           <div className="pt-6 border-t border-amber-200/60 max-w-2xl mx-auto flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600 relative z-10">
-            <a href="tel:04132811153" className="inline-flex items-center gap-2 hover:text-[#C8102E] transition-colors font-medium">
-              <Phone size={14} className="text-[#DB8902]" /> (41) 3281-1153
+            <a href="tel:04132811167" className="inline-flex items-center gap-2 hover:text-[#C8102E] transition-colors font-medium">
+              <Phone size={14} className="text-[#DB8902]" /> (41) 3281-1167
             </a>
             <a href="mailto:corporativo@ncturismo.com.br" className="inline-flex items-center gap-2 hover:text-[#C8102E] transition-colors font-medium">
               <Mail size={14} className="text-[#DB8902]" /> corporativo@ncturismo.com.br

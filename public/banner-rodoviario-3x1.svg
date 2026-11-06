@@ -1,0 +1,343 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 600" width="100%" height="100%">
+  <defs>
+    <!-- Authentic Brazilian Sunny Tropical Sky -->
+    <linearGradient id="skyBrasil" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0F2FE" />
+      <stop offset="45%" stop-color="#BAE6FD" />
+      <stop offset="78%" stop-color="#FEF3C7" />
+      <stop offset="100%" stop-color="#FDE68A" />
+    </linearGradient>
+
+    <!-- Warm Brazilian Tropical Sun -->
+    <radialGradient id="sunGlowBrasil" cx="82%" cy="22%" r="35%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.98" />
+      <stop offset="30%" stop-color="#FDE047" stop-opacity="0.65" />
+      <stop offset="70%" stop-color="#F59E0B" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Lush Green Mata Atlântica & Serra do Mar (Zero Snow, 100% Tropical Green) -->
+    <linearGradient id="mataAtlanticaFar" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#15803D" stop-opacity="0.72" />
+      <stop offset="100%" stop-color="#166534" stop-opacity="0.92" />
+    </linearGradient>
+
+    <linearGradient id="mataAtlanticaNear" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#16A34A" stop-opacity="0.88" />
+      <stop offset="100%" stop-color="#14532D" stop-opacity="0.96" />
+    </linearGradient>
+
+    <!-- Pão de Açúcar & Corcovado Granite/Green Tone -->
+    <linearGradient id="morroCarioca" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#15803D" />
+      <stop offset="55%" stop-color="#166534" />
+      <stop offset="100%" stop-color="#14532D" />
+    </linearGradient>
+
+    <!-- Guanabara Bay / Atlantic Ocean Water -->
+    <linearGradient id="oceanWater" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7" stop-opacity="0.75" />
+      <stop offset="50%" stop-color="#0EA5E9" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.75" />
+    </linearGradient>
+
+    <!-- Brazilian Highway Surface (BR-116 / Via Dutra) -->
+    <linearGradient id="roadGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#475569" />
+      <stop offset="50%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+
+    <!-- Bus Body Pearl White -->
+    <linearGradient id="busBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="70%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+
+    <!-- NC Turismo Crimson Livery -->
+    <linearGradient id="ncCrimson" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#990A22" />
+      <stop offset="55%" stop-color="#C8102E" />
+      <stop offset="100%" stop-color="#E11D48" />
+    </linearGradient>
+
+    <!-- NC Turismo Gold Accent -->
+    <linearGradient id="ncGold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D97706" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#FBBF24" />
+    </linearGradient>
+
+    <!-- Panoramic Tinted Daylight Glass -->
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0EA5E9" stop-opacity="0.32" />
+      <stop offset="45%" stop-color="#38BDF8" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0.38" />
+    </linearGradient>
+
+    <filter id="busShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#0F172A" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- 1. Sunny Brazilian Sky -->
+  <rect width="1800" height="600" fill="url(#skyBrasil)" />
+  <circle cx="1480" cy="135" r="290" fill="url(#sunGlowBrasil)" />
+  <circle cx="1480" cy="135" r="56" fill="#FEF08A" opacity="0.95" />
+
+  <!-- Soft Summer Clouds -->
+  <g fill="#FFFFFF" opacity="0.82">
+    <ellipse cx="290" cy="95" rx="125" ry="22" />
+    <ellipse cx="350" cy="85" rx="85" ry="18" />
+    <ellipse cx="920" cy="80" rx="145" ry="20" />
+    <ellipse cx="985" cy="72" rx="95" ry="16" />
+  </g>
+
+  <!-- 2. RIGHT SIDE HORIZON: RIO DE JANEIRO (Corcovado + Cristo Redentor + Pão de Açúcar + Baía de Guanabara) -->
+  <!-- Corcovado Peak -->
+  <path d="M 1180,430 Q 1275,180 1320,175 Q 1355,175 1420,430 Z" fill="url(#morroCarioca)" opacity="0.88" />
+  <!-- Cristo Redentor Silhouette on Corcovado Peak -->
+  <g transform="translate(1312, 136)" fill="#0F172A" opacity="0.78">
+    <!-- Pedestal -->
+    <rect x="-6" y="28" width="12" height="12" rx="1" />
+    <!-- Robe / Body -->
+    <path d="M -4,8 L 4,8 L 6,28 L -6,28 Z" />
+    <!-- Outstretched Arms -->
+    <rect x="-18" y="9" width="36" height="4.5" rx="2" />
+    <!-- Head -->
+    <circle cx="0" cy="4" r="3.8" />
+  </g>
+
+  <!-- Pão de Açúcar (Sugarloaf Iconic Dome) & Morro da Urca -->
+  <path d="M 1450,435 C 1485,220 1565,215 1605,435 Z" fill="url(#morroCarioca)" />
+  <path d="M 1575,435 C 1605,310 1685,310 1725,435 Z" fill="#15803D" />
+  <!-- Bondinho Cable Car Line between Morro da Urca and Pão de Açúcar -->
+  <line x1="1532" y1="248" x2="1645" y2="328" stroke="#FFFFFF" stroke-width="1.5" opacity="0.75" />
+  <rect x="1584" y="284" width="10" height="7" rx="2" fill="#C8102E" />
+
+  <!-- 3. LEFT & CENTER HORIZON: CURITIBA (Jardim Botânico Glass Dome + Araucárias do Paraná + Serra do Mar Verde) -->
+  <!-- Rolling Green Hills of Serra do Mar -->
+  <path d="M 0,435 Q 160,310 350,365 Q 560,295 790,375 Q 980,315 1220,435 Z" fill="url(#mataAtlanticaFar)" />
+  <path d="M 0,445 Q 230,355 470,400 Q 720,340 990,415 Q 1160,385 1350,445 Z" fill="url(#mataAtlanticaNear)" />
+
+  <!-- Curitiba Iconic Jardim Botânico Crystal Greenhouse Silhouette (Left Horizon) -->
+  <g transform="translate(135, 318)" stroke="#FFFFFF" stroke-width="2" fill="#E0F2FE" fill-opacity="0.55">
+    <!-- Left Dome -->
+    <path d="M 0,75 L 0,38 Q 28,8 56,38 L 56,75 Z" />
+    <!-- Center Taller Main Dome -->
+    <path d="M 48,75 L 48,22 Q 88,-15 128,22 L 128,75 Z" />
+    <!-- Right Dome -->
+    <path d="M 120,75 L 120,38 Q 148,8 176,38 L 176,75 Z" />
+    <!-- Arched Steel Ribs -->
+    <line x1="68" y1="10" x2="68" y2="75" stroke-width="1.2" />
+    <line x1="88" y1="2" x2="88" y2="75" stroke-width="1.5" />
+    <line x1="108" y1="10" x2="108" y2="75" stroke-width="1.2" />
+    <rect x="-10" y="74" width="196" height="6" fill="#F8FAFC" />
+  </g>
+
+  <!-- Authentic Araucárias do Paraná (Pinheiro-do-Paraná Candelabra Trees) -->
+  <g fill="#064E3B">
+    <!-- Araucária 1 -->
+    <rect x="62" y="335" width="5" height="65" fill="#3F2E21" />
+    <ellipse cx="64" cy="335" rx="34" ry="8" />
+    <ellipse cx="46" cy="346" rx="18" ry="5" />
+    <ellipse cx="82" cy="346" rx="18" ry="5" />
+    <!-- Araucária 2 -->
+    <rect x="348" y="328" width="6" height="75" fill="#3F2E21" />
+    <ellipse cx="351" cy="328" rx="40" ry="9" />
+    <ellipse cx="328" cy="341" rx="22" ry="6" />
+    <ellipse cx="374" cy="341" rx="22" ry="6" />
+    <!-- Araucária 3 -->
+    <rect x="405" y="348" width="4.5" height="55" fill="#3F2E21" />
+    <ellipse cx="407" cy="348" rx="28" ry="7" />
+  </g>
+
+  <!-- Guanabara Bay / Litoral Brasileiro Water Strip -->
+  <rect x="1150" y="422" width="650" height="28" fill="url(#oceanWater)" />
+  <line x1="1220" y1="434" x2="1760" y2="434" stroke="#E0F2FE" stroke-width="2" stroke-dasharray="28 18" opacity="0.7" />
+
+  <!-- Tropical Imperial Palm Trees (Palmeiras Imperiais do Rio) -->
+  <g stroke="#14532D" fill="none">
+    <path d="M 1680,448 Q 1686,390 1692,360" stroke="#78350F" stroke-width="5" />
+    <path d="M 1692,360 Q 1665,352 1652,372" stroke="#15803D" stroke-width="4" />
+    <path d="M 1692,360 Q 1718,352 1730,372" stroke="#15803D" stroke-width="4" />
+    <path d="M 1692,360 Q 1672,338 1656,348" stroke="#16A34A" stroke-width="3.5" />
+    <path d="M 1692,360 Q 1712,338 1726,348" stroke="#16A34A" stroke-width="3.5" />
+  </g>
+
+  <!-- 4. Modern Brazilian Highway Deck & Guardrail -->
+  <rect x="0" y="446" width="1800" height="16" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1.5" />
+  <path d="M0,462 L1800,462 L1800,600 L0,600 Z" fill="url(#roadGrad)" />
+
+  <!-- Highway Lane Markings -->
+  <line x1="0" y1="476" x2="1800" y2="476" stroke="#F8FAFC" stroke-width="3" opacity="0.7" />
+  <line x1="0" y1="530" x2="1800" y2="530" stroke="#FBBF24" stroke-width="4.5" stroke-dasharray="64 48" opacity="0.95" />
+  <line x1="0" y1="582" x2="1800" y2="582" stroke="#F8FAFC" stroke-width="4" opacity="0.85" />
+
+  <!-- =======================================================================
+       5. HIGH-STANDARD DOUBLE DECKER EXECUTIVE COACH (NC TURISMO BRASIL)
+       ======================================================================= -->
+  <g filter="url(#busShadow)" transform="translate(390, 126)">
+    <!-- Ground Contact Shadow -->
+    <ellipse cx="560" cy="378" rx="520" ry="18" fill="#0F172A" opacity="0.38" />
+
+    <!-- Main Aerodynamic Double Decker Body Shell -->
+    <path
+      d="M 45,65
+         Q 45,20 95,18
+         L 955,18
+         Q 1025,18 1060,68
+         L 1095,175
+         Q 1112,230 1110,295
+         L 1110,332
+         Q 1110,350 1090,350
+         L 55,350
+         Q 30,350 30,325
+         L 30,110
+         Q 30,75 45,65 Z"
+      fill="url(#busBody)"
+      stroke="#CBD5E1"
+      stroke-width="2"
+    />
+
+    <!-- Upper Deck Panoramic Windows (Piso 2 - Semileito / Executivo) -->
+    <path
+      d="M 70,46
+         Q 70,34 90,34
+         L 965,34
+         Q 1012,34 1038,76
+         L 1060,132
+         L 70,132 Z"
+      fill="#0F172A"
+    />
+    <path
+      d="M 74,38
+         L 962,38
+         Q 1008,38 1032,76
+         L 1054,128
+         L 74,128 Z"
+      fill="url(#glassGrad)"
+    />
+
+    <!-- Upper Deck Window Pillars -->
+    <g stroke="#0F172A" stroke-width="6">
+      <line x1="210" y1="34" x2="210" y2="132" />
+      <line x1="355" y1="34" x2="355" y2="132" />
+      <line x1="500" y1="34" x2="500" y2="132" />
+      <line x1="645" y1="34" x2="645" y2="132" />
+      <line x1="790" y1="34" x2="790" y2="132" />
+      <line x1="930" y1="34" x2="945" y2="132" />
+    </g>
+
+    <!-- Upper Deck Sunlight Reflection Strip -->
+    <path d="M 85,46 L 955,46 L 975,62 L 85,62 Z" fill="#FFFFFF" opacity="0.3" />
+
+    <!-- Lower Deck Leito Cama Lounge Windows (Piso 1) -->
+    <path
+      d="M 615,172
+         L 935,172
+         Q 965,172 978,195
+         L 995,242
+         L 615,242 Z"
+      fill="#0F172A"
+    />
+    <path
+      d="M 620,176
+         L 932,176
+         Q 960,176 972,196
+         L 988,238
+         L 620,238 Z"
+      fill="url(#glassGrad)"
+    />
+    <line x1="745" y1="172" x2="745" y2="242" stroke="#0F172A" stroke-width="6" />
+    <line x1="865" y1="172" x2="865" y2="242" stroke="#0F172A" stroke-width="6" />
+
+    <!-- Driver Front Cabin Windshield -->
+    <path
+      d="M 1005,168
+         L 1072,168
+         L 1098,255
+         L 1018,255 Z"
+      fill="#0F172A"
+    />
+    <path
+      d="M 1010,173
+         L 1068,173
+         L 1092,250
+         L 1022,250 Z"
+      fill="url(#glassGrad)"
+    />
+
+    <!-- Dynamic NC Turismo Crimson & Gold Aerodynamic Livery -->
+    <path
+      d="M 30,225
+         L 540,165
+         L 975,165
+         L 940,145
+         L 30,145 Z"
+      fill="url(#ncCrimson)"
+    />
+    <path
+      d="M 30,248
+         L 565,182
+         L 605,248
+         L 30,295 Z"
+      fill="url(#ncGold)"
+      opacity="0.92"
+    />
+
+    <!-- Chrome Metallic Beltline Accent -->
+    <path d="M 30,142 L 1063,142 L 1066,149 L 30,149 Z" fill="#CBD5E1" />
+
+    <!-- Brand Identity On Coach Side -->
+    <text x="115" y="198" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="800" letter-spacing="3">
+      NC TURISMO
+    </text>
+    <text x="117" y="218" fill="#FEF3C7" font-family="monospace" font-size="11" font-weight="700" letter-spacing="2.2">
+      CURITIBA • SÃO PAULO • RIO DE JANEIRO
+    </text>
+
+    <!-- Luggage Compartment Doors Lines -->
+    <g stroke="#CBD5E1" stroke-width="2" fill="none">
+      <rect x="330" y="252" width="135" height="82" rx="4" />
+      <rect x="475" y="252" width="135" height="82" rx="4" />
+      <rect x="620" y="252" width="135" height="82" rx="4" />
+      <rect x="765" y="252" width="110" height="82" rx="4" />
+    </g>
+
+    <!-- Aerodynamic Rear View Mirror -->
+    <path d="M 1055,148 Q 1118,145 1122,192 L 1108,195 Q 1105,160 1055,158 Z" fill="#C8102E" />
+    <rect x="1106" y="182" width="16" height="28" rx="5" fill="#1E293B" />
+
+    <!-- LED Matrix Destination Sign (Front Top) -->
+    <rect x="1008" y="133" width="52" height="14" rx="3" fill="#0F172A" />
+    <text x="1014" y="143" fill="#FBBF24" font-family="monospace" font-size="7.5" font-weight="700">
+      RIO • CWB
+    </text>
+
+    <!-- Full LED Headlights & DRLs -->
+    <path d="M 1084,302 L 1110,295 L 1110,322 L 1080,322 Z" fill="#FEF08A" />
+    <path d="M 1082,300 L 1112,293" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Rear LED Tail Light Bar -->
+    <rect x="30" y="255" width="10" height="68" rx="3" fill="#E11D48" />
+
+    <!-- 8x2 Double Decker Wheels -->
+    <g transform="translate(155, 345)">
+      <circle cx="0" cy="0" r="42" fill="#1E293B" />
+      <circle cx="0" cy="0" r="26" fill="#E2E8F0" stroke="#94A3B8" stroke-width="3" />
+      <circle cx="0" cy="0" r="11" fill="#C8102E" />
+    </g>
+    <g transform="translate(260, 345)">
+      <circle cx="0" cy="0" r="42" fill="#1E293B" />
+      <circle cx="0" cy="0" r="26" fill="#E2E8F0" stroke="#94A3B8" stroke-width="3" />
+      <circle cx="0" cy="0" r="11" fill="#C8102E" />
+    </g>
+    <g transform="translate(945, 345)">
+      <circle cx="0" cy="0" r="42" fill="#1E293B" />
+      <circle cx="0" cy="0" r="26" fill="#E2E8F0" stroke="#94A3B8" stroke-width="3" />
+      <circle cx="0" cy="0" r="11" fill="#C8102E" />
+    </g>
+  </g>
+</svg>

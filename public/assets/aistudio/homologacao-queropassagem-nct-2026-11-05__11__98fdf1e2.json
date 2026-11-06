@@ -1,0 +1,296 @@
+[
+  {
+    "id": "LOG_1793909788290_15m2t",
+    "timestamp": "2026-11-05T20:16:28.290Z",
+    "scenarioTag": "3.1",
+    "operation": "CHECKOUT",
+    "method": "POST",
+    "endpoint": "https://queropassagem.qpdevs.com/ws_v4/new/checkout",
+    "httpStatus": 200,
+    "ok": true,
+    "latencyMs": 4035,
+    "requestPayload": {
+      "bookingId": "9f0d13e8db78625957746c34cbe11d0f",
+      "email": "homologacao@ncturismo.com.br",
+      "buyer": {
+        "name": "NC Turismo Homologacao",
+        "cpf": "52998224725",
+        "phone": "(41) 3281-1167"
+      },
+      "payment": {
+        "method": "creditCard",
+        "cardNumber": "4111 1111 1111 1111",
+        "holder": "NC TURISMO TESTE",
+        "expiresAt": "2030-10",
+        "securityCode": "123",
+        "installment": 1
+      },
+      "externalId": "NCT-3_1-1793909783751",
+      "callbackURL": "https://ais-dev-xw33vky72lvznb4lx4uf7w-56607652372.us-west2.run.app/api/rodoviario/callback"
+    },
+    "responsePayload": {
+      "id": 99020362,
+      "externalId": "NCT-3_1-1793909783751",
+      "email": "homologacao@ncturismo.com.br",
+      "buyer": {
+        "name": "NC Turismo Homologacao"
+      },
+      "payment": {
+        "total": 100,
+        "tax": 0,
+        "insurance": 0,
+        "tickets": 100,
+        "discount": 0,
+        "method": "creditCard",
+        "refunded": 0,
+        "installment": 1,
+        "toll": 0,
+        "authorizationCode": "145803"
+      },
+      "status": "in_confirmation_process",
+      "date": "2026-11-05 17:16:25",
+      "travels": [
+        {
+          "from": {
+            "id": "ROD_53",
+            "label": "Curitiba, PR",
+            "customName": null,
+            "customAddress": "Rua sem fim 1001"
+          },
+          "to": {
+            "id": "ROD_3520",
+            "label": "PERDIZES, MG",
+            "customName": null,
+            "customAddress": null
+          },
+          "departure": {
+            "date": "2026-11-14",
+            "time": "00:30:00"
+          },
+          "arrival": {
+            "date": "2026-11-14",
+            "time": "07:10:00"
+          },
+          "company": {
+            "id": "2",
+            "name": "1001"
+          },
+          "passengers": [
+            {
+              "id": 947050,
+              "name": "Joao Carlos Silva Teste",
+              "travelDocument": "123456789",
+              "travelDocumentType": "RG",
+              "seatNumber": "31",
+              "seatClass": "SEMI LEITO",
+              "bpe": "",
+              "ticket": "",
+              "state": "processing",
+              "canceled_by": null,
+              "modifiable": false,
+              "birthDate": "1990-05-15",
+              "insurance": null,
+              "cancellation": {
+                "allowed": false,
+                "fee": 5
+              }
+            }
+          ],
+          "travelCancellationLimitDate": "2026-11-13 21:30:00"
+        }
+      ]
+    },
+    "notes": "Pedido #99020362 · Status: in_confirmation_process"
+  },
+  {
+    "id": "LOG_1793909777380_vwrn9",
+    "timestamp": "2026-11-05T20:16:17.380Z",
+    "scenarioTag": "3.1",
+    "operation": "BOOKING_CREATE",
+    "method": "POST",
+    "endpoint": "https://queropassagem.qpdevs.com/ws_v4/new/booking",
+    "httpStatus": 200,
+    "ok": true,
+    "latencyMs": 1280,
+    "requestPayload": {
+      "affiliateCode": "NCT",
+      "travels": [
+        {
+          "travelId": "1_912978045ff6b0b41a1a2c932342eb78",
+          "passengers": [
+            {
+              "name": "Joao Carlos Silva Teste",
+              "travelDocument": "123456789",
+              "travelDocumentType": "RG",
+              "seatNumber": "31",
+              "birthDate": "1990-05-15",
+              "cpf": "52998224725"
+            }
+          ]
+        }
+      ]
+    },
+    "responsePayload": {
+      "id": "9f0d13e8db78625957746c34cbe11d0f",
+      "expiresAt": "2026-11-05T17:26:16-03:00",
+      "paymentMethods": {
+        "creditCard": [
+          {
+            "instalment": {
+              "instalments": 1,
+              "value": 100
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 100
+          },
+          {
+            "instalment": {
+              "instalments": 2,
+              "value": 50
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 100
+          },
+          {
+            "instalment": {
+              "instalments": 3,
+              "value": 33.33
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 99.99
+          },
+          {
+            "instalment": {
+              "instalments": 4,
+              "value": 25
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 100
+          },
+          {
+            "instalment": {
+              "instalments": 5,
+              "value": 20
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 100
+          },
+          {
+            "instalment": {
+              "instalments": 6,
+              "value": 16.67
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 100.02
+          },
+          {
+            "instalment": {
+              "instalments": 7,
+              "value": 14.29
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 100.03
+          },
+          {
+            "instalment": {
+              "instalments": 8,
+              "value": 12.5
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 100
+          },
+          {
+            "instalment": {
+              "instalments": 9,
+              "value": 11.11
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 99.99
+          },
+          {
+            "instalment": {
+              "instalments": 10,
+              "value": 10
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 100
+          },
+          {
+            "instalment": {
+              "instalments": 11,
+              "value": 9.09
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 99.99
+          },
+          {
+            "instalment": {
+              "instalments": 12,
+              "value": 8.33
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 99.96
+          }
+        ],
+        "pix": [
+          {
+            "instalment": {
+              "instalments": 1,
+              "value": 100
+            },
+            "seatPrice": 100,
+            "taxPrice": 0,
+            "insurancePrice": 0,
+            "total": 100
+          }
+        ]
+      },
+      "travels": [
+        {
+          "id": "1_db498a84a4f2d20a155c81b84380a1f7",
+          "passengers": [
+            {
+              "name": "Joao Carlos Silva Teste",
+              "travelDocument": "123456789",
+              "travelDocumentType": "RG",
+              "seatNumber": "31",
+              "birthDate": "1990-05-15",
+              "cpf": "529.982.247-25",
+              "insurance": false,
+              "cancellation": {
+                "limitDate": "2026-11-13 21:30:00",
+                "allowed": true,
+                "fee": 5
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "notes": "Pré-reserva com 1 trecho(s)"
+  }
+]
