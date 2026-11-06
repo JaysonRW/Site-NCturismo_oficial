@@ -45,10 +45,10 @@ export const LazerView: React.FC<LazerViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [selectedPackage, setSelectedPackage] = useState<LazerPackage | null>(null);
 
-  // Filters State
+  // Filters State (priceMax = 0 significa "Sem limite / Todos os valores" por padrão)
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [priceMax, setPriceMax] = useState<number>(15000);
+  const [priceMax, setPriceMax] = useState<number>(0);
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
   useEffect(() => {
@@ -89,24 +89,40 @@ export const LazerView: React.FC<LazerViewProps> = ({
     { id: 'pacotes', label: 'Pacotes Completos', icon: Palmtree }
   ];
 
-  // Filtering
-  const activePackages = packages.filter(p => p.status === 'active');
+  // Filtering (considera status 'active' ou vazio como ativo)
+  const activePackages = packages.filter(p => !p.status || p.status === 'active');
 
-  const filteredPackages = activePackages.filter(pkg => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch = !searchTerm || 
-      pkg.title.toLowerCase().includes(term) ||
-      pkg.destination.toLowerCase().includes(term) ||
-      pkg.description.toLowerCase().includes(term);
+  // Teto dinâmico do controle deslizante de preço (sempre acomoda o pacote mais caro cadastrado)
+  const highestPackagePrice = activePackages.reduce(
+    (max, p) => Math.max(max, Number(p.price_from) || 0),
+    15000
+  );
+  const sliderMax = Math.max(20000, Math.ceil(highestPackagePrice / 5000) * 5000);
+  const effectiveSliderValue = priceMax <= 0 || priceMax > sliderMax ? sliderMax : priceMax;
 
-    const matchesCategory = selectedCategory === 'all' || pkg.category === selectedCategory;
-    const matchesPrice = pkg.price_from <= priceMax;
+  const filteredPackages = activePackages
+    .filter(pkg => {
+      const term = searchTerm.toLowerCase().trim();
+      const matchesSearch = !term || 
+        (pkg.title || '').toLowerCase().includes(term) ||
+        (pkg.destination || '').toLowerCase().includes(term) ||
+        (pkg.description || '').toLowerCase().includes(term);
 
-    const matchesMonth = selectedMonth === 'all' || 
-      pkg.departure_dates.toLowerCase().includes(selectedMonth.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || pkg.category === selectedCategory;
+      const matchesPrice =
+        priceMax <= 0 || priceMax >= sliderMax || (Number(pkg.price_from) || 0) <= priceMax;
 
-    return matchesSearch && matchesCategory && matchesPrice && matchesMonth;
-  });
+      const matchesMonth = selectedMonth === 'all' || 
+        (pkg.departure_dates || '').toLowerCase().includes(selectedMonth.toLowerCase());
+
+      return matchesSearch && matchesCategory && matchesPrice && matchesMonth;
+    })
+    .sort((a, b) => {
+      if (Boolean(b.featured) !== Boolean(a.featured)) {
+        return b.featured ? 1 : -1;
+      }
+      return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+    });
 
   const generateWhatsAppLink = (pkg: LazerPackage) => {
     const msg = `Olá! Vim pelo site da NC Turismo e gostaria de solicitar uma cotação/atendimento para o pacote: "${pkg.title}" (Destino: ${pkg.destination}, Datas: ${pkg.departure_dates}).`;
@@ -288,16 +304,21 @@ export const LazerView: React.FC<LazerViewProps> = ({
                   Valor até
                 </label>
                 <span className="text-xs font-bold text-[#C8102E]">
-                  R$ {priceMax.toLocaleString('pt-BR')}
+                  {priceMax <= 0 || priceMax >= sliderMax
+                    ? 'Todos os valores'
+                    : `R$ ${effectiveSliderValue.toLocaleString('pt-BR')}`}
                 </span>
               </div>
               <input
                 type="range"
                 min="1500"
-                max="15000"
+                max={sliderMax}
                 step="500"
-                value={priceMax}
-                onChange={e => setPriceMax(Number(e.target.value))}
+                value={effectiveSliderValue}
+                onChange={e => {
+                  const val = Number(e.target.value);
+                  setPriceMax(val >= sliderMax ? 0 : val);
+                }}
                 className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#C8102E] mt-3"
               />
             </div>
@@ -347,7 +368,7 @@ export const LazerView: React.FC<LazerViewProps> = ({
               onClick={() => {
                 setSearchTerm('');
                 setSelectedCategory('all');
-                setPriceMax(15000);
+                setPriceMax(0);
                 setSelectedMonth('all');
               }}
               className="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold uppercase text-[#0F172A] transition-colors"

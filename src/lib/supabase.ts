@@ -50,6 +50,8 @@ export interface TermsAcceptance {
   source: string;
 }
 
+const TERMS_TABLE_MISSING_KEY = 'nc_terms_table_missing';
+
 export const recordTermsAcceptance = async (acceptance: Omit<TermsAcceptance, 'id'>): Promise<TermsAcceptance> => {
   const localRecord: TermsAcceptance = {
     id: `acc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
@@ -67,32 +69,49 @@ export const recordTermsAcceptance = async (acceptance: Omit<TermsAcceptance, 'i
   }
 
   // 2. Also try to persist in Supabase if table exists
-  try {
-    const { error } = await supabase
-      .from('terms_acceptances')
-      .insert([localRecord]);
-    if (error) {
-      console.warn('Registro no Supabase (aviso de tabela/schema):', error.message);
+  if (typeof sessionStorage === 'undefined' || sessionStorage.getItem(TERMS_TABLE_MISSING_KEY) !== 'true') {
+    try {
+      const { error } = await supabase
+        .from('terms_acceptances')
+        .insert([localRecord]);
+      if (error) {
+        if (error.code === 'PGRST205' || error.message?.includes('terms_acceptances')) {
+          try {
+            sessionStorage.setItem(TERMS_TABLE_MISSING_KEY, 'true');
+          } catch {}
+        }
+      }
+    } catch {
+      // fallback local já garantido
     }
-  } catch (err) {
-    console.warn('Erro ao persistir no Supabase:', err);
   }
 
   return localRecord;
 };
 
 export const getTermsAcceptances = async (): Promise<TermsAcceptance[]> => {
-  // Try Supabase first
-  try {
-    const { data, error } = await supabase
-      .from('terms_acceptances')
-      .select('*')
-      .order('accepted_at', { ascending: false });
-    if (!error && data && data.length > 0) {
-      return data;
+  // Evita chamadas 404 repetidas no console caso a tabela terms_acceptances ainda não tenha sido criada no Supabase
+  const skipSupabase =
+    typeof sessionStorage !== 'undefined' && sessionStorage.getItem(TERMS_TABLE_MISSING_KEY) === 'true';
+
+  if (!skipSupabase) {
+    try {
+      const { data, error } = await supabase
+        .from('terms_acceptances')
+        .select('*')
+        .order('accepted_at', { ascending: false });
+      if (error) {
+        if (error.code === 'PGRST205' || error.message?.includes('terms_acceptances')) {
+          try {
+            sessionStorage.setItem(TERMS_TABLE_MISSING_KEY, 'true');
+          } catch {}
+        }
+      } else if (data && data.length > 0) {
+        return data;
+      }
+    } catch {
+      // ignore
     }
-  } catch (e) {
-    // ignore
   }
 
   // Fallback to localStorage
@@ -297,6 +316,57 @@ export const INITIAL_LAZER_PACKAGES: LazerPackage[] = [
 const LAZER_STORAGE_KEY = 'nc_lazer_packages';
 const LAZER_STORAGE_INIT_FLAG = 'nc_lazer_packages_initialized_v2';
 
+export function normalizeLazerPrice(raw: unknown): number {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return raw;
+  }
+  const str = String(raw ?? '').trim();
+  if (!str) return 0;
+  // Se digitou no formato brasileiro "4.659,12" ou "41.590,89"
+  if (str.includes(',') && str.includes('.')) {
+    const cleaned = str.replace(/\./g, '').replace(',', '.');
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (str.includes(',')) {
+    const parsed = Number(str.replace(',', '.'));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  const parsed = Number(str);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+export function normalizeLazerPackageRecord(raw: any): LazerPackage {
+  const rawPriceFrom = normalizeLazerPrice(raw?.price_from);
+  const rawPriceOriginal = normalizeLazerPrice(raw?.price_original);
+
+  return {
+    id: String(raw?.id || `pkg_${Date.now()}`),
+    title: String(raw?.title || '').trim(),
+    destination: String(raw?.destination || '').trim(),
+    category: (raw?.category || 'pacotes') as LazerCategory,
+    category_label: String(raw?.category_label || raw?.category || 'Pacotes Completos').trim(),
+    cover_image: String(raw?.cover_image || '').trim(),
+    gallery_images: Array.isArray(raw?.gallery_images) ? raw.gallery_images : [],
+    price_from: rawPriceFrom,
+    price_original: rawPriceOriginal > 0 ? rawPriceOriginal : undefined,
+    installment_text: String(raw?.installment_text || 'Consulte parcelamento').trim(),
+    departure_dates: String(raw?.departure_dates || 'Datas sob consulta').trim(),
+    valid_until: raw?.valid_until ? String(raw.valid_until).trim() : '',
+    duration_days: Math.max(1, Number(raw?.duration_days) || 7),
+    nights: Math.max(0, Number(raw?.nights) ?? 6),
+    status: raw?.status === 'draft' ? 'draft' : 'active',
+    badge: raw?.badge ? String(raw.badge).trim() : '',
+    included_items: Array.isArray(raw?.included_items)
+      ? raw.included_items.map((i: any) => String(i).trim()).filter(Boolean)
+      : [],
+    description: String(raw?.description || '').trim(),
+    featured: Boolean(raw?.featured),
+    created_at: raw?.created_at || new Date().toISOString(),
+    updated_at: raw?.updated_at || new Date().toISOString(),
+  };
+}
+
 export const getLazerPackages = async (): Promise<LazerPackage[]> => {
   // 1. Tenta carregar do Supabase caso a tabela exista
   try {
@@ -305,12 +375,15 @@ export const getLazerPackages = async (): Promise<LazerPackage[]> => {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data && data.length > 0) {
-      localStorage.setItem(LAZER_STORAGE_KEY, JSON.stringify(data));
-      localStorage.setItem(LAZER_STORAGE_INIT_FLAG, 'true');
-      return data as LazerPackage[];
+    if (!error && Array.isArray(data) && data.length > 0) {
+      const normalized = data.map(normalizeLazerPackageRecord);
+      try {
+        localStorage.setItem(LAZER_STORAGE_KEY, JSON.stringify(normalized));
+        localStorage.setItem(LAZER_STORAGE_INIT_FLAG, 'true');
+      } catch {}
+      return normalized;
     }
-  } catch (e) {
+  } catch {
     // continua para o fallback local
   }
 
@@ -320,11 +393,11 @@ export const getLazerPackages = async (): Promise<LazerPackage[]> => {
     const hasInitialized = localStorage.getItem(LAZER_STORAGE_INIT_FLAG);
     if (cached && hasInitialized) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed)) {
-        return parsed as LazerPackage[];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(normalizeLazerPackageRecord);
       }
     }
-  } catch (e) {
+  } catch {
     // continua para inicial
   }
 
@@ -332,38 +405,46 @@ export const getLazerPackages = async (): Promise<LazerPackage[]> => {
   try {
     localStorage.setItem(LAZER_STORAGE_KEY, JSON.stringify(INITIAL_LAZER_PACKAGES));
     localStorage.setItem(LAZER_STORAGE_INIT_FLAG, 'true');
-  } catch (e) {
+  } catch {
     // ignore
   }
   return INITIAL_LAZER_PACKAGES;
 };
 
 export const saveLazerPackage = async (pkg: LazerPackage): Promise<LazerPackage> => {
-  const currentPackages = await getLazerPackages();
-  const exists = currentPackages.some(p => p.id === pkg.id);
-  
-  let updatedList: LazerPackage[];
-  if (exists) {
-    updatedList = currentPackages.map(p => p.id === pkg.id ? { ...p, ...pkg, updated_at: new Date().toISOString() } : p);
-  } else {
-    updatedList = [{ ...pkg, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }, ...currentPackages];
-  }
+  const normalizedPkg = normalizeLazerPackageRecord({
+    ...pkg,
+    updated_at: new Date().toISOString(),
+  });
 
-  // Salva no cache do localStorage com a flag de inicializado
-  try {
-    localStorage.setItem(LAZER_STORAGE_KEY, JSON.stringify(updatedList));
-    localStorage.setItem(LAZER_STORAGE_INIT_FLAG, 'true');
-    // Dispara evento customizado para sincronizar componentes na mesma aba
-    window.dispatchEvent(new Event('nc_lazer_updated'));
-  } catch (err) {
-    console.error('Erro ao salvar no localStorage:', err);
-  }
+  // 1. Primeiro persiste no Supabase com apenas as colunas oficiais do schema da tabela lazer_packages
+  const dbRecord = {
+    id: normalizedPkg.id,
+    title: normalizedPkg.title,
+    destination: normalizedPkg.destination,
+    category: normalizedPkg.category,
+    category_label: normalizedPkg.category_label,
+    cover_image: normalizedPkg.cover_image,
+    gallery_images: normalizedPkg.gallery_images || [],
+    price_from: normalizedPkg.price_from,
+    price_original: normalizedPkg.price_original || 0,
+    installment_text: normalizedPkg.installment_text,
+    departure_dates: normalizedPkg.departure_dates,
+    valid_until: normalizedPkg.valid_until || '',
+    duration_days: normalizedPkg.duration_days,
+    nights: normalizedPkg.nights,
+    status: normalizedPkg.status,
+    badge: normalizedPkg.badge || '',
+    included_items: normalizedPkg.included_items || [],
+    description: normalizedPkg.description || '',
+    featured: Boolean(normalizedPkg.featured),
+    updated_at: normalizedPkg.updated_at,
+  };
 
-  // Tenta persistir no Supabase (se a tabela existir)
   try {
     const { error } = await supabase
       .from('lazer_packages')
-      .upsert(pkg, { onConflict: 'id' });
+      .upsert(dbRecord, { onConflict: 'id' });
     if (error) {
       console.warn('Aviso ao sincronizar pacote no Supabase:', error.message);
     }
@@ -371,12 +452,33 @@ export const saveLazerPackage = async (pkg: LazerPackage): Promise<LazerPackage>
     console.warn('Erro ao conectar ao Supabase para pacote:', err);
   }
 
-  return pkg;
+  // 2. Atualiza o cache local e só dispara o evento nc_lazer_updated APÓS concluir o upsert no Supabase
+  const currentPackages = await getLazerPackages();
+  const exists = currentPackages.some((p) => p.id === normalizedPkg.id);
+  const updatedList = exists
+    ? currentPackages.map((p) => (p.id === normalizedPkg.id ? { ...p, ...normalizedPkg } : p))
+    : [normalizedPkg, ...currentPackages];
+
+  try {
+    localStorage.setItem(LAZER_STORAGE_KEY, JSON.stringify(updatedList));
+    localStorage.setItem(LAZER_STORAGE_INIT_FLAG, 'true');
+    window.dispatchEvent(new Event('nc_lazer_updated'));
+  } catch (err) {
+    console.error('Erro ao salvar no localStorage:', err);
+  }
+
+  return normalizedPkg;
 };
 
 export const deleteLazerPackage = async (id: string): Promise<boolean> => {
+  try {
+    await supabase.from('lazer_packages').delete().eq('id', id);
+  } catch {
+    // ignora
+  }
+
   const currentPackages = await getLazerPackages();
-  const updatedList = currentPackages.filter(p => p.id !== id);
+  const updatedList = currentPackages.filter((p) => p.id !== id);
 
   try {
     localStorage.setItem(LAZER_STORAGE_KEY, JSON.stringify(updatedList));
@@ -384,12 +486,6 @@ export const deleteLazerPackage = async (id: string): Promise<boolean> => {
     window.dispatchEvent(new Event('nc_lazer_updated'));
   } catch (e) {
     console.error(e);
-  }
-
-  try {
-    await supabase.from('lazer_packages').delete().eq('id', id);
-  } catch (e) {
-    // ignora
   }
 
   return true;

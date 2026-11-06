@@ -454,10 +454,12 @@ CREATE POLICY "Admin controle total pacotes lazer" ON public.lazer_packages FOR 
               {/* Preço Original e Preço a partir de */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
-                  Preço A Partir De (R$) *
+                  Preço A Partir De (R$) * <span className="text-[10px] text-slate-400 font-normal normal-case">(ex: 4659.12)</span>
                 </label>
                 <input
                   type="number"
+                  step="0.01"
+                  min="0"
                   required
                   value={formData.price_from}
                   onChange={e => setFormData({ ...formData, price_from: Number(e.target.value) })}
@@ -467,13 +469,15 @@ CREATE POLICY "Admin controle total pacotes lazer" ON public.lazer_packages FOR 
 
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
-                  Preço De Tabela Anterior (Opcional, para "De / Por")
+                  Preço De Tabela Anterior <span className="text-[10px] text-slate-400 font-normal normal-case">(opcional, ex: 5445.36)</span>
                 </label>
                 <input
                   type="number"
+                  step="0.01"
+                  min="0"
                   value={formData.price_original || ''}
                   onChange={e => setFormData({ ...formData, price_original: Number(e.target.value) })}
-                  placeholder="Ex: 4200"
+                  placeholder="Ex: 5445.36"
                   className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-[#DB8902] focus:outline-none"
                 />
               </div>
