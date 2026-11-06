@@ -1175,6 +1175,18 @@ async function startServer() {
 
   app.use(express.json({ limit: '2mb' }));
 
+  // Permite que o domínio de produção estático (ncturismo.com.br no Plesk) consuma o gateway /api/rodoviario/*
+  app.use('/api/rodoviario', (req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') {
+      res.status(204).end();
+      return;
+    }
+    next();
+  });
+
   const makeRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
   // 1. GET /api/rodoviario/health

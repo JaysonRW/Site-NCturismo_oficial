@@ -479,17 +479,51 @@ function buildFallbackSeatMap(option: SearchOption): SeatMapResponse {
 }
 
 // ============================================================================
-// API CLIENT FUNCTIONS
+// API CLIENT FUNCTIONS (COM FALLBACK AUTOMÁTICO PARA HOSPEDAGEM ESTÁTICA PLESK)
 // ============================================================================
+
+const REMOTE_RODOVIARIO_GATEWAY =
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_RODOVIARIO_API_BASE) ||
+  'https://ais-pre-xw33vky72lvznb4lx4uf7w-56607652372.us-west2.run.app';
+
+let useRemoteGatewayFallback = false;
+
+/**
+ * Executa chamadas para `/api/rodoviario/*`. Se o site estiver hospedado em um servidor
+ * puramente estático (ex.: Plesk em ncturismo.com.br sem Node.js local) e o endpoint local
+ * retornar HTML/404/500, redireciona transparentemente para o Gateway Cloud Run ativo.
+ */
+async function fetchRodoviarioApi(endpointPath: string, init?: RequestInit): Promise<Response> {
+  if (useRemoteGatewayFallback) {
+    return fetch(`${REMOTE_RODOVIARIO_GATEWAY}${endpointPath}`, init);
+  }
+
+  try {
+    const localRes = await fetch(endpointPath, init);
+    const contentType = (localRes.headers.get('content-type') || '').toLowerCase();
+    const isJson = contentType.includes('application/json');
+
+    // Se o servidor estático (Plesk) devolveu 404/405/500 ou página HTML em vez de JSON da API
+    if (!isJson && (localRes.status === 404 || localRes.status === 405 || localRes.status >= 500 || contentType.includes('text/html'))) {
+      useRemoteGatewayFallback = true;
+      return fetch(`${REMOTE_RODOVIARIO_GATEWAY}${endpointPath}`, init);
+    }
+
+    return localRes;
+  } catch {
+    useRemoteGatewayFallback = true;
+    return fetch(`${REMOTE_RODOVIARIO_GATEWAY}${endpointPath}`, init);
+  }
+}
 
 export async function fetchRodoviarioConfig(overrideMode?: 'demo' | 'sandbox'): Promise<RodoviarioConfig> {
   try {
     const query = overrideMode ? `?mode=${overrideMode}` : '';
-    const res = await fetch(`/api/rodoviario/config${query}`);
+    const res = await fetchRodoviarioApi(`/api/rodoviario/config${query}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const cfg = await res.json();
 
-    fetch('/api/rodoviario/diagnostics')
+    fetchRodoviarioApi('/api/rodoviario/diagnostics')
       .then((r) => r.json())
       .then((diag) => {
         console.group('%c[NC Turismo · Homologação API Rodoviária Quero Passagem]', 'color:#C8102E;font-weight:bold;');
@@ -547,7 +581,7 @@ export async function searchRodoviarioStops(query: string, mode?: 'demo' | 'sand
     const params = new URLSearchParams();
     if (query) params.set('q', query);
     if (mode) params.set('mode', mode);
-    const res = await fetch(`/api/rodoviario/stops?${params.toString()}`);
+    const res = await fetchRodoviarioApi(`/api/rodoviario/stops?${params.toString()}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     return data.stops || [];
@@ -578,7 +612,7 @@ export async function executeRodoviarioSearch(params: {
   mode?: 'demo' | 'sandbox';
 }): Promise<SearchResponse> {
   try {
-    const res = await fetch('/api/rodoviario/search', {
+    const res = await fetchRodoviarioApi('/api/rodoviario/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -618,7 +652,7 @@ export async function fetchRodoviarioSeats(
   mode?: 'demo' | 'sandbox'
 ): Promise<SeatMapResponse> {
   try {
-    const res = await fetch('/api/rodoviario/seats', {
+    const res = await fetchRodoviarioApi('/api/rodoviario/seats', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -648,7 +682,7 @@ export async function fetchConnectionSuggestions(
   try {
     const params = new URLSearchParams({ from, to });
     if (mode) params.set('mode', mode);
-    const res = await fetch(`/api/rodoviario/connection-suggestions?${params.toString()}`);
+    const res = await fetchRodoviarioApi(`/api/rodoviario/connection-suggestions?${params.toString()}`);
     if (!res.ok) return [];
     const data = await res.json();
     return data.suggestions || [];
@@ -682,7 +716,7 @@ export async function createRodoviarioBooking(params: {
   logEntry?: HomologationLogEntry;
   message?: string;
 }> {
-  const res = await fetch('/api/rodoviario/booking', {
+  const res = await fetchRodoviarioApi('/api/rodoviario/booking', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
@@ -725,7 +759,7 @@ export async function executeRodoviarioCheckout(params: {
   logEntry?: HomologationLogEntry;
   message?: string;
 }> {
-  const res = await fetch('/api/rodoviario/checkout', {
+  const res = await fetchRodoviarioApi('/api/rodoviario/checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
@@ -749,7 +783,7 @@ export async function fetchRodoviarioPurchaseGet(params: {
   logEntry?: HomologationLogEntry;
   message?: string;
 }> {
-  const res = await fetch('/api/rodoviario/purchase/get', {
+  const res = await fetchRodoviarioApi('/api/rodoviario/purchase/get', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
@@ -763,7 +797,7 @@ export async function fetchRodoviarioPurchaseGet(params: {
 
 export async function fetchHomologationLogs(): Promise<HomologationLogEntry[]> {
   try {
-    const res = await fetch('/api/rodoviario/homologation-logs');
+    const res = await fetchRodoviarioApi('/api/rodoviario/homologation-logs');
     if (!res.ok) return [];
     const data = await res.json();
     return data.logs || [];
@@ -773,5 +807,5 @@ export async function fetchHomologationLogs(): Promise<HomologationLogEntry[]> {
 }
 
 export async function clearHomologationLogs(): Promise<void> {
-  await fetch('/api/rodoviario/homologation-logs', { method: 'DELETE' });
+  await fetchRodoviarioApi('/api/rodoviario/homologation-logs', { method: 'DELETE' });
 }

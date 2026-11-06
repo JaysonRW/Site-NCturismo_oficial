@@ -1,0 +1,26 @@
+# ============================================================================
+# NC Turismo — Configuração Apache / Plesk para Rotas Limpas (SPA + SEO)
+# ============================================================================
+Options -MultiViews
+DirectoryIndex index.html
+
+# Fallback nativo do Apache 2.4+ (evita loops de RewriteRule 500 no Plesk)
+FallbackResource /index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1. Permite acesso direto à raiz e ao próprio index.html sem reescrita
+  RewriteRule ^index\.html$ - [L]
+
+  # 2. Se o arquivo ou diretório físico existir em dist/ (ex.: /rodoviario/index.html, /assets/*),
+  #    serve diretamente do disco com máxima performance
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 3. Para rotas dinâmicas futuras (ex.: /artigo/novo-artigo ou /proposta/codigo),
+  #    entrega /index.html sem causar loop interno no Plesk
+  RewriteRule . /index.html [L]
+</IfModule>
