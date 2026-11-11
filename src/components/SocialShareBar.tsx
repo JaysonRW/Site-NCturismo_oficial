@@ -6,6 +6,7 @@ interface SocialShareBarProps {
   title: string;
   summary?: string;
   variant?: 'inline' | 'floating' | 'card' | 'compact';
+  shareContext?: 'article' | 'lazer';
   className?: string;
 }
 
@@ -14,6 +15,7 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
   title,
   summary = '',
   variant = 'inline',
+  shareContext = 'article',
   className = ''
 }) => {
   const [copied, setCopied] = useState(false);
@@ -36,7 +38,11 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
     if (navigator.clipboard) {
       navigator.clipboard.writeText(currentUrl);
       setCopied(true);
-      showToast('Link do artigo copiado para a área de transferência!');
+      showToast(
+        shareContext === 'lazer'
+          ? 'Link da promoção copiado para a área de transferência!'
+          : 'Link do artigo copiado para a área de transferência!'
+      );
       setTimeout(() => setCopied(false), 2500);
     }
   };
@@ -47,7 +53,10 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
   };
 
   const handleX = () => {
-    const text = `${title} — via @NCTurismo`;
+    const text =
+      shareContext === 'lazer' && summary
+        ? `${title} (${summary}) — via @NCTurismo`
+        : `${title} — via @NCTurismo`;
     const shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(text)}`;
     window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=450');
   };
@@ -58,7 +67,10 @@ export const SocialShareBar: React.FC<SocialShareBarProps> = ({
   };
 
   const handleWhatsApp = () => {
-    const text = `*${title}*\n\nConfira este artigo no Centro de Conhecimento da NC Turismo:\n${currentUrl}`;
+    const text =
+      shareContext === 'lazer'
+        ? `*${title}*\n${summary ? `${summary}\n\n` : '\n'}Confira esta promoção na página de Lazer da NC Turismo:\n${currentUrl}`
+        : `*${title}*\n\nConfira este artigo no Centro de Conhecimento da NC Turismo:\n${currentUrl}`;
     const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(shareUrl, '_blank', 'noopener,noreferrer');
   };

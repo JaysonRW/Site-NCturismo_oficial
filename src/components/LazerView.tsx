@@ -4,6 +4,7 @@ import {
   LazerCategory, 
   getLazerPackages 
 } from '../lib/supabase';
+import { SocialShareBar } from './SocialShareBar';
 import { 
   Compass, 
   ArrowLeft, 
@@ -51,6 +52,14 @@ export const LazerView: React.FC<LazerViewProps> = ({
   const [priceMax, setPriceMax] = useState<number>(0);
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
+  const getPackageShareUrl = (pkg: LazerPackage) => {
+    const identifier = pkg.id;
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/lazer?pacote=${encodeURIComponent(identifier)}`;
+    }
+    return `https://ncturismo.com.br/lazer?pacote=${encodeURIComponent(identifier)}`;
+  };
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     const loadPackages = async () => {
@@ -58,6 +67,18 @@ export const LazerView: React.FC<LazerViewProps> = ({
       try {
         const data = await getLazerPackages();
         setPackages(data);
+
+        // Se o visitante abriu um link compartilhado (?pacote=...), abre o pacote automaticamente
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          const sharedRef = params.get('pacote');
+          if (sharedRef && data.length > 0) {
+            const matched = data.find(p => p.id === sharedRef);
+            if (matched) {
+              setSelectedPackage(matched);
+            }
+          }
+        }
       } catch (err) {
         console.error('Erro ao carregar pacotes de lazer:', err);
       } finally {
@@ -462,9 +483,9 @@ export const LazerView: React.FC<LazerViewProps> = ({
                   </div>
                 </div>
 
-                {/* Pricing & Actions */}
+                {/* Pricing, Social Share Bar & Actions */}
                 <div className="p-6 pt-0 space-y-4">
-                  <div className="pt-4 border-t border-slate-100 flex items-end justify-between">
+                  <div className="pt-4 border-t border-slate-100 flex items-end justify-between gap-2">
                     <div>
                       {pkg.price_original && pkg.price_original > pkg.price_from && (
                         <span className="text-xs text-slate-400 line-through block">
@@ -481,12 +502,30 @@ export const LazerView: React.FC<LazerViewProps> = ({
                         {pkg.installment_text}
                       </span>
                     </div>
+                  </div>
+
+                  {/* Barra de compartilhamento idêntica ao Centro de Conhecimento NC */}
+                  <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center"
+                    >
+                      <SocialShareBar
+                        url={getPackageShareUrl(pkg)}
+                        title={`${pkg.title} — ${pkg.destination}`}
+                        summary={`A partir de R$ ${pkg.price_from.toLocaleString('pt-BR')} (${pkg.installment_text}) • ${pkg.departure_dates}`}
+                        variant="compact"
+                        shareContext="lazer"
+                      />
+                    </div>
 
                     <button
+                      type="button"
                       onClick={() => setSelectedPackage(pkg)}
-                      className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold uppercase tracking-wider text-[#0F172A] hover:text-[#C8102E] transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#C8102E] hover:text-[#9E0A22] transition-colors shrink-0 cursor-pointer group/btn"
                     >
-                      Ver Detalhes
+                      <span>Ver</span>
+                      <ArrowRight size={13} className="group-hover/btn:translate-x-0.5 transition-transform" />
                     </button>
                   </div>
 
@@ -508,7 +547,10 @@ export const LazerView: React.FC<LazerViewProps> = ({
 
       {/* MODAL DE DETALHES DO PACOTE */}
       {selectedPackage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setSelectedPackage(null)}
+        >
           <div 
             className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 relative flex flex-col"
             onClick={e => e.stopPropagation()}
@@ -579,6 +621,20 @@ export const LazerView: React.FC<LazerViewProps> = ({
                     </span>
                   )}
                 </div>
+              </div>
+
+              {/* Barra de compartilhamento dentro do modal */}
+              <div className="flex items-center justify-between flex-wrap gap-3 py-3 px-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <span className="text-xs font-semibold text-slate-600">
+                  Compartilhe esta promoção:
+                </span>
+                <SocialShareBar
+                  url={getPackageShareUrl(selectedPackage)}
+                  title={`${selectedPackage.title} — ${selectedPackage.destination}`}
+                  summary={`A partir de R$ ${selectedPackage.price_from.toLocaleString('pt-BR')} (${selectedPackage.installment_text})`}
+                  variant="compact"
+                  shareContext="lazer"
+                />
               </div>
 
               {/* Description */}
