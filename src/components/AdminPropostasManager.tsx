@@ -11,6 +11,7 @@ import {
   getPropostasComerciais,
   savePropostaComercial,
   deletePropostaComercial,
+  buildPropostaShareUrl,
   getLeadsParcerias,
   LeadParceria
 } from '../lib/supabase';
@@ -30,10 +31,13 @@ import {
   FileText,
   Handshake,
   Layers,
+  Mail,
+  MessageCircle,
   Plus,
   Printer,
   RefreshCw,
   Search,
+  Send,
   Share2,
   Sliders,
   Sparkles,
@@ -64,6 +68,8 @@ export const AdminPropostasManager: React.FC<AdminPropostasManagerProps> = ({ no
   const [showSqlModal, setShowSqlModal] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
   const [showImportLeadModal, setShowImportLeadModal] = useState(false);
+  const [sendModalProposta, setSendModalProposta] = useState<PropostaComercial | null>(null);
+  const [copiedModalLink, setCopiedModalLink] = useState(false);
 
   // Current editing proposal state
   const createBlankProposal = (nextNumber: number): PropostaComercial => {
@@ -182,7 +188,7 @@ export const AdminPropostasManager: React.FC<AdminPropostasManagerProps> = ({ no
     notify('Proposta comercial removida.');
   };
 
-  const handleSaveCurrent = async (goToPreview = false) => {
+  const handleSaveCurrent = async (goToPreview = false, openSendAfterSave = false) => {
     if (!currentProposta.cliente_nome.trim()) {
       notify('Informe o nome da empresa/cliente na Aba 1 antes de salvar.', 'error');
       setEditorStep('cliente');
@@ -192,19 +198,44 @@ export const AdminPropostasManager: React.FC<AdminPropostasManagerProps> = ({ no
     setSaving(true);
     try {
       const res = await savePropostaComercial(currentProposta);
+      setCurrentProposta(res.proposta);
       await loadAll();
       if (res.syncedSupabase) {
         notify('Proposta salva e sincronizada no banco Supabase com sucesso!');
       } else {
-        notify('Proposta salva com sucesso! (Para persistir na nuvem, aplique o Script SQL da tabela propostas_comerciais).');
+        notify('Proposta salva com sucesso!');
       }
       if (goToPreview) {
         setViewMode('preview');
+      }
+      if (openSendAfterSave) {
+        setSendModalProposta(res.proposta);
+        setCopiedModalLink(false);
       }
     } catch (e: any) {
       notify('Erro ao salvar proposta: ' + (e?.message || 'Tente novamente'), 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleOpenSendModalForProposta = async (prop: PropostaComercial) => {
+    // Garante que a proposta esteja persistida no Supabase antes de gerar o link para o cliente
+    const res = await savePropostaComercial(prop);
+    await loadAll();
+    setSendModalProposta(res.proposta);
+    setCopiedModalLink(false);
+  };
+
+  const handleMarkAsSent = async (prop: PropostaComercial) => {
+    if (prop.status === 'rascunho') {
+      const updated: PropostaComercial = { ...prop, status: 'enviada' };
+      const res = await savePropostaComercial(updated);
+      setSendModalProposta(res.proposta);
+      if (currentProposta.id === prop.id) {
+        setCurrentProposta(res.proposta);
+      }
+      await loadAll();
     }
   };
 
@@ -389,19 +420,169 @@ export const AdminPropostasManager: React.FC<AdminPropostasManagerProps> = ({ no
     }
   };
 
+  const renderSendProposalModal = () => {
+    if (!sendModalProposta) return null;
+
+    const shareUrl = buildPropostaShareUrl(sendModalProposta);
+    const rawDigits = (sendModalProposta.contato_telefone || '').replace(/\D/g, '');
+    const whatsappPhone =
+      rawDigits.length >= 10
+        ? rawDigits.startsWith('55')
+          ? rawDigits
+          : `55${rawDigits}`
+        : '';
+
+    const whatsappMessage = `Olá${sendModalProposta.contato_nome ? `, ${sendModalProposta.contato_nome.trim()}` : ''}! Tudo bem?\n\nPreparamos a *Proposta Comercial ${sendModalProposta.codigo_proposta}* da *NC Turismo* desenhada especialmente para a *${sendModalProposta.cliente_nome.trim()}*.\n\nVocê pode acessar a apresentação executiva completa e registrar o *aceite digital* (ou solicitar ajustes) diretamente pelo link abaixo:\n${shareUrl}\n\nPermaneço à inteira disposição para conversarmos!`;
+
+    const whatsappHref = whatsappPhone
+      ? `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(whatsappMessage)}`
+      : `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
+
+    const emailSubject = `Proposta Comercial ${sendModalProposta.codigo_proposta} — NC Turismo & ${sendModalProposta.cliente_nome.trim()}`;
+    const emailBody = `Olá${sendModalProposta.contato_nome ? `, ${sendModalProposta.contato_nome.trim()}` : ''},\n\nÉ uma satisfação compartilhar a Proposta Comercial ${sendModalProposta.codigo_proposta} elaborada pela NC Turismo para a ${sendModalProposta.cliente_nome.trim()}.\n\nAcesse a apresentação completa e formalize o aceite digital diretamente no link abaixo:\n${shareUrl}\n\nAtenciosamente,\n${sendModalProposta.consultor_nome || 'Equipe Executiva NC Turismo'}\n${sendModalProposta.consultor_telefone || '(41) 3281-1153'}`;
+
+    const mailtoHref = `mailto:${encodeURIComponent((sendModalProposta.contato_email || '').trim())}?subject=${encodeURIComponent(
+      emailSubject
+    )}&body=${encodeURIComponent(emailBody)}`;
+
+    return (
+      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="bg-[#11141c] border border-white/15 rounded-3xl max-w-xl w-full p-6 sm:p-7 space-y-5 shadow-2xl">
+          <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
+                <Send size={12} /> Envio Oficial ao Cliente · {sendModalProposta.codigo_proposta}
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold text-white">
+                Enviar Proposta para {sendModalProposta.cliente_nome}
+              </h3>
+              <p className="text-xs text-nc-warm/70">
+                Ao acessar este link, o cliente visualiza a apresentação personalizada e pode <strong>Aceitar Digitalmente</strong> ou <strong>Solicitar Ajustes</strong> em tempo real.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSendModalProposta(null)}
+              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-nc-warm/70 hover:text-white cursor-pointer"
+            >
+              Fechar ✕
+            </button>
+          </div>
+
+          {/* Link Box */}
+          <div className="space-y-2">
+            <label className="block text-[11px] uppercase tracking-wider font-bold text-nc-warm/70">
+              Link Exclusivo da Proposta (Pronto para Aprovação do Cliente)
+            </label>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 bg-[#0a0c10] border border-white/15 rounded-2xl p-2.5">
+              <input
+                type="text"
+                readOnly
+                value={shareUrl}
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+                className="flex-1 bg-transparent px-2.5 py-1.5 text-xs font-mono text-amber-300 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  navigator.clipboard.writeText(shareUrl);
+                  setCopiedModalLink(true);
+                  await handleMarkAsSent(sendModalProposta);
+                  notify(`Link da proposta ${sendModalProposta.codigo_proposta} copiado com sucesso!`);
+                  setTimeout(() => setCopiedModalLink(false), 3000);
+                }}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white text-xs font-bold uppercase tracking-wider shadow-md hover:brightness-105 transition-all cursor-pointer shrink-0"
+              >
+                {copiedModalLink ? <Check size={15} /> : <Copy size={15} />}
+                <span>{copiedModalLink ? 'Link Copiado!' : 'Copiar Link'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Direct Channels: WhatsApp, Email, Test Link */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                handleMarkAsSent(sendModalProposta);
+              }}
+              className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-white transition-all"
+            >
+              <div className="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center shrink-0">
+                <MessageCircle size={20} />
+              </div>
+              <div>
+                <div className="text-xs sm:text-sm font-bold text-white">Enviar no WhatsApp</div>
+                <div className="text-[11px] text-emerald-200/80">
+                  {sendModalProposta.contato_telefone
+                    ? `Direto para ${sendModalProposta.contato_telefone}`
+                    : 'Escolher contato no WhatsApp'}
+                </div>
+              </div>
+            </a>
+
+            <a
+              href={mailtoHref}
+              onClick={() => {
+                handleMarkAsSent(sendModalProposta);
+              }}
+              className="flex items-center gap-3 p-4 rounded-2xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/35 text-white transition-all"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shrink-0">
+                <Mail size={20} />
+              </div>
+              <div>
+                <div className="text-xs sm:text-sm font-bold text-white">Enviar por E-mail</div>
+                <div className="text-[11px] text-blue-200/80 truncate max-w-[170px]">
+                  {sendModalProposta.contato_email || 'Abrir cliente de e-mail'}
+                </div>
+              </div>
+            </a>
+          </div>
+
+          {/* Footer: Open Client View in New Tab */}
+          <div className="pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-[11px] text-nc-warm/60">
+              Status atual: <strong className="text-white">{getStatusLabel(sendModalProposta.status)}</strong>
+            </span>
+            <a
+              href={shareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200"
+            >
+              <span>Abrir Link em Nova Aba (Testar Visão do Cliente)</span>
+              <ExternalLink size={13} />
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ============================================================================
   // RENDER MODE 1: PREVIEW PADRONIZADO DA APRESENTAÇÃO EXECUTIVA
   // ============================================================================
   if (viewMode === 'preview') {
     return (
-      <div className="rounded-3xl overflow-hidden border border-white/15 shadow-2xl">
-        <PropostaApresentacaoView
-          proposta={currentProposta}
-          isPublicView={false}
-          onBack={() => setViewMode('list')}
-          onEdit={() => setViewMode('edit')}
-        />
-      </div>
+      <>
+        {renderSendProposalModal()}
+        <div className="rounded-3xl overflow-hidden border border-white/15 shadow-2xl">
+          <PropostaApresentacaoView
+            proposta={currentProposta}
+            isPublicView={false}
+            onBack={() => setViewMode('list')}
+            onEdit={() => setViewMode('edit')}
+            onOpenSendModal={(prop) => handleOpenSendModalForProposta(prop)}
+            onUpdateProposta={(updated) => {
+              setCurrentProposta(updated);
+              loadAll();
+            }}
+          />
+        </div>
+      </>
     );
   }
 
@@ -411,6 +592,7 @@ export const AdminPropostasManager: React.FC<AdminPropostasManagerProps> = ({ no
   if (viewMode === 'edit') {
     return (
       <div className="space-y-6">
+        {renderSendProposalModal()}
         {/* Top Editor Header */}
         <div className="bg-[#0c0e12] border border-white/10 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -450,7 +632,7 @@ export const AdminPropostasManager: React.FC<AdminPropostasManagerProps> = ({ no
 
             <button
               type="button"
-              onClick={() => handleSaveCurrent(false)}
+              onClick={() => handleSaveCurrent(false, false)}
               disabled={saving}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
             >
@@ -460,7 +642,18 @@ export const AdminPropostasManager: React.FC<AdminPropostasManagerProps> = ({ no
 
             <button
               type="button"
-              onClick={() => handleSaveCurrent(true)}
+              onClick={() => handleSaveCurrent(false, true)}
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+              title="Salvar e abrir opções para enviar o link da proposta ao cliente"
+            >
+              <Send size={14} />
+              <span>Enviar ao Cliente</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSaveCurrent(true, false)}
               disabled={saving}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:brightness-105 transition-all cursor-pointer disabled:opacity-50"
             >
@@ -1362,6 +1555,7 @@ export const AdminPropostasManager: React.FC<AdminPropostasManagerProps> = ({ no
   // ============================================================================
   return (
     <div className="space-y-6">
+      {renderSendProposalModal()}
       {/* Top Banner & Primary CTA Button */}
       <div className="bg-gradient-to-r from-[#13161f] via-[#171218] to-[#191510] border border-white/10 rounded-3xl p-6 md:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-xl">
         <div className="space-y-2 max-w-2xl">
@@ -1372,7 +1566,7 @@ export const AdminPropostasManager: React.FC<AdminPropostasManagerProps> = ({ no
             Apresentações Comerciais Padronizadas NC Turismo
           </h2>
           <p className="text-xs md:text-sm text-nc-warm/75 leading-relaxed">
-            Elabore propostas consultivas com a <strong>Logo do Cliente</strong> ao lado da marca NC Turismo, selecione os produtos de <strong>Gestão de Despesas, Ativos OBT, BI e Agenciamento</strong>, personalize termos e exporte em PDF ou link direto.
+            Elabore propostas consultivas com a <strong>Logo do Cliente</strong> ao lado da marca NC Turismo, selecione os produtos de <strong>Gestão de Despesas, Ativos OBT, BI e Agenciamento</strong>, personalize termos e envie o link direto para o cliente aceitar online.
           </p>
         </div>
 
@@ -1600,6 +1794,16 @@ export const AdminPropostasManager: React.FC<AdminPropostasManagerProps> = ({ no
               <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                 <button
                   type="button"
+                  onClick={() => handleOpenSendModalForProposta(prop)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
+                  title="Enviar link desta proposta para o cliente acessar e aceitar"
+                >
+                  <Send size={14} />
+                  <span>Enviar ao Cliente</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => handlePreviewProposta(prop)}
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white text-xs font-bold uppercase tracking-wider shadow-md hover:brightness-105 transition-all cursor-pointer"
                 >
@@ -1613,20 +1817,7 @@ export const AdminPropostasManager: React.FC<AdminPropostasManagerProps> = ({ no
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-white text-xs font-bold transition-all cursor-pointer"
                 >
                   <Edit3 size={14} />
-                  <span>Editar Proposta</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const url = `${window.location.origin}${window.location.pathname}#proposta/${prop.codigo_proposta || prop.id}`;
-                    navigator.clipboard.writeText(url);
-                    notify(`Link da apresentação (${prop.codigo_proposta}) copiado para enviar ao cliente!`);
-                  }}
-                  className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-amber-300 transition-colors cursor-pointer"
-                  title="Copiar link público da apresentação para enviar ao cliente"
-                >
-                  <Share2 size={15} />
+                  <span>Editar</span>
                 </button>
 
                 <button

@@ -1,8 +1,13 @@
-import React from 'react';
-import { PropostaComercial } from '../lib/supabase';
+import React, { useState, useEffect } from 'react';
+import {
+  PropostaComercial,
+  buildPropostaShareUrl,
+  registerPropostaClientDecision,
+} from '../lib/supabase';
 import {
   Building2,
   Calendar,
+  Check,
   CheckCircle2,
   Clock,
   Cpu,
@@ -18,27 +23,55 @@ import {
   PieChart,
   Printer,
   Receipt,
+  Send,
   ShieldCheck,
   Sparkles,
   TrendingDown,
   UserCheck,
   ArrowLeft,
-  Share2
+  Share2,
+  XCircle,
+  AlertCircle,
 } from 'lucide-react';
 
 interface PropostaApresentacaoViewProps {
   proposta: PropostaComercial;
+  notFoundCode?: string | null;
   isPublicView?: boolean;
   onBack?: () => void;
   onEdit?: () => void;
+  onOpenSendModal?: (proposta: PropostaComercial) => void;
+  onUpdateProposta?: (updated: PropostaComercial) => void;
 }
 
 export const PropostaApresentacaoView: React.FC<PropostaApresentacaoViewProps> = ({
   proposta,
+  notFoundCode = null,
   isPublicView = false,
   onBack,
-  onEdit
+  onEdit,
+  onOpenSendModal,
+  onUpdateProposta,
 }) => {
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [decisionTab, setDecisionTab] = useState<'aprovar' | 'ajustar' | 'recusar'>('aprovar');
+  const [responsavelNome, setResponsavelNome] = useState(proposta.contato_nome || '');
+  const [responsavelCargo, setResponsavelCargo] = useState(proposta.contato_cargo || '');
+  const [responsavelEmail, setResponsavelEmail] = useState(proposta.contato_email || '');
+  const [decisionMessage, setDecisionMessage] = useState('');
+  const [acceptedTermsCheck, setAcceptedTermsCheck] = useState(true);
+  const [submittingDecision, setSubmittingDecision] = useState(false);
+  const [decisionFeedback, setDecisionFeedback] = useState<{
+    type: 'success' | 'warning' | 'error';
+    text: string;
+  } | null>(null);
+
+  useEffect(() => {
+    setResponsavelNome(proposta.contato_nome || '');
+    setResponsavelCargo(proposta.contato_cargo || '');
+    setResponsavelEmail(proposta.contato_email || '');
+  }, [proposta.id, proposta.contato_nome, proposta.contato_cargo, proposta.contato_email]);
+
   const selectedModulos = (proposta.modulos || []).filter((m) => m.selecionado);
 
   const formatDateBR = (dateStr: string) => {
@@ -54,10 +87,131 @@ export const PropostaApresentacaoView: React.FC<PropostaApresentacaoViewProps> =
     window.print();
   };
 
+  const shareUrl = buildPropostaShareUrl(proposta);
+
   const handleCopyShareLink = () => {
-    const url = `${window.location.origin}${window.location.pathname}#proposta/${proposta.codigo_proposta || proposta.id}`;
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText(shareUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 3000);
   };
+
+  const scrollToDecision = () => {
+    const el = document.getElementById('decisao-proposta');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleClientDecisionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!responsavelNome.trim()) {
+      setDecisionFeedback({
+        type: 'error',
+        text: 'Por favor, informe o seu nome completo para registrar a resposta.',
+      });
+      return;
+    }
+
+    if (decisionTab === 'aprovar' && !acceptedTermsCheck) {
+      setDecisionFeedback({
+        type: 'error',
+        text: 'Confirme a caixa de ciência das condições comerciais para concluir o aceite.',
+      });
+      return;
+    }
+
+    if ((decisionTab === 'ajustar' || decisionTab === 'recusar') && !decisionMessage.trim()) {
+      setDecisionFeedback({
+        type: 'error',
+        text:
+          decisionTab === 'ajustar'
+            ? 'Descreva brevemente quais pontos ou condições gostaria de ajustar.'
+            : 'Informe brevemente o motivo para registrarmos em nosso atendimento.',
+      });
+      return;
+    }
+
+    setSubmittingDecision(true);
+    setDecisionFeedback(null);
+
+    try {
+      const targetStatus =
+        decisionTab === 'aprovar'
+          ? 'aprovada'
+          : decisionTab === 'ajustar'
+          ? 'em_negociacao'
+          : 'arquivada';
+
+      const result = await registerPropostaClientDecision({
+        proposta,
+        decision: targetStatus,
+        responsavelNome,
+        responsavelCargo,
+        responsavelEmail,
+        mensagem: decisionMessage,
+      });
+
+      if (onUpdateProposta) {
+        onUpdateProposta(result.proposta);
+      }
+
+      setDecisionFeedback({
+        type: 'success',
+        text:
+          targetStatus === 'aprovada'
+            ? `Aceite digital da proposta ${proposta.codigo_proposta} confirmado com sucesso! Nossa equipe executiva já foi notificada para iniciar o onboarding.`
+            : targetStatus === 'em_negociacao'
+            ? `Sua solicitação de ajuste na proposta ${proposta.codigo_proposta} foi registrada com sucesso! Nosso consultor retornará em breve.`
+            : `Sua resposta para a proposta ${proposta.codigo_proposta} foi registrada com sucesso.`,
+      });
+    } catch (err: any) {
+      setDecisionFeedback({
+        type: 'error',
+        text: 'Não foi possível registrar sua resposta no momento. Tente novamente ou fale pelo WhatsApp.',
+      });
+    } finally {
+      setSubmittingDecision(false);
+    }
+  };
+
+  if (notFoundCode) {
+    return (
+      <div className="min-h-screen bg-[#0F172A] text-white flex flex-col items-center justify-center p-6 font-sans">
+        <div className="max-w-lg w-full bg-slate-900 border border-white/10 rounded-3xl p-8 text-center space-y-5 shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/15 border border-red-500/30 text-[#C8102E] flex items-center justify-center mx-auto">
+            <AlertCircle size={28} />
+          </div>
+          <h1 className="text-xl md:text-2xl font-bold text-white">
+            Proposta Comercial Não Localizada ({notFoundCode})
+          </h1>
+          <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
+            Não encontramos uma proposta ativa com o código informado ou o link pode estar incompleto. Solicite o link atualizado diretamente ao seu consultor NC Turismo.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-white cursor-pointer"
+              >
+                Ir para o Portal NC Turismo
+              </button>
+            )}
+            <a
+              href={`https://wa.me/554132811153?text=${encodeURIComponent(
+                `Olá! Tentei acessar a Proposta Comercial ${notFoundCode} no portal da NC Turismo e gostaria de receber o link atualizado.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white text-xs font-bold uppercase tracking-wider"
+            >
+              <MessageCircle size={15} />
+              <span>Falar com Consultor</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getCategoryIcon = (cat: string) => {
     switch (cat) {
@@ -79,8 +233,8 @@ export const PropostaApresentacaoView: React.FC<PropostaApresentacaoViewProps> =
   return (
     <div className="bg-[#F8FAFC] text-[#0F172A] min-h-screen font-sans selection:bg-[#C8102E] selection:text-white pb-20 print:bg-white print:pb-0">
       {/* Top Action Bar (Hidden when printing) */}
-      <div className="sticky top-0 z-40 bg-[#0F172A]/95 backdrop-blur-md border-b border-white/10 px-6 py-3.5 text-white print:hidden">
-        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div className="sticky top-0 z-40 bg-[#0F172A]/95 backdrop-blur-md border-b border-white/10 px-4 sm:px-6 py-3.5 text-white print:hidden">
+        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {onBack && (
               <button
@@ -88,18 +242,36 @@ export const PropostaApresentacaoView: React.FC<PropostaApresentacaoViewProps> =
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold transition-colors cursor-pointer"
               >
                 <ArrowLeft size={14} />
-                <span>{isPublicView ? 'Voltar ao Portal NC' : 'Voltar ao Painel'}</span>
+                <span>{isPublicView ? 'Conhecer o Portal NC' : 'Voltar ao Painel'}</span>
               </button>
             )}
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  proposta.status === 'aprovada'
+                    ? 'bg-emerald-400'
+                    : proposta.status === 'em_negociacao'
+                    ? 'bg-amber-400 animate-pulse'
+                    : 'bg-emerald-400 animate-pulse'
+                }`}
+              />
               <span className="text-xs font-mono uppercase tracking-wider text-slate-300">
-                Apresentação Executiva Padronizada · <strong className="text-white">{proposta.codigo_proposta}</strong>
+                Proposta Executiva · <strong className="text-white">{proposta.codigo_proposta}</strong>
               </span>
+              {proposta.status === 'aprovada' && (
+                <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[11px] font-bold">
+                  <CheckCircle2 size={12} /> Aprovada pelo Cliente
+                </span>
+              )}
+              {proposta.status === 'em_negociacao' && (
+                <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[11px] font-bold">
+                  Em Revisão / Negociação
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             {onEdit && (
               <button
                 onClick={onEdit}
@@ -109,14 +281,35 @@ export const PropostaApresentacaoView: React.FC<PropostaApresentacaoViewProps> =
               </button>
             )}
 
-            <button
-              onClick={handleCopyShareLink}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 border border-amber-400/30 text-xs font-bold transition-all cursor-pointer"
-              title="Copiar link direto desta proposta para enviar ao cliente"
-            >
-              <Share2 size={14} />
-              <span>Copiar Link da Proposta</span>
-            </button>
+            {onOpenSendModal ? (
+              <button
+                onClick={() => onOpenSendModal(proposta)}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 text-xs font-bold transition-all cursor-pointer"
+                title="Enviar link desta proposta ao cliente via WhatsApp, E-mail ou copiar link"
+              >
+                <Send size={14} />
+                <span>Enviar Proposta ao Cliente</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleCopyShareLink}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 border border-amber-400/30 text-xs font-bold transition-all cursor-pointer"
+                title="Copiar link direto desta proposta para enviar ao cliente"
+              >
+                {copiedLink ? <Check size={14} className="text-emerald-400" /> : <Share2 size={14} />}
+                <span>{copiedLink ? 'Link Copiado!' : 'Copiar Link da Proposta'}</span>
+              </button>
+            )}
+
+            {isPublicView && proposta.status !== 'aprovada' && (
+              <button
+                onClick={scrollToDecision}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider shadow-lg transition-all cursor-pointer"
+              >
+                <CheckCircle2 size={14} />
+                <span>Aceitar / Responder Proposta</span>
+              </button>
+            )}
 
             <button
               onClick={handlePrint}
@@ -620,36 +813,316 @@ export const PropostaApresentacaoView: React.FC<PropostaApresentacaoViewProps> =
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#FAFCFF] border border-slate-200/80 space-y-3">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold block">
-                De Acordo / Aceite do Cliente
-              </span>
-              <div className="h-10 border-b border-slate-300" />
+            <div
+              className={`p-6 rounded-2xl border space-y-3 ${
+                proposta.status === 'aprovada'
+                  ? 'bg-emerald-50/70 border-emerald-300'
+                  : 'bg-[#FAFCFF] border-slate-200/80'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold block">
+                  De Acordo / Aceite do Cliente
+                </span>
+                {proposta.status === 'aprovada' && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wider">
+                    <CheckCircle2 size={11} /> Aceite Confirmado
+                  </span>
+                )}
+              </div>
+              <div className="h-10 border-b border-slate-300 flex items-end pb-1 font-display italic text-slate-800 text-sm">
+                {proposta.status === 'aprovada' ? proposta.contato_nome || responsavelNome : ''}
+              </div>
               <div className="text-xs text-slate-600">
                 <strong className="text-[#0F172A] block">{proposta.cliente_nome}</strong>
                 <span>Representante: {proposta.contato_nome || '_______________________________'}</span>
-                <span className="block text-slate-400 mt-0.5">Data de aprovação: ____/____/2026</span>
+                <span className="block text-slate-500 mt-0.5">
+                  {proposta.status === 'aprovada'
+                    ? `Aprovada digitalmente em ${formatDateBR(proposta.updated_at?.slice(0, 10))}`
+                    : 'Data de aprovação: ____/____/2026'}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Direct CTA Footer (Hidden in Print) */}
-          <div className="pt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200/80 print:hidden">
-            <div className="text-xs text-slate-500">
-              Dúvidas sobre o escopo técnico, integrações de ERP ou condições comerciais? Fale diretamente com nosso consultor.
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <a
-                href={`https://wa.me/554132811153?text=${encodeURIComponent(
-                  `Olá! Estou analisando a Proposta Comercial ${proposta.codigo_proposta} preparada pela NC Turismo para a empresa ${proposta.cliente_nome} e gostaria de conversar sobre os próximos passos.`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white text-xs font-bold uppercase tracking-wider shadow-md hover:brightness-105 transition-all"
-              >
-                <MessageCircle size={16} />
-                <span>Aprovar ou Ajustar Proposta via WhatsApp</span>
-              </a>
+          {/* =================================================================
+              CENTRAL INTERATIVA DE ACEITE OU RESPOSTA DO CLIENTE (NÃO IMPRIME)
+             ================================================================= */}
+          <div id="decisao-proposta" className="pt-8 mt-6 border-t-2 border-slate-200 print:hidden">
+            <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-[#0F172A] via-[#131C31] to-[#1A1423] text-white p-6 sm:p-8 shadow-xl space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
+                <div className="space-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-[11px] font-bold uppercase tracking-wider">
+                    <FileCheck2 size={13} /> Formalização Digital da Proposta · {proposta.codigo_proposta}
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                    Deseja Aprovar esta Proposta ou Solicitar Ajustes?
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-300">
+                    Registre abaixo sua decisão para que nossa equipe executiva inicie o onboarding ou realize eventuais adequações no escopo.
+                  </p>
+                </div>
+
+                {/* Status Badge Atual */}
+                <div className="shrink-0">
+                  {proposta.status === 'aprovada' ? (
+                    <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold">
+                      <CheckCircle2 size={16} />
+                      <span>Proposta Aprovada</span>
+                    </div>
+                  ) : proposta.status === 'em_negociacao' ? (
+                    <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold">
+                      <Clock size={16} />
+                      <span>Em Revisão / Negociação</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 border border-white/15 text-slate-200 text-xs font-bold">
+                      <Clock size={16} className="text-amber-400" />
+                      <span>Aguardando Parecer do Cliente</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 3 Opções de Decisão */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDecisionTab('aprovar');
+                    setDecisionFeedback(null);
+                  }}
+                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3 ${
+                    decisionTab === 'aprovar'
+                      ? 'bg-emerald-500/20 border-emerald-400 text-white shadow-lg'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                  }`}
+                >
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      decisionTab === 'aprovar' ? 'bg-emerald-500 text-slate-950' : 'bg-white/10 text-emerald-400'
+                    }`}
+                  >
+                    <CheckCircle2 size={18} />
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-sm font-bold text-white">1. Aceitar Proposta</div>
+                    <div className="text-[11px] text-slate-300 mt-0.5">
+                      Aprovar condições e iniciar implantação
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDecisionTab('ajustar');
+                    setDecisionFeedback(null);
+                  }}
+                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3 ${
+                    decisionTab === 'ajustar'
+                      ? 'bg-amber-500/20 border-amber-400 text-white shadow-lg'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                  }`}
+                >
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      decisionTab === 'ajustar' ? 'bg-amber-400 text-slate-950' : 'bg-white/10 text-amber-400'
+                    }`}
+                  >
+                    <Handshake size={18} />
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-sm font-bold text-white">2. Solicitar Ajustes</div>
+                    <div className="text-[11px] text-slate-300 mt-0.5">
+                      Revisar escopo, valores ou tirar dúvidas
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDecisionTab('recusar');
+                    setDecisionFeedback(null);
+                  }}
+                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3 ${
+                    decisionTab === 'recusar'
+                      ? 'bg-red-500/20 border-red-400 text-white shadow-lg'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                  }`}
+                >
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      decisionTab === 'recusar' ? 'bg-red-500 text-white' : 'bg-white/10 text-red-400'
+                    }`}
+                  >
+                    <XCircle size={18} />
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-sm font-bold text-white">3. Não Aprovar Agora</div>
+                    <div className="text-[11px] text-slate-300 mt-0.5">
+                      Declinar ou adiar projeto para outro momento
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              {/* Formulário de Registro da Decisão */}
+              <form onSubmit={handleClientDecisionSubmit} className="space-y-4 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider font-bold text-slate-300 mb-1.5">
+                      Seu Nome Completo *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={responsavelNome}
+                      onChange={(e) => setResponsavelNome(e.target.value)}
+                      placeholder="Ex: Régis Silva"
+                      className="w-full h-11 rounded-xl bg-white/10 border border-white/15 px-3.5 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider font-bold text-slate-300 mb-1.5">
+                      Cargo / Departamento
+                    </label>
+                    <input
+                      type="text"
+                      value={responsavelCargo}
+                      onChange={(e) => setResponsavelCargo(e.target.value)}
+                      placeholder="Ex: Diretor / Gestor Financeiro"
+                      className="w-full h-11 rounded-xl bg-white/10 border border-white/15 px-3.5 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider font-bold text-slate-300 mb-1.5">
+                      E-mail Corporativo
+                    </label>
+                    <input
+                      type="email"
+                      value={responsavelEmail}
+                      onChange={(e) => setResponsavelEmail(e.target.value)}
+                      placeholder="nome@suaempresa.com.br"
+                      className="w-full h-11 rounded-xl bg-white/10 border border-white/15 px-3.5 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider font-bold text-slate-300 mb-1.5">
+                    {decisionTab === 'aprovar'
+                      ? 'Observações para o Início da Implantação (Opcional)'
+                      : decisionTab === 'ajustar'
+                      ? 'Quais pontos ou condições você gostaria de ajustar na proposta? *'
+                      : 'Gostaria de informar o motivo do adiamento/recusa? *'}
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={decisionMessage}
+                    onChange={(e) => setDecisionMessage(e.target.value)}
+                    placeholder={
+                      decisionTab === 'aprovar'
+                        ? 'Ex: Aprovado! Podemos agendar a reunião de kickoff para esta semana.'
+                        : decisionTab === 'ajustar'
+                        ? 'Ex: Gostaria de revisar a condição comercial do item X ou incluir mais um centro de custo...'
+                        : 'Ex: Vamos retomar o projeto no próximo trimestre.'
+                    }
+                    className="w-full rounded-xl bg-white/10 border border-white/15 p-3.5 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                {decisionTab === 'aprovar' && (
+                  <label className="flex items-start gap-3 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptedTermsCheck}
+                      onChange={(e) => setAcceptedTermsCheck(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 accent-emerald-500 rounded"
+                    />
+                    <span className="text-xs text-slate-200 leading-relaxed">
+                      Declaro estar de acordo com o escopo consultivo e as condições comerciais apresentadas na Proposta{' '}
+                      <strong>{proposta.codigo_proposta}</strong> para <strong>{proposta.cliente_nome}</strong>, autorizando o contato da equipe NC Turismo para formalização contratual e kickoff.
+                    </span>
+                  </label>
+                )}
+
+                {decisionFeedback && (
+                  <div
+                    className={`p-4 rounded-2xl border text-xs sm:text-sm font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      decisionFeedback.type === 'success'
+                        ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-200'
+                        : 'bg-red-500/20 border-red-400/50 text-red-200'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle2 size={18} className="shrink-0 mt-0.5" />
+                      <span>{decisionFeedback.text}</span>
+                    </div>
+                    {decisionFeedback.type === 'success' && (
+                      <a
+                        href={`https://wa.me/554132811153?text=${encodeURIComponent(
+                          decisionTab === 'aprovar'
+                            ? `Olá! Acabei de registrar o ACEITE DIGITAL da Proposta Comercial ${proposta.codigo_proposta} (${proposta.cliente_nome}) no portal da NC Turismo. Responsável: ${responsavelNome}. Podemos alinhar os próximos passos!`
+                            : `Olá! Acabei de registrar uma observação na Proposta Comercial ${proposta.codigo_proposta} (${proposta.cliente_nome}): "${decisionMessage}"`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-slate-900 font-bold text-xs shrink-0 hover:bg-amber-300 transition-colors"
+                      >
+                        <MessageCircle size={14} />
+                        <span>Notificar Consultor no WhatsApp</span>
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                  <a
+                    href={`https://wa.me/554132811153?text=${encodeURIComponent(
+                      `Olá! Estou analisando a Proposta Comercial ${proposta.codigo_proposta} preparada pela NC Turismo para a empresa ${proposta.cliente_nome} e gostaria de falar com o consultor.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-xs text-amber-300 hover:text-amber-200 font-semibold"
+                  >
+                    <MessageCircle size={15} />
+                    <span>Prefere falar antes pelo WhatsApp com o consultor? Clique aqui</span>
+                  </a>
+
+                  <button
+                    type="submit"
+                    disabled={submittingDecision}
+                    className={`inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-xs sm:text-sm uppercase tracking-wider shadow-lg transition-all cursor-pointer disabled:opacity-50 ${
+                      decisionTab === 'aprovar'
+                        ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
+                        : decisionTab === 'ajustar'
+                        ? 'bg-amber-400 hover:bg-amber-300 text-slate-950'
+                        : 'bg-red-500 hover:bg-red-400 text-white'
+                    }`}
+                  >
+                    {decisionTab === 'aprovar' ? (
+                      <>
+                        <CheckCircle2 size={17} />
+                        <span>{submittingDecision ? 'Confirmando Aceite...' : 'Confirmar Aceite da Proposta'}</span>
+                      </>
+                    ) : decisionTab === 'ajustar' ? (
+                      <>
+                        <Send size={16} />
+                        <span>{submittingDecision ? 'Enviando...' : 'Enviar Solicitação de Ajustes'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle size={16} />
+                        <span>{submittingDecision ? 'Registrando...' : 'Registrar Recusa / Adiamento'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </section>

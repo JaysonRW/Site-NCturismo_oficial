@@ -49,6 +49,8 @@ export default function App() {
   const [session, setSession] = useState<any>(null);
   const [activeSlug, setActiveSlug] = useState<string>('sla-suporte-viagens-corporativas-atendimento');
   const [activeProposta, setActiveProposta] = useState<PropostaComercial>(INITIAL_PROPOSTAS_COMERCIAIS[0]);
+  const [propostaLoading, setPropostaLoading] = useState<boolean>(false);
+  const [propostaNotFoundCode, setPropostaNotFoundCode] = useState<string | null>(null);
 
   useEffect(() => {
     // Check initial auth state
@@ -67,10 +69,14 @@ export default function App() {
 
   useEffect(() => {
     const syncRouteFromLocation = () => {
-      const match = resolveBrowserLocation(window.location.pathname, window.location.hash);
+      const match = resolveBrowserLocation(
+        window.location.pathname,
+        window.location.hash,
+        window.location.search
+      );
 
-      // Se acessou uma página dedicada via hash legado (ex.: /#gestao-de-viagens ou /#rodoviario),
-      // converte silenciosamente a URL para o caminho limpo (/gestao-de-viagens) sem recarregar
+      // Se acessou uma página dedicada via hash legado (ex.: /#gestao-de-viagens ou /#proposta/NC-2026-002),
+      // converte silenciosamente a URL para o caminho canônico (ex.: /?proposta=NC-2026-002) sem recarregar
       if (match.wasLegacyHash && !match.homeAnchorId && match.canonicalPath.startsWith('/')) {
         window.history.replaceState(null, '', match.canonicalPath);
       }
@@ -80,9 +86,21 @@ export default function App() {
       }
 
       if (match.propostaCode) {
-        getPropostaComercialById(match.propostaCode).then((found) => {
-          if (found) setActiveProposta(found);
-        });
+        setPropostaLoading(true);
+        setPropostaNotFoundCode(null);
+        getPropostaComercialById(match.propostaCode)
+          .then((found) => {
+            if (found) {
+              setActiveProposta(found);
+              setPropostaNotFoundCode(null);
+              document.title = `Proposta ${found.codigo_proposta} · ${found.cliente_nome} | NC Turismo`;
+            } else {
+              setPropostaNotFoundCode(match.propostaCode || null);
+            }
+          })
+          .finally(() => {
+            setPropostaLoading(false);
+          });
       }
 
       setCurrentView(match.view);
@@ -115,7 +133,8 @@ export default function App() {
   }, []);
 
   const pushCleanUrl = (path: string) => {
-    if (window.location.pathname + window.location.hash !== path) {
+    const currentFull = window.location.pathname + window.location.search + window.location.hash;
+    if (currentFull !== path) {
       window.history.pushState(null, '', path);
     }
   };
@@ -164,9 +183,20 @@ export default function App() {
     }
 
     if (match.propostaCode) {
-      getPropostaComercialById(match.propostaCode).then((found) => {
-        if (found) setActiveProposta(found);
-      });
+      setPropostaLoading(true);
+      setPropostaNotFoundCode(null);
+      getPropostaComercialById(match.propostaCode)
+        .then((found) => {
+          if (found) {
+            setActiveProposta(found);
+            setPropostaNotFoundCode(null);
+          } else {
+            setPropostaNotFoundCode(match.propostaCode || null);
+          }
+        })
+        .finally(() => {
+          setPropostaLoading(false);
+        });
     }
 
     if (match.homeAnchorId) {
@@ -214,11 +244,26 @@ export default function App() {
   }
 
   if (currentView === 'proposta') {
+    if (propostaLoading) {
+      return (
+        <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-6 text-white font-sans">
+          <div className="w-12 h-12 rounded-2xl border-2 border-[#C8102E] border-t-amber-400 animate-spin mb-4" />
+          <p className="text-sm font-bold tracking-wider uppercase text-amber-300">
+            Carregando Proposta Comercial NC Turismo...
+          </p>
+          <p className="text-xs text-slate-400 mt-1">
+            Sincronizando dados, escopo consultivo e condições comerciais.
+          </p>
+        </div>
+      );
+    }
     return (
       <PropostaApresentacaoView
         proposta={activeProposta}
+        notFoundCode={propostaNotFoundCode}
         isPublicView={true}
         onBack={handleBackToHome}
+        onUpdateProposta={(updated) => setActiveProposta(updated)}
       />
     );
   }

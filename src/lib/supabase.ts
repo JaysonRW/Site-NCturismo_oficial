@@ -1356,14 +1356,25 @@ export const getPropostasComerciais = async (): Promise<PropostaComercial[]> => 
   }
 };
 
+export const buildPropostaShareUrl = (propostaOrCode: PropostaComercial | string): string => {
+  const code =
+    typeof propostaOrCode === 'string'
+      ? propostaOrCode.trim()
+      : (propostaOrCode.codigo_proposta || propostaOrCode.id).trim();
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://ncturismo.com.br';
+  return `${origin}/?proposta=${encodeURIComponent(code)}`;
+};
+
 export const getPropostaComercialById = async (idOrCode: string): Promise<PropostaComercial | null> => {
-  const clean = idOrCode.trim();
-  // 1. Tenta Supabase direto
+  const clean = decodeURIComponent(idOrCode || '').trim();
+  if (!clean) return null;
+
+  // 1. Tenta Supabase direto (por id ou codigo_proposta case-insensitive)
   try {
     const { data, error } = await supabase
       .from('propostas_comerciais')
       .select('*')
-      .or(`id.eq.${clean},codigo_proposta.eq.${clean}`)
+      .or(`id.eq.${clean},codigo_proposta.ilike.${clean}`)
       .limit(1);
 
     if (!error && data && data.length > 0) {
@@ -1374,13 +1385,69 @@ export const getPropostaComercialById = async (idOrCode: string): Promise<Propos
   }
 
   const all = await getPropostasComerciais();
-  return all.find(p => p.id === clean || p.codigo_proposta.toLowerCase() === clean.toLowerCase()) || null;
+  return (
+    all.find(
+      (p) =>
+        p.id.trim().toLowerCase() === clean.toLowerCase() ||
+        p.codigo_proposta.trim().toLowerCase() === clean.toLowerCase()
+    ) || null
+  );
+};
+
+export const registerPropostaClientDecision = async (params: {
+  proposta: PropostaComercial;
+  decision: 'aprovada' | 'em_negociacao' | 'arquivada';
+  responsavelNome: string;
+  responsavelCargo?: string;
+  responsavelEmail?: string;
+  mensagem?: string;
+}): Promise<{ proposta: PropostaComercial; syncedSupabase: boolean; errorMsg?: string }> => {
+  const nowBr = new Date().toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const decisionLabel =
+    params.decision === 'aprovada'
+      ? 'ACEITE DIGITAL CONFIRMADO PELO CLIENTE'
+      : params.decision === 'em_negociacao'
+      ? 'SOLICITAÇÃO DE AJUSTE / REVISÃO PELO CLIENTE'
+      : 'PROPOSTA RECUSADA / ADIADA PELO CLIENTE';
+
+  const auditBlock = [
+    `[${decisionLabel} em ${nowBr}]`,
+    `Responsável: ${params.responsavelNome.trim()}${params.responsavelCargo ? ` (${params.responsavelCargo.trim()})` : ''}${params.responsavelEmail ? ` · E-mail: ${params.responsavelEmail.trim()}` : ''}`,
+    params.mensagem?.trim() ? `Mensagem do Cliente: "${params.mensagem.trim()}"` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  // Remove blocos de decisão anteriores para não duplicar e anexa o mais recente
+  const baseObs = (params.proposta.observacoes_finais || '')
+    .replace(/\n*\[(ACEITE DIGITAL CONFIRMADO|SOLICITAÇÃO DE AJUSTE|PROPOSTA RECUSADA)[\s\S]*$/i, '')
+    .trim();
+
+  const updatedProposta: PropostaComercial = {
+    ...params.proposta,
+    status: params.decision,
+    contato_nome: params.responsavelNome.trim() || params.proposta.contato_nome,
+    contato_cargo: params.responsavelCargo?.trim() || params.proposta.contato_cargo,
+    contato_email: params.responsavelEmail?.trim() || params.proposta.contato_email,
+    observacoes_finais: baseObs ? `${baseObs}\n\n${auditBlock}` : auditBlock,
+  };
+
+  return savePropostaComercial(updatedProposta);
 };
 
 export const savePropostaComercial = async (proposta: PropostaComercial): Promise<{ proposta: PropostaComercial; syncedSupabase: boolean; errorMsg?: string }> => {
   const now = new Date().toISOString();
   const payload: PropostaComercial = {
     ...proposta,
+    codigo_proposta: (proposta.codigo_proposta || '').trim(),
+    cliente_nome: (proposta.cliente_nome || '').trim(),
     updated_at: now,
     created_at: proposta.created_at || now
   };

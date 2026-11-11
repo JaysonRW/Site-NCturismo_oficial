@@ -285,15 +285,22 @@ export function resolveTokenToRoute(rawToken: string, isFromHash = false): Resol
 
   // Rotas dinâmicas: Proposta Comercial (/proposta/:code)
   if (lower.startsWith('proposta/')) {
-    const code = cleaned.replace(/^proposta\//i, '');
+    const code = decodeURIComponent(cleaned.replace(/^proposta\//i, '')).trim();
     if (code) {
       return {
         view: 'proposta',
-        canonicalPath: `/proposta/${code}`,
+        canonicalPath: `/?proposta=${encodeURIComponent(code)}`,
         propostaCode: code,
         wasLegacyHash: isFromHash,
       };
     }
+  }
+  if (lower === 'proposta') {
+    return {
+      view: 'proposta',
+      canonicalPath: '/proposta',
+      wasLegacyHash: isFromHash,
+    };
   }
 
   // Admin
@@ -418,11 +425,32 @@ export function resolveTokenToRoute(rawToken: string, isFromHash = false): Resol
 }
 
 /**
- * Resolve o estado atual do navegador (pathname + hash) priorizando:
- * 1. Hash legado caso esteja na raiz (ex.: /#gestao-de-viagens ou /#faq)
- * 2. Pathname limpo (ex.: /gestao-de-viagens)
+ * Resolve o estado atual do navegador (pathname + hash + search) priorizando:
+ * 1. Parâmetro de query ?proposta=CODIGO (universal para qualquer servidor estático/Plesk)
+ * 2. Hash legado (ex.: /#proposta/CODIGO ou /#gestao-de-viagens)
+ * 3. Pathname limpo (ex.: /gestao-de-viagens ou /proposta/CODIGO)
  */
-export function resolveBrowserLocation(pathname: string, hash: string): ResolvedRouteMatch {
+export function resolveBrowserLocation(pathname: string, hash: string, search?: string): ResolvedRouteMatch {
+  const effectiveSearch =
+    search !== undefined ? search : typeof window !== 'undefined' ? window.location.search : '';
+
+  if (effectiveSearch) {
+    try {
+      const params = new URLSearchParams(effectiveSearch);
+      const propParam = (params.get('proposta') || params.get('codigo') || '').trim();
+      if (propParam) {
+        return {
+          view: 'proposta',
+          canonicalPath: `/?proposta=${encodeURIComponent(propParam)}`,
+          propostaCode: propParam,
+          wasLegacyHash: false,
+        };
+      }
+    } catch {
+      // ignore invalid query params
+    }
+  }
+
   const cleanHash = (hash || '').replace(/^#/, '').trim();
   const cleanPath = (pathname || '/').replace(/^\/+|\/+$/g, '').trim();
 
