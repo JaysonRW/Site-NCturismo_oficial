@@ -141,7 +141,7 @@ export const Header: React.FC<HeaderProps> = ({
           aria-label="NC Turismo - Página Inicial"
         >
           <img 
-            src="/logo.png" 
+            src="/Logotipo%20NC%20Turismo%20Vermelho%20e%20Branco.png" 
             alt="NC Turismo" 
             className="w-[170px] md:w-[210px] h-auto object-contain transform origin-left -my-3" 
           />
