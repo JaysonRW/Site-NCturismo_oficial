@@ -4,23 +4,43 @@
 Options -MultiViews
 DirectoryIndex index.html
 
-# Fallback nativo do Apache 2.4+ (evita loops de RewriteRule 500 no Plesk)
-FallbackResource /index.html
-
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
 
-  # 1. Permite acesso direto à raiz e ao próprio index.html sem reescrita
+  # 1. Canonicalização de Host: redireciona www -> domínio raiz sem www (301)
+  RewriteCond %{HTTP_HOST} ^www\.ncturismo\.com\.br$ [NC]
+  RewriteRule ^(.*)$ https://ncturismo.com.br/$1 [R=301,L]
+
+  # 2. Canonicalização da Home: redireciona acesso externo a /index.html -> / (301)
+  RewriteCond %{THE_REQUEST} \s/+index\.html[\s?] [NC]
+  RewriteRule ^index\.html$ https://ncturismo.com.br/ [R=301,L]
+
+  # 3. Canonicalização de Trailing Slash: remove barra final em sub-rotas via 301
+  #    Garante alinhamento exato com o sitemap.xml e tags <link rel="canonical">
+  RewriteCond %{REQUEST_METHOD} =GET
+  RewriteCond %{REQUEST_URI} ^/(.+)/$
+  RewriteRule ^(.+)/$ https://ncturismo.com.br/$1 [R=301,L]
+
+  # 4. Redirecionamento 301 de aliases legados para suas URLs canônicas
+  RewriteRule ^blog$ https://ncturismo.com.br/conhecimento [R=301,L]
+  RewriteRule ^passagens-rodoviarias$ https://ncturismo.com.br/rodoviario [R=301,L]
+  RewriteRule ^onibus$ https://ncturismo.com.br/rodoviario [R=301,L]
+
+  # 5. Permite acesso direto à raiz e ao próprio index.html sem reescrita adicional
+  RewriteRule ^$ - [L]
   RewriteRule ^index\.html$ - [L]
 
-  # 2. Se o arquivo ou diretório físico existir em dist/ (ex.: /rodoviario/index.html, /assets/*),
-  #    serve diretamente do disco com máxima performance
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
+  # 6. Se o arquivo físico existir exatamente como requisitado (assets, sitemap.xml, robots.txt, etc.), serve direto
+  RewriteCond %{REQUEST_FILENAME} -f
   RewriteRule ^ - [L]
 
-  # 3. Para rotas dinâmicas futuras (ex.: /artigo/novo-artigo ou /proposta/codigo),
-  #    entrega /index.html sem causar loop interno no Plesk
+  # 7. Se existir a página estática pré-renderizada .html (ex.: /area-cliente -> area-cliente.html),
+  #    serve com HTTP 200 sem conflito de diretório (-d / mod_dir) no Plesk
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.*)$ $1.html [L]
+
+  # 8. Para rotas dinâmicas futuras do SPA (ex.: /artigo/novo-slug ou /proposta/codigo),
+  #    entrega /index.html sem causar loop interno (500) no Plesk
   RewriteRule . /index.html [L]
 </IfModule>

@@ -479,7 +479,7 @@ export function applyClientSeoMetadata(view: AppViewName, customPath?: string) {
   if (typeof document === 'undefined') return;
   const def = SEO_ROUTES[view] || SEO_ROUTES.home;
   const effectivePath = customPath || def.canonicalPath;
-  const fullUrl = `${window.location.origin}${effectivePath === '/' ? '' : effectivePath}`;
+  const fullUrl = `${window.location.origin}${effectivePath === '/' ? '/' : effectivePath}`;
 
   document.title = def.title;
 
@@ -499,6 +499,7 @@ export function applyClientSeoMetadata(view: AppViewName, customPath?: string) {
   setMeta('meta[property="og:url"]', 'property', 'og:url', fullUrl);
   setMeta('meta[name="twitter:title"]', 'name', 'twitter:title', def.title);
   setMeta('meta[name="twitter:description"]', 'name', 'twitter:description', def.description);
+  setMeta('meta[name="robots"]', 'name', 'robots', def.indexable ? 'index, follow' : 'noindex, nofollow');
 
   let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
   if (!canonicalEl) {

@@ -269,11 +269,14 @@ function customizeHtmlForRoute(baseHtml, route) {
       `<link rel="canonical" href="${escapeAttr(fullCanonicalUrl)}" />`
     );
 
-  if (!route.indexable) {
+  const robotsContent = route.indexable ? 'index, follow' : 'noindex, nofollow';
+  if (/<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i.test(html)) {
     html = html.replace(
       /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i,
-      `<meta name="robots" content="noindex, nofollow" />`
+      `<meta name="robots" content="${robotsContent}" />`
     );
+  } else {
+    html = html.replace(/<\/head>/i, `    <meta name="robots" content="${robotsContent}" />\n  </head>`);
   }
 
   return html;
@@ -331,18 +334,26 @@ function run() {
     const cleanRel = route.path.replace(/^\/+|\/+$/g, '');
     if (!cleanRel) continue;
 
-    const targetDir = path.join(distDir, cleanRel);
-    fs.mkdirSync(targetDir, { recursive: true });
+    // Garante remoção de eventual diretório legado com o mesmo nome da rota
+    const legacyDir = path.join(distDir, cleanRel);
+    if (fs.existsSync(legacyDir) && fs.statSync(legacyDir).isDirectory()) {
+      fs.rmSync(legacyDir, { recursive: true, force: true });
+    }
+
+    // Gera arquivos .html planos (ex.: dist/area-cliente.html, dist/artigo/slug.html)
+    // Evita a criação de diretórios físicos para as rotas, eliminando conflitos de barra final e erros 500 no Apache/Plesk
+    const targetFile = path.join(distDir, `${cleanRel}.html`);
+    fs.mkdirSync(path.dirname(targetFile), { recursive: true });
 
     const routeHtml = customizeHtmlForRoute(baseHtml, route);
-    fs.writeFileSync(path.join(targetDir, 'index.html'), routeHtml, 'utf8');
+    fs.writeFileSync(targetFile, routeHtml, 'utf8');
     generatedCount++;
   }
 
   generateStaticSitemapAndRobots();
 
   console.log(
-    `[postbuild-seo] Sucesso: ${generatedCount} diretórios físicos de rotas gerados em dist/ (incluindo /rodoviario, /gestao-de-viagens, /lazer, etc.) + sitemap.xml e robots.txt.`
+    `[postbuild-seo] Sucesso: ${generatedCount} arquivos HTML pré-renderizados gerados em dist/ (ex.: area-cliente.html, gestao-de-viagens.html) + sitemap.xml e robots.txt.`
   );
 }
 
