@@ -210,6 +210,7 @@ export interface BookingPassengerInput {
   includeInsurance: boolean;
   insurance?: {
     cpf: string;
+    bithDate?: string;
     birthDate: string;
     cep: string;
   };

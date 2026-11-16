@@ -3,6 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import { SEO_ROUTES, resolveTokenToRoute } from './src/lib/seoRoutes.ts';
 
@@ -1171,7 +1172,7 @@ function resolvePublicCallbackUrl(req: express.Request, customUrl?: string): str
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json({ limit: '2mb' }));
 
@@ -1799,19 +1800,23 @@ async function startServer() {
                 }
 
                 // Cenários 1.3 e 1.4: Apenas envia o objeto insurance para o passageiro COM seguro!
-                if (p.includeInsurance && p.insurance) {
-                  const insuredCpf = resolveSandboxCpf(p.insurance.cpf || p.cpf, pIdx);
+                const insData =
+                  p.includeInsurance && p.insurance
+                    ? p.insurance
+                    : p.insurance && p.insurance.cpf && p.includeInsurance !== false
+                    ? p.insurance
+                    : null;
+
+                if (insData) {
+                  const insuredCpf = resolveSandboxCpf(insData.cpf || p.cpf, pIdx);
+                  const bDate = String(
+                    insData.bithDate || insData.birthDate || p.birthDate || '1990-05-15'
+                  ).trim();
                   passengerObj.insurance = {
                     cpf: insuredCpf,
-                    birthDate: String(p.insurance.birthDate || p.birthDate || '1990-05-15').trim(),
-                    cep: String(p.insurance.cep || '80010-000').trim(),
-                  };
-                } else if (p.insurance && p.insurance.cpf && p.includeInsurance !== false) {
-                  const insuredCpf = resolveSandboxCpf(p.insurance.cpf || p.cpf, pIdx);
-                  passengerObj.insurance = {
-                    cpf: insuredCpf,
-                    birthDate: String(p.insurance.birthDate || p.birthDate || '1990-05-15').trim(),
-                    cep: String(p.insurance.cep || '80010-000').trim(),
+                    bithDate: bDate,
+                    birthDate: bDate,
+                    cep: String(insData.cep || '80010-000').trim(),
                   };
                 }
 
@@ -1976,7 +1981,7 @@ async function startServer() {
       externalId: String(externalId || `NCT-${Date.now()}`).trim(),
     };
 
-    if (includeCallbackUrl || String(scenarioTag) === '3.1') {
+    if (includeCallbackUrl || String(scenarioTag) === '3.1' || Boolean(callbackURL)) {
       qpCheckoutPayload.callbackURL = resolvedCallbackUrl;
     }
 
@@ -2341,6 +2346,10 @@ ${urlEntries.join('\n')}
         `<meta name="twitter:description" content="${escapeAttr(def.description)}" />`
       )
       .replace(
+        /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i,
+        `<meta name="robots" content="${def.indexable ? 'index, follow' : 'noindex, nofollow'}" />`
+      )
+      .replace(
         /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i,
         `<link rel="canonical" href="${escapeAttr(canonicalUrl)}" />`
       );
@@ -2392,7 +2401,23 @@ ${urlEntries.join('\n')}
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`NC Turismo Server + Rodoviário API listening on http://0.0.0.0:${PORT}`);
+    const nets = os.networkInterfaces();
+    const networkIps: string[] = [];
+    for (const name of Object.keys(nets)) {
+      for (const net of nets[name] || []) {
+        if (net.family === 'IPv4' && !net.internal) {
+          networkIps.push(net.address);
+        }
+      }
+    }
+
+    console.log(`\n  🚀 NC Turismo Server & Rodoviário API rodando com sucesso:`);
+    console.log(`  ➜  Local:    http://localhost:${PORT}/`);
+    console.log(`  ➜  Loopback: http://127.0.0.1:${PORT}/`);
+    networkIps.forEach((ip) => {
+      console.log(`  ➜  Network:  http://${ip}:${PORT}/`);
+    });
+    console.log(`  ➜  API:      http://localhost:${PORT}/api/rodoviario/config\n`);
   });
 }
 
