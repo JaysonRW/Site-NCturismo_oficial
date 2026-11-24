@@ -523,27 +523,6 @@ export async function fetchRodoviarioConfig(overrideMode?: 'demo' | 'sandbox'): 
     const res = await fetchRodoviarioApi(`/api/rodoviario/config${query}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const cfg = await res.json();
-
-    fetchRodoviarioApi('/api/rodoviario/diagnostics')
-      .then((r) => r.json())
-      .then((diag) => {
-        console.group('%c[NC Turismo · Homologação API Rodoviária Quero Passagem]', 'color:#C8102E;font-weight:bold;');
-        console.log('1. API Interna (/api/rodoviario/*):', diag.internalApi?.status === 'ok' ? 'SUCESSO ✅' : 'FALHA ❌');
-        console.log(
-          '2. Credencial Sandbox:',
-          diag.credentialsCheck?.usernamePreview,
-          `| Affiliate: ${diag.credentialsCheck?.affiliateCodeValue}`
-        );
-        console.log(
-          '3. Gateway Sandbox (qpdevs.com/ws_v4):',
-          diag.probes?.sandboxWsV4?.ok
-            ? `SUCESSO ✅ (HTTP ${diag.probes.sandboxWsV4.status} em ${diag.probes.sandboxWsV4.latencyMs}ms · ${diag.probes.sandboxWsV4.companiesCount} viações)`
-            : `FALHA ❌ (${diag.probes?.sandboxWsV4?.errorCode})`
-        );
-        console.groupEnd();
-      })
-      .catch(() => {});
-
     return cfg;
   } catch {
     return {

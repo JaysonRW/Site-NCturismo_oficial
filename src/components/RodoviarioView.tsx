@@ -4,7 +4,6 @@ import {
   Bus,
   MapPin,
   Calendar,
-  Users,
   ArrowLeftRight,
   Search,
   Clock,
@@ -21,14 +20,8 @@ import {
   GitBranch,
   Armchair,
   MessageSquare,
-  FileCode2,
-  Download,
-  Copy,
-  Check,
   CreditCard,
   Shield,
-  Webhook,
-  Trash2,
 } from 'lucide-react';
 import {
   StopItem,
@@ -37,7 +30,6 @@ import {
   SeatMapResponse,
   SeatMatrixCell,
   ConnectionSuggestion,
-  HomologationLogEntry,
   BookingPassengerInput,
   FALLBACK_STOPS,
   fetchRodoviarioConfig,
@@ -47,9 +39,6 @@ import {
   fetchConnectionSuggestions,
   createRodoviarioBooking,
   executeRodoviarioCheckout,
-  fetchRodoviarioPurchaseGet,
-  fetchHomologationLogs,
-  clearHomologationLogs,
 } from '../lib/rodoviario';
 
 interface RodoviarioViewProps {
@@ -61,7 +50,6 @@ interface RodoviarioViewProps {
 type SortByOption = 'departure_asc' | 'price_asc' | 'duration_asc' | 'seats_desc';
 type TimePeriodFilter = 'all' | 'madrugada' | 'manha' | 'tarde' | 'noite';
 type TravelModeFilter = 'all' | 'direct' | 'connection';
-type ManualConfirmationFilter = 'all' | 'false' | 'true';
 
 interface SelectedSeatAssignment {
   segmentIndex: number;
@@ -88,128 +76,17 @@ interface PassengerFormState {
   includeInsurance: boolean;
 }
 
-const DEFAULT_PASSENGERS: PassengerFormState[] = [
-  {
-    name: 'Joao Carlos Silva Teste',
-    travelDocument: '123456789',
-    travelDocumentType: 'RG',
-    cpf: '52998224725',
-    birthDate: '1990-05-15',
-    cep: '80010-000',
-    includeInsurance: false,
-  },
-  {
-    name: 'Maria Fernanda Souza Teste',
-    travelDocument: '987654321',
-    travelDocumentType: 'RG',
-    cpf: '39053344705',
-    birthDate: '1992-08-20',
-    cep: '01310-100',
-    includeInsurance: false,
-  },
-  {
-    name: 'Carlos Eduardo Oliveira',
-    travelDocument: '456789123',
-    travelDocumentType: 'RG',
-    cpf: '12345678909',
-    birthDate: '1988-11-10',
-    cep: '20040-002',
-    includeInsurance: false,
-  },
-  {
-    name: 'Ana Paula Santos',
-    travelDocument: '741852963',
-    travelDocumentType: 'RG',
-    cpf: '71428793060',
-    birthDate: '1995-03-25',
-    cep: '80420-090',
-    includeInsurance: false,
-  },
-  {
-    name: 'Pedro Henrique Costa',
-    travelDocument: '369258147',
-    travelDocumentType: 'RG',
-    cpf: '84965915072',
-    birthDate: '1985-07-04',
-    cep: '04538-132',
-    includeInsurance: false,
-  },
-];
+const createEmptyPassenger = (): PassengerFormState => ({
+  name: '',
+  travelDocument: '',
+  travelDocumentType: 'RG',
+  cpf: '',
+  birthDate: '',
+  cep: '',
+  includeInsurance: false,
+});
 
-const HOMOLOGATION_SCENARIOS = [
-  {
-    tag: '1.1',
-    label: '1.1 · Compra simples: Ida com 1 passageiro (manualConfirmation: false)',
-    passengers: 1,
-    roundTrip: false,
-    connection: false,
-    manualConfirmation: false,
-    insurancePreset: [false],
-  },
-  {
-    tag: '1.2',
-    label: '1.2 · Compra simples: Ida e Volta com 1 passageiro (manualConfirmation: false)',
-    passengers: 1,
-    roundTrip: true,
-    connection: false,
-    manualConfirmation: false,
-    insurancePreset: [false],
-  },
-  {
-    tag: '1.3',
-    label: '1.3 · Compra simples: Ida com 2 passageiros (1 COM seguro e 1 SEM seguro)',
-    passengers: 2,
-    roundTrip: false,
-    connection: false,
-    manualConfirmation: false,
-    insurancePreset: [true, false],
-  },
-  {
-    tag: '1.4',
-    label: '1.4 · Compra simples: Ida e Volta com 2 passageiros (1 COM seguro e 1 SEM seguro)',
-    passengers: 2,
-    roundTrip: true,
-    connection: false,
-    manualConfirmation: false,
-    insurancePreset: [true, false],
-  },
-  {
-    tag: '2.1',
-    label: '2.1 · Conexão: Apenas Ida com 1 passageiro (manualConfirmation: false)',
-    passengers: 1,
-    roundTrip: false,
-    connection: true,
-    manualConfirmation: false,
-    insurancePreset: [false],
-  },
-  {
-    tag: '2.2',
-    label: '2.2 · Conexão: Ida e Volta com 1 passageiro (manualConfirmation: false)',
-    passengers: 1,
-    roundTrip: true,
-    connection: true,
-    manualConfirmation: false,
-    insurancePreset: [false],
-  },
-  {
-    tag: '2.3',
-    label: '2.3 · Conexão: 2 passageiros (manualConfirmation: false)',
-    passengers: 2,
-    roundTrip: false,
-    connection: true,
-    manualConfirmation: false,
-    insurancePreset: [false, false],
-  },
-  {
-    tag: '3.1',
-    label: '3.1 · Confirmação Posterior: Ônibus com manualConfirmation: true + Callback URL (Não cancelar)',
-    passengers: 1,
-    roundTrip: false,
-    connection: false,
-    manualConfirmation: true,
-    insurancePreset: [false],
-  },
-];
+const INITIAL_PASSENGERS: PassengerFormState[] = [createEmptyPassenger()];
 
 const formatBRL = (value: number) =>
   new Intl.NumberFormat('pt-BR', {
@@ -242,20 +119,12 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   // SYSTEM CONFIG & MODE STATE
   // =========================================================================
   const [activeMode, setActiveMode] = useState<'demo' | 'sandbox'>('sandbox');
-  const initialPublicCallbackUrl =
-    typeof window !== 'undefined' &&
-    window.location.origin.startsWith('https://') &&
-    !window.location.origin.includes('localhost')
-      ? `${window.location.origin}/api/rodoviario/callback`
-      : 'https://ais-pre-xw33vky72lvznb4lx4uf7w-56607652372.us-west2.run.app/api/rodoviario/callback';
-
-  const [defaultCallbackUrl, setDefaultCallbackUrl] = useState<string>(initialPublicCallbackUrl);
 
   // =========================================================================
-  // SEARCH ENGINE STATE (Padrão Inicial: ROD_55 -> CIT_1 para Homologação)
+  // SEARCH ENGINE STATE
   // =========================================================================
-  const [originStop, setOriginStop] = useState<StopItem | null>(FALLBACK_STOPS[0]); // ROD_55: Rio de Janeiro, RJ - Novo Rio
-  const [destinationStop, setDestinationStop] = useState<StopItem | null>(FALLBACK_STOPS[1]); // CIT_1: São Paulo - TODOS
+  const [originStop, setOriginStop] = useState<StopItem | null>(FALLBACK_STOPS[0]); // Rio de Janeiro, RJ - Novo Rio
+  const [destinationStop, setDestinationStop] = useState<StopItem | null>(FALLBACK_STOPS[1]); // São Paulo - TODOS
   const [originQuery, setOriginQuery] = useState(FALLBACK_STOPS[0].name);
   const [destinationQuery, setDestinationQuery] = useState(FALLBACK_STOPS[1].name);
 
@@ -266,7 +135,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
   const [departureDate, setDepartureDate] = useState<string>(getDefaultFutureDate(3));
   const [returnDate, setReturnDate] = useState<string>('');
-  const [passengersCount, setPassengersCount] = useState<number>(1);
+  const passengersCount = 1;
   const [includeConnections, setIncludeConnections] = useState<boolean>(true);
 
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -302,12 +171,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [timePeriod, setTimePeriod] = useState<TimePeriodFilter>('all');
   const [travelModeFilter, setTravelModeFilter] = useState<TravelModeFilter>('all');
-  const [manualConfirmationFilter, setManualConfirmationFilter] =
-    useState<ManualConfirmationFilter>('all');
   const [maxPriceFilter, setMaxPriceFilter] = useState<number>(1000);
 
   // =========================================================================
-  // SEAT MAP & HOMOLOGATION CHECKOUT MODAL STATE
+  // SEAT MAP & CHECKOUT MODAL STATE
   // =========================================================================
   const [selectedOptionForSeats, setSelectedOptionForSeats] = useState<SearchOption | null>(null);
   const [seatMapData, setSeatMapData] = useState<SeatMapResponse | null>(null);
@@ -316,22 +183,18 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   const [activeSegmentTab, setActiveSegmentTab] = useState<number>(1);
   const [activeFloorTab, setActiveFloorTab] = useState<number>(0);
   const [selectedSeats, setSelectedSeats] = useState<SelectedSeatAssignment[]>([]);
-  const [seatSelectionConfirmation, setSeatSelectionConfirmation] = useState<boolean>(false);
 
-  // Homologation Booking & Checkout state (Inside Modal)
-  const [selectedScenarioTag, setSelectedScenarioTag] = useState<string>('1.1');
-  const [passengersForm, setPassengersForm] = useState<PassengerFormState[]>(DEFAULT_PASSENGERS);
-  const [buyerEmail, setBuyerEmail] = useState<string>('homologacao@ncturismo.com.br');
-  const [buyerName, setBuyerName] = useState<string>('NC Turismo Homologacao');
-  const [buyerCpf, setBuyerCpf] = useState<string>('52998224725');
-  const [buyerPhone, setBuyerPhone] = useState<string>('(41) 3281-1167');
-  const [paymentMethod, setPaymentMethod] = useState<'preApproved' | 'creditCard' | 'pix'>('creditCard');
-  const [cardNumber, setCardNumber] = useState<string>('4111 1111 1111 1111');
-  const [cardHolder, setCardHolder] = useState<string>('NC TURISMO TESTE');
-  const [cardExpiresAt, setCardExpiresAt] = useState<string>('2030-10');
-  const [cardCvv, setCardCvv] = useState<string>('123');
-  const [includeCallbackUrl, setIncludeCallbackUrl] = useState<boolean>(false);
-  const [customCallbackUrl, setCustomCallbackUrl] = useState<string>(initialPublicCallbackUrl);
+  // Booking & Checkout state (Inside Modal)
+  const [passengersForm, setPassengersForm] = useState<PassengerFormState[]>(INITIAL_PASSENGERS);
+  const [buyerEmail, setBuyerEmail] = useState<string>('');
+  const [buyerName, setBuyerName] = useState<string>('');
+  const [buyerCpf, setBuyerCpf] = useState<string>('');
+  const [buyerPhone, setBuyerPhone] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<'creditCard' | 'pix'>('creditCard');
+  const [cardNumber, setCardNumber] = useState<string>('');
+  const [cardHolder, setCardHolder] = useState<string>('');
+  const [cardExpiresAt, setCardExpiresAt] = useState<string>('');
+  const [cardCvv, setCardCvv] = useState<string>('');
 
   const [bookingLoading, setBookingLoading] = useState<boolean>(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
@@ -340,16 +203,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   const [checkoutLoading, setCheckoutLoading] = useState<boolean>(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [completedPurchase, setCompletedPurchase] = useState<any | null>(null);
-
-  // Homologation Logs Drawer/Modal State
-  const [showHomologationPanel, setShowHomologationPanel] = useState<boolean>(false);
-  const [homologationLogs, setHomologationLogs] = useState<HomologationLogEntry[]>([]);
-  const [logsLoading, setLogsLoading] = useState<boolean>(false);
-  const [copiedLogId, setCopiedLogId] = useState<string | null>(null);
-  const [purchaseLookupId, setPurchaseLookupId] = useState<string>('');
-  const [purchaseLookupEmail, setPurchaseLookupEmail] = useState<string>('homologacao@ncturismo.com.br');
-  const [purchaseLookupLoading, setPurchaseLookupLoading] = useState<boolean>(false);
-  const [purchaseLookupResult, setPurchaseLookupResult] = useState<any | null>(null);
 
   // Refs for closing dropdowns on outside click
   const originRef = useRef<HTMLDivElement>(null);
@@ -361,19 +214,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   useEffect(() => {
     fetchRodoviarioConfig().then((cfg) => {
       setActiveMode(cfg.mode);
-      if (
-        cfg.defaultCallbackUrl &&
-        !cfg.defaultCallbackUrl.includes('localhost') &&
-        !cfg.defaultCallbackUrl.includes('127.0.0.1')
-      ) {
-        setDefaultCallbackUrl(cfg.defaultCallbackUrl);
-        setCustomCallbackUrl(cfg.defaultCallbackUrl);
-      }
     });
-    fetchHomologationLogs().then(setHomologationLogs);
   }, []);
 
-  // Run initial search automatically so user sees live Sandbox results on page open
+  // Run initial search automatically on page open
   useEffect(() => {
     handleRunSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -602,10 +446,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
     return combinedOptions
       .filter((opt) => {
         if (travelModeFilter !== 'all' && opt.travelType !== travelModeFilter) return false;
-        if (manualConfirmationFilter === 'false' && Boolean(opt.manualConfirmation) !== false)
-          return false;
-        if (manualConfirmationFilter === 'true' && Boolean(opt.manualConfirmation) !== true)
-          return false;
         if (selectedCompanies.length > 0 && !selectedCompanies.includes(opt.company.name)) return false;
         if (selectedClasses.length > 0 && !selectedClasses.includes(opt.seatClass)) return false;
         if (opt.pricing.totalPrice > maxPriceFilter) return false;
@@ -629,7 +469,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   }, [
     combinedOptions,
     travelModeFilter,
-    manualConfirmationFilter,
     selectedCompanies,
     selectedClasses,
     maxPriceFilter,
@@ -642,43 +481,12 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
     setSelectedClasses([]);
     setTimePeriod('all');
     setTravelModeFilter('all');
-    setManualConfirmationFilter('all');
     setMaxPriceFilter(highestOptionPrice);
   };
 
   // =========================================================================
-  // HANDLERS: SEAT MAP & HOMOLOGATION SCENARIO PRESETS
+  // HANDLERS: SEAT MAP, BOOKING & CHECKOUT
   // =========================================================================
-  const applyScenarioDefaults = (option: SearchOption, isRoundTrip: boolean, paxCount: number) => {
-    const isConn = option.travelType === 'connection';
-    const isManual = Boolean(option.manualConfirmation);
-
-    let detectedTag = '1.1';
-    if (isManual) {
-      detectedTag = '3.1';
-    } else if (isConn) {
-      if (isRoundTrip) detectedTag = '2.2';
-      else if (paxCount >= 2) detectedTag = '2.3';
-      else detectedTag = '2.1';
-    } else {
-      if (isRoundTrip && paxCount >= 2) detectedTag = '1.4';
-      else if (!isRoundTrip && paxCount >= 2) detectedTag = '1.3';
-      else if (isRoundTrip && paxCount === 1) detectedTag = '1.2';
-      else detectedTag = '1.1';
-    }
-
-    setSelectedScenarioTag(detectedTag);
-    setIncludeCallbackUrl(isManual);
-
-    // Nos cenários 1.3 e 1.4, pré-marca automaticamente 1 passageiro COM seguro e 1 SEM seguro!
-    setPassengersForm((prev) =>
-      prev.map((p, idx) => ({
-        ...p,
-        includeInsurance: (detectedTag === '1.3' || detectedTag === '1.4') && idx === 0,
-      }))
-    );
-  };
-
   const handleOpenSeatMap = async (option: SearchOption) => {
     setSelectedOptionForSeats(option);
     setSeatMapData(null);
@@ -686,14 +494,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
     setSelectedSeats([]);
     setActiveSegmentTab(1);
     setActiveFloorTab(0);
-    setSeatSelectionConfirmation(false);
     setBookingError(null);
     setCreatedBooking(null);
     setCheckoutError(null);
     setCompletedPurchase(null);
     setSeatMapLoading(true);
-
-    applyScenarioDefaults(option, Boolean(returnDate), passengersCount);
 
     try {
       const response = await fetchRodoviarioSeats(option, activeMode);
@@ -715,7 +520,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
     setSelectedOptionForSeats(null);
     setSeatMapData(null);
     setSelectedSeats([]);
-    setSeatSelectionConfirmation(false);
     setCreatedBooking(null);
     setCompletedPurchase(null);
   };
@@ -748,7 +552,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
         };
       });
       setSelectedSeats(reindexed);
-      setSeatSelectionConfirmation(false);
       setCreatedBooking(null);
       return;
     }
@@ -784,11 +587,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
     const updatedList = [...selectedSeats, nextSeat];
     setSelectedSeats(updatedList);
-    setSeatSelectionConfirmation(false);
     setCreatedBooking(null);
 
     // Em viagens com conexão (2 trechos), assim que o usuário seleciona todas as poltronas do 1º trecho,
-    // avança automaticamente para a aba do 2º trecho para escolher o connectionSeatNumber!
+    // avança automaticamente para a aba do 2º trecho para escolher o assento da conexão
     if (
       seatMapData &&
       seatMapData.segments.length > 1 &&
@@ -807,7 +609,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   };
 
   // =========================================================================
-  // HANDLERS: HOMOLOGATION BOOKING & CHECKOUT (USER-TRIGGERED ONLY)
+  // HANDLERS: BOOKING & CHECKOUT
   // =========================================================================
   const buildLegPassengersPayload = (
     option: SearchOption,
@@ -822,25 +624,26 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
       .sort((a, b) => a.passengerNumber - b.passengerNumber);
 
     return Array.from({ length: passengersCount }).map((_, idx) => {
-      const pForm = passengersForm[idx] || DEFAULT_PASSENGERS[idx] || DEFAULT_PASSENGERS[0];
+      const pForm = passengersForm[idx] || createEmptyPassenger();
       const primarySeat = seg1Seats[idx]?.seatNumber || seatsForLeg[idx]?.seatNumber || '01';
       const connSeat = isConn ? seg2Seats[idx]?.seatNumber || primarySeat : undefined;
 
       return {
-        name: pForm.name,
-        travelDocument: pForm.travelDocument,
+        name: pForm.name.trim(),
+        travelDocument: pForm.travelDocument.trim(),
         travelDocumentType: pForm.travelDocumentType || 'RG',
-        cpf: pForm.cpf,
-        birthDate: pForm.birthDate,
+        cpf: pForm.cpf.trim(),
+        birthDate: pForm.birthDate.trim(),
         seatNumber: primarySeat,
         ...(isConn && connSeat ? { connectionSeatNumber: connSeat } : {}),
         includeInsurance: pForm.includeInsurance,
         ...(pForm.includeInsurance
           ? {
               insurance: {
-                cpf: pForm.cpf,
-                birthDate: pForm.birthDate,
-                cep: pForm.cep || '80010-000',
+                cpf: pForm.cpf.trim(),
+                birthDate: pForm.birthDate.trim(),
+                bithDate: pForm.birthDate.trim(),
+                cep: pForm.cep.trim(),
               },
             }
           : {}),
@@ -850,6 +653,19 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
   const handleExecuteBooking = async () => {
     if (!selectedOptionForSeats) return;
+
+    for (let i = 0; i < passengersCount; i++) {
+      const p = passengersForm[i] || createEmptyPassenger();
+      if (!p.name.trim() || !p.travelDocument.trim() || !p.cpf.trim() || !p.birthDate.trim()) {
+        setBookingError(`Preencha todos os dados obrigatórios do Passageiro ${i + 1} (Nome, RG, CPF e Data de Nascimento).`);
+        return;
+      }
+      if (p.includeInsurance && !p.cep.trim()) {
+        setBookingError(`Informe o CEP do Passageiro ${i + 1} para emissão do Seguro Viagem.`);
+        return;
+      }
+    }
+
     setBookingLoading(true);
     setBookingError(null);
     setCreatedBooking(null);
@@ -858,7 +674,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
     try {
       const travelsPayload = [];
 
-      // Se estamos na etapa de Volta e existe uma Ida salva, enviamos [Ida, Volta] no mesmo booking!
+      // Se estamos na etapa de Volta e existe uma Ida salva, enviamos [Ida, Volta] no mesmo booking
       if (activeTripStep === 'inbound' && stagedOutboundLeg) {
         travelsPayload.push({
           optionId: stagedOutboundLeg.option.optionId,
@@ -874,15 +690,12 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
       });
 
       const res = await createRodoviarioBooking({
-        scenarioTag: selectedScenarioTag,
         travels: travelsPayload,
       });
 
       setCreatedBooking(res.booking);
-      fetchHomologationLogs().then(setHomologationLogs);
     } catch (err: any) {
-      setBookingError(err.message || 'Falha ao criar pré-reserva no Sandbox.');
-      fetchHomologationLogs().then(setHomologationLogs);
+      setBookingError(err.message || 'Não foi possível criar a pré-reserva. Verifique os dados e tente novamente.');
     } finally {
       setBookingLoading(false);
     }
@@ -890,154 +703,55 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
   const handleExecuteCheckout = async () => {
     if (!createdBooking?.id) return;
+
+    if (!buyerEmail.trim() || !buyerName.trim() || !buyerCpf.trim() || !buyerPhone.trim()) {
+      setCheckoutError('Preencha e-mail, nome completo, CPF e telefone do comprador para concluir o pagamento.');
+      return;
+    }
+
+    if (
+      paymentMethod === 'creditCard' &&
+      (!cardNumber.trim() || !cardHolder.trim() || !cardExpiresAt.trim() || !cardCvv.trim())
+    ) {
+      setCheckoutError('Preencha todos os dados do cartão de crédito.');
+      return;
+    }
+
     setCheckoutLoading(true);
     setCheckoutError(null);
     setCompletedPurchase(null);
 
     try {
       const res = await executeRodoviarioCheckout({
-        scenarioTag: selectedScenarioTag,
         bookingId: createdBooking.id,
-        email: buyerEmail,
-        buyer:
-          paymentMethod === 'preApproved'
-            ? true
-            : {
-                name: buyerName,
-                cpf: buyerCpf,
-                phone: buyerPhone,
-              },
+        email: buyerEmail.trim(),
+        buyer: {
+          name: buyerName.trim(),
+          cpf: buyerCpf.trim(),
+          phone: buyerPhone.trim(),
+        },
         payment: {
           method: paymentMethod,
           ...(paymentMethod === 'creditCard'
             ? {
-                cardNumber,
-                holder: cardHolder,
-                expiresAt: cardExpiresAt,
-                securityCode: cardCvv,
+                cardNumber: cardNumber.trim(),
+                holder: cardHolder.trim(),
+                expiresAt: cardExpiresAt.trim(),
+                securityCode: cardCvv.trim(),
                 installment: 1,
               }
             : {}),
         },
-        includeCallbackUrl,
-        callbackURL: customCallbackUrl || defaultCallbackUrl,
-        externalId: `NCT-${selectedScenarioTag.replace('.', '_')}-${Date.now()}`,
+        includeCallbackUrl: Boolean(selectedOptionForSeats?.manualConfirmation),
+        externalId: `NCT-${Date.now()}`,
       });
 
       setCompletedPurchase(res.purchase);
-      fetchHomologationLogs().then(setHomologationLogs);
     } catch (err: any) {
-      setCheckoutError(err.message || 'Falha ao processar checkout no Sandbox.');
-      fetchHomologationLogs().then(setHomologationLogs);
+      setCheckoutError(err.message || 'Não foi possível processar o pagamento. Verifique os dados e tente novamente.');
     } finally {
       setCheckoutLoading(false);
     }
-  };
-
-  const handleLookupPurchase = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!purchaseLookupId.trim() || !purchaseLookupEmail.trim()) return;
-    setPurchaseLookupLoading(true);
-    setPurchaseLookupResult(null);
-    try {
-      const res = await fetchRodoviarioPurchaseGet({
-        id: Number(purchaseLookupId.trim()),
-        email: purchaseLookupEmail.trim(),
-        scenarioTag: '3.1',
-      });
-      setPurchaseLookupResult(res.purchase);
-      fetchHomologationLogs().then(setHomologationLogs);
-    } catch (err: any) {
-      setPurchaseLookupResult({ error: err.message });
-      fetchHomologationLogs().then(setHomologationLogs);
-    } finally {
-      setPurchaseLookupLoading(false);
-    }
-  };
-
-  const handleDownloadJsonLogs = async () => {
-    try {
-      const res = await fetch('/api/rodoviario/consolidated-dossier');
-      const data = await res.json();
-      const payload = data?.dossier || {
-        affiliateCode: 'NCT',
-        generatedAt: new Date().toISOString(),
-        logs: homologationLogs,
-      };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: 'application/json;charset=utf-8',
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `dossie-homologacao-queropassagem-nct-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      const blob = new Blob([JSON.stringify(homologationLogs, null, 2)], {
-        type: 'application/json;charset=utf-8',
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `dossie-homologacao-queropassagem-nct-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-  };
-
-  const handleDownloadMarkdownLogs = async () => {
-    try {
-      const res = await fetch('/api/rodoviario/consolidated-dossier');
-      const data = await res.json();
-      let mdText = String(data?.markdown || '');
-      if (!mdText) {
-        const lines: string[] = [
-          '# Dossiê Consolidado de Homologação API Rodoviária — NC Turismo (Afiliado: NCT)',
-          `Gerado em: ${new Date().toISOString()}`,
-          '',
-        ];
-        homologationLogs.forEach((log, idx) => {
-          lines.push(
-            `## ${idx + 1}. [${log.operation}] ${log.scenarioTag ? `Cenário ${log.scenarioTag} — ` : ''}${log.timestamp}`
-          );
-          lines.push(`- **Endpoint**: \`${log.method} ${log.endpoint}\``);
-          lines.push(`- **Status HTTP**: \`${log.httpStatus}\` (${log.latencyMs}ms)`);
-          if (log.notes) lines.push(`- **Observação**: ${log.notes}`);
-          lines.push('\n### Request\n```json\n' + JSON.stringify(log.requestPayload, null, 2) + '\n```');
-          lines.push('\n### Response\n```json\n' + JSON.stringify(log.responsePayload, null, 2) + '\n```\n---\n');
-        });
-        mdText = lines.join('\n');
-      }
-      const blob = new Blob([mdText], { type: 'text/markdown;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `dossie-homologacao-queropassagem-nct-${new Date().toISOString().slice(0, 10)}.md`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      // ignore
-    }
-  };
-
-  const handleCopyLog = (log: HomologationLogEntry) => {
-    const formatted = JSON.stringify(
-      {
-        scenario: log.scenarioTag,
-        operation: log.operation,
-        endpoint: `${log.method} ${log.endpoint}`,
-        httpStatus: log.httpStatus,
-        timestamp: log.timestamp,
-        request: log.requestPayload,
-        response: log.responsePayload,
-      },
-      null,
-      2
-    );
-    navigator.clipboard.writeText(formatted);
-    setCopiedLogId(log.id);
-    setTimeout(() => setCopiedLogId(null), 2000);
   };
 
   const activeSegmentObj = useMemo(() => {
@@ -1076,7 +790,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans selection:bg-[#C8102E] selection:text-white pt-28 pb-20">
       {/* =====================================================================
-          TOP HEADER / BREADCRUMB + BOTÃO PAINEL DE HOMOLOGAÇÃO
+          TOP HEADER / BREADCRUMB
          ===================================================================== */}
       <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 mb-6">
         <div className="flex items-center justify-between flex-wrap gap-4 pb-5 border-b border-slate-200/90">
@@ -1091,25 +805,8 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
           <div className="flex items-center gap-3 text-xs font-mono text-slate-600 flex-wrap">
             <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
               <ShieldCheck size={14} className="text-emerald-600" />
-              <span>Sandbox Quero Passagem Ativo (Afiliado: NCT)</span>
+              <span>Compra Segura · +300 Viações Oficiais</span>
             </span>
-
-            <button
-              type="button"
-              onClick={() => {
-                fetchHomologationLogs().then(setHomologationLogs);
-                setShowHomologationPanel(true);
-              }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 hover:bg-[#C8102E] text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
-            >
-              <FileCode2 size={14} />
-              <span>Painel de Homologação &amp; Logs (.MD / .JSON)</span>
-              {homologationLogs.length > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-[#DB8902] text-white text-[10px]">
-                  {homologationLogs.length}
-                </span>
-              )}
-            </button>
           </div>
         </div>
       </div>
@@ -1244,7 +941,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               {/* ORIGEM AUTOCOMPLETE */}
               <div className="lg:col-span-3 relative" ref={originRef}>
                 <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5">
-                  Origem (Cidade ou ID ex: ROD_55)
+                  Origem
                 </label>
                 <div className="relative">
                   <MapPin
@@ -1259,14 +956,9 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                       setOriginQuery(e.target.value);
                       setShowOriginDropdown(true);
                     }}
-                    placeholder="Ex: Rio de Janeiro ou ROD_55"
-                    className="w-full pl-10 pr-20 py-3 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-sm font-medium text-slate-900 placeholder-slate-400 transition-all shadow-2xs"
+                    placeholder="Cidade ou rodoviária de origem"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-sm font-medium text-slate-900 placeholder-slate-400 transition-all shadow-2xs"
                   />
-                  {originStop && (
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                      {originStop.id}
-                    </span>
-                  )}
                 </div>
 
                 {/* Origin Dropdown */}
@@ -1288,9 +980,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                               {stop.name}
                             </span>
                           </div>
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 shrink-0">
-                            {stop.id}
-                          </span>
+                          {stop.stateCode && (
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 shrink-0">
+                              {stop.stateCode}
+                            </span>
+                          )}
                         </button>
 
                         {stop.substops && stop.substops.length > 0 && (
@@ -1311,7 +1005,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 className="w-full px-3 py-2 text-left hover:bg-amber-50/60 flex items-center justify-between gap-2 transition-colors cursor-pointer"
                               >
                                 <span className="text-xs text-slate-700 font-medium truncate">↳ {sub.name}</span>
-                                <span className="text-[10px] font-mono font-semibold text-[#DB8902]">{sub.id}</span>
                               </button>
                             ))}
                           </div>
@@ -1337,7 +1030,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               {/* DESTINO AUTOCOMPLETE */}
               <div className="lg:col-span-3 relative" ref={destinationRef}>
                 <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5">
-                  Destino (Cidade ou ID ex: CIT_1)
+                  Destino
                 </label>
                 <div className="relative">
                   <MapPin
@@ -1352,14 +1045,9 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                       setDestinationQuery(e.target.value);
                       setShowDestinationDropdown(true);
                     }}
-                    placeholder="Ex: São Paulo ou CIT_1"
-                    className="w-full pl-10 pr-20 py-3 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-sm font-medium text-slate-900 placeholder-slate-400 transition-all shadow-2xs"
+                    placeholder="Cidade ou rodoviária de destino"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-sm font-medium text-slate-900 placeholder-slate-400 transition-all shadow-2xs"
                   />
-                  {destinationStop && (
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                      {destinationStop.id}
-                    </span>
-                  )}
                 </div>
 
                 {/* Destination Dropdown */}
@@ -1381,9 +1069,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                               {stop.name}
                             </span>
                           </div>
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 shrink-0">
-                            {stop.id}
-                          </span>
+                          {stop.stateCode && (
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 shrink-0">
+                              {stop.stateCode}
+                            </span>
+                          )}
                         </button>
 
                         {stop.substops && stop.substops.length > 0 && (
@@ -1404,7 +1094,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 className="w-full px-3 py-2 text-left hover:bg-amber-50/60 flex items-center justify-between gap-2 transition-colors cursor-pointer"
                               >
                                 <span className="text-xs text-slate-700 font-medium truncate">↳ {sub.name}</span>
-                                <span className="text-[10px] font-mono font-semibold text-[#DB8902]">{sub.id}</span>
                               </button>
                             ))}
                           </div>
@@ -1474,28 +1163,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
             {/* Secondary Search Controls Row */}
             <div className="mt-4 pt-3.5 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
               <div className="flex flex-wrap items-center gap-5">
-                {/* Passageiros */}
-                <div className="flex items-center gap-2">
-                  <Users size={15} className="text-[#C8102E]" />
-                  <span className="text-slate-600 font-medium">Passageiros:</span>
-                  <div className="inline-flex items-center rounded-lg bg-white border border-slate-200 p-0.5 shadow-2xs">
-                    {[1, 2, 3, 4, 5].map((num) => (
-                      <button
-                        key={num}
-                        type="button"
-                        onClick={() => setPassengersCount(num)}
-                        className={`px-2.5 py-1 rounded-md font-mono tabular-nums text-xs font-bold transition-colors cursor-pointer ${
-                          passengersCount === num
-                            ? 'bg-[#C8102E] text-white shadow-2xs'
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                        }`}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Toggle Conexões */}
                 <label className="inline-flex items-center gap-2.5 cursor-pointer select-none">
                   <input
@@ -1506,7 +1173,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                   />
                   <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all relative peer-checked:bg-[#C8102E]" />
                   <span className="text-slate-700 font-medium">
-                    Incluir viagens com conexão (Cenário 2)
+                    Incluir viagens com conexão
                   </span>
                 </label>
 
@@ -1528,27 +1195,27 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     onClick={() => setReturnDate(getDefaultFutureDate(5))}
                     className="text-xs text-slate-700 hover:text-[#C8102E] underline decoration-slate-300 font-medium cursor-pointer"
                   >
-                    + Adicionar Data de Volta (Cenários 1.2, 1.4 e 2.2)
+                    + Adicionar Data de Volta
                   </button>
                 )}
               </div>
 
-              {/* Quick Homologation & Popular Routes */}
+              {/* Quick Popular Routes */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-slate-500 font-mono uppercase text-[11px] font-semibold">
-                  Atalhos Homologação:
+                  Rotas populares:
                 </span>
                 <button
                   type="button"
                   onClick={() => {
-                    setOriginStop(FALLBACK_STOPS[0]); // ROD_55
+                    setOriginStop(FALLBACK_STOPS[0]);
                     setOriginQuery(FALLBACK_STOPS[0].name);
-                    setDestinationStop(FALLBACK_STOPS[1]); // CIT_1
+                    setDestinationStop(FALLBACK_STOPS[1]);
                     setDestinationQuery(FALLBACK_STOPS[1].name);
                   }}
                   className="text-xs text-[#C8102E] hover:underline font-bold cursor-pointer"
                 >
-                  ROD_55 → CIT_1 (Rio → SP)
+                  Rio de Janeiro → São Paulo
                 </button>
                 <span className="text-slate-300">·</span>
                 <button
@@ -1627,7 +1294,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               </div>
 
               <span className="text-xs text-slate-500">
-                Para compra de Ida e Volta (Cenários 1.2, 1.4 e 2.2), escolha primeiro as poltronas da Ida e depois da Volta.
+                Para compra de ida e volta, escolha primeiro as poltronas da ida e depois as da volta.
               </span>
             </div>
 
@@ -1660,7 +1327,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* =================================================================
-              LEFT SIDEBAR: LOCAL FILTERS (INCLUDING HOMOLOGATION FILTER)
+              LEFT SIDEBAR: LOCAL FILTERS
              ================================================================= */}
           <aside className="lg:col-span-3 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
@@ -1679,41 +1346,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               </button>
             </div>
 
-            {/* Filter Homologação: manualConfirmation false vs true */}
-            <div className="mb-6 p-3.5 rounded-xl bg-slate-50 border border-slate-200/90">
-              <h3 className="text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold mb-2">
-                Filtro Homologação (manualConfirmation)
-              </h3>
-              <div className="space-y-1.5">
-                {[
-                  { id: 'all', label: 'Todos os ônibus' },
-                  {
-                    id: 'false',
-                    label: 'manualConfirmation: false (Cenários 1 e 2)',
-                  },
-                  {
-                    id: 'true',
-                    label: 'manualConfirmation: true (Cenário 3.1 Callback)',
-                  },
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() =>
-                      setManualConfirmationFilter(opt.id as ManualConfirmationFilter)
-                    }
-                    className={`w-full px-3 py-2 rounded-lg text-left text-xs font-semibold transition-all cursor-pointer ${
-                      manualConfirmationFilter === opt.id
-                        ? 'bg-[#C8102E] text-white shadow-2xs'
-                        : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Filter 1: Tipo de Viagem (Direto vs Conexão) */}
             <div className="mb-6">
               <h3 className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold mb-2.5">
@@ -1722,8 +1354,8 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               <div className="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-xl">
                 {[
                   { id: 'all', label: 'Todas' },
-                  { id: 'direct', label: 'Diretas (Cen. 1/3)' },
-                  { id: 'connection', label: 'Conexões (Cen. 2)' },
+                  { id: 'direct', label: 'Diretas' },
+                  { id: 'connection', label: 'Conexões' },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -1923,27 +1555,13 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                       <span>
                         Conexões:{' '}
                         {isConnLoading ? (
-                          <span className="text-[#DB8902] font-mono">buscando em paralelo...</span>
+                          <span className="text-[#DB8902] font-mono">buscando...</span>
                         ) : (
                           <strong className="font-mono tabular-nums">{activeConnRes?.options.length ?? 0}</strong>
                         )}
                       </span>
                     </>
                   )}
-                  <span>·</span>
-                  <span className="text-emerald-700 font-mono">
-                    manualConfirmation=false:{' '}
-                    <strong>
-                      {combinedOptions.filter((o) => !o.manualConfirmation).length}
-                    </strong>
-                  </span>
-                  <span>·</span>
-                  <span className="text-amber-700 font-mono">
-                    manualConfirmation=true:{' '}
-                    <strong>
-                      {combinedOptions.filter((o) => Boolean(o.manualConfirmation)).length}
-                    </strong>
-                  </span>
                 </div>
               </div>
 
@@ -2018,7 +1636,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     Nenhuma viagem encontrada com os filtros atuais
                   </h3>
                   <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                    Tente limpar os filtros laterais, habilitar conexões ou selecionar o atalho oficial ROD_55 → CIT_1.
+                    Tente limpar os filtros laterais, habilitar viagens com conexão ou alterar a data da viagem.
                   </p>
                 </div>
 
@@ -2058,7 +1676,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
             )}
 
             {/* ===============================================================
-                TRIP OPTION CARDS (LIGHT & CRISP + HOMOLOGATION METADATA)
+                TRIP OPTION CARDS
                =============================================================== */}
             <div className="space-y-3.5">
               {filteredAndSortedOptions.map((option) => {
@@ -2098,20 +1716,14 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             }`}
                           >
-                            {isConn ? 'Conexão (Cenário 2)' : 'Viagem Direta'}
+                            {isConn ? 'Com Conexão' : 'Viagem Direta'}
                           </span>
 
-                          <span
-                            className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${
-                              isManual
-                                ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                                : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                            }`}
-                          >
-                            {isManual
-                              ? 'manualConfirmation: true (Cenário 3.1)'
-                              : 'manualConfirmation: false (Cenários 1 e 2)'}
-                          </span>
+                          {isManual && (
+                            <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                              Confirmação sob consulta
+                            </span>
+                          )}
                           {option.insurancePrice !== undefined && option.insurancePrice > 0 && (
                             <span className="text-slate-600 font-mono text-[11px] bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
                               Seguro: {formatBRL(option.insurancePrice)}
@@ -2232,14 +1844,14 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
       </section>
 
       {/* =====================================================================
-          STAGE C: 2D MULTI-FLOOR SEAT MAP + HOMOLOGATION BOOKING & CHECKOUT
+          STAGE C: 2D MULTI-FLOOR SEAT MAP + BOOKING & CHECKOUT
          ===================================================================== */}
       {selectedOptionForSeats && (
         <div
           className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
-          aria-label="Mapa de Poltronas e Emissão Homologação"
+          aria-label="Mapa de Poltronas e Reserva"
         >
           <div className="bg-white rounded-3xl max-w-6xl w-full overflow-hidden shadow-2xl border border-slate-200 my-8 animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header with High-Visibility Bus Operator Banner */}
@@ -2250,16 +1862,14 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     <span>
                       {activeTripStep === 'outbound' ? 'Trecho de Ida' : 'Trecho de Volta'} · Seleção de Poltronas em Tempo Real
                     </span>
-                    <span className="text-slate-300">·</span>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] ${
-                        selectedOptionForSeats.manualConfirmation
-                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                          : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                      }`}
-                    >
-                      manualConfirmation: {String(Boolean(selectedOptionForSeats.manualConfirmation))}
-                    </span>
+                    {selectedOptionForSeats.manualConfirmation && (
+                      <>
+                        <span className="text-slate-300">·</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] bg-amber-50 text-amber-900 border border-amber-200">
+                          Confirmação sob consulta
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   <h3 className="text-lg sm:text-xl font-bold text-slate-900">
@@ -2317,7 +1927,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                 <div className="py-16 text-center space-y-3">
                   <RefreshCw size={28} className="animate-spin text-[#C8102E] mx-auto" />
                   <p className="text-sm font-medium text-slate-600">
-                    Consultando matriz física do veículo ({selectedOptionForSeats.company.name}) no Sandbox Quero Passagem (POST /new/seats)...
+                    Consultando mapa de poltronas disponíveis ({selectedOptionForSeats.company.name})...
                   </p>
                 </div>
               )}
@@ -2372,7 +1982,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     {seatMapData.segments.length > 1 && (
                       <div className="space-y-2">
                         <div className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold">
-                          1. Escolha as Poltronas dos 2 Trechos da Conexão (seatNumber &amp; connectionSeatNumber)
+                          1. Escolha as Poltronas dos 2 Trechos da Conexão
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           {seatMapData.segments.map((seg) => {
@@ -2589,12 +2199,12 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     )}
                   </div>
 
-                  {/* Right 5 Cols: Passenger Form + Homologation Booking & Checkout Studio */}
+                  {/* Right 5 Cols: Passenger Form + Booking & Checkout */}
                   <div className="lg:col-span-5 bg-slate-50/90 rounded-2xl p-5 border border-slate-200 space-y-5">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                       <div>
                         <div className="text-[11px] font-mono uppercase tracking-wider text-[#C8102E] font-bold">
-                          Emissão &amp; Homologação Sandbox
+                          Dados dos Passageiros &amp; Reserva
                         </div>
                         <h4 className="text-base font-bold text-slate-900">
                           {passengersCount} {passengersCount === 1 ? 'Passageiro' : 'Passageiros'}
@@ -2687,7 +2297,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     {returnDate && activeTripStep === 'outbound' && (
                       <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 space-y-2.5">
                         <div className="text-xs text-amber-950 font-medium">
-                          Você selecionou uma <strong>Data de Volta ({formatDateShort(returnDate)})</strong>. Para os Cenários <strong>1.2, 1.4 ou 2.2</strong>, salve as poltronas da Ida para escolher a Volta:
+                          Você selecionou uma <strong>Data de Volta ({formatDateShort(returnDate)})</strong>. Salve as poltronas da ida para escolher a viagem de volta:
                         </div>
                         <button
                           type="button"
@@ -2700,37 +2310,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                       </div>
                     )}
 
-                    {/* Seletor do Cenário Oficial da Quero Passagem */}
-                    <div className="space-y-2 pt-2 border-t border-slate-200">
-                      <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold">
-                        Cenário de Homologação (Identificação nos Logs .MD / .JSON)
-                      </label>
-                      <select
-                        value={selectedScenarioTag}
-                        onChange={(e) => {
-                          const tag = e.target.value;
-                          setSelectedScenarioTag(tag);
-                          setIncludeCallbackUrl(tag === '3.1');
-                          if (tag === '1.3' || tag === '1.4') {
-                            setPassengersForm((prev) =>
-                              prev.map((p, idx) => ({ ...p, includeInsurance: idx === 0 }))
-                            );
-                          }
-                        }}
-                        className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#C8102E]"
-                      >
-                        {HOMOLOGATION_SCENARIOS.map((sc) => (
-                          <option key={sc.tag} value={sc.tag}>
-                            {sc.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Dados dos Passageiros + Seguro Individual (Cenários 1.3 e 1.4) */}
+                    {/* Dados dos Passageiros + Seguro Individual */}
                     <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                       {Array.from({ length: passengersCount }).map((_, idx) => {
-                        const pForm = passengersForm[idx] || DEFAULT_PASSENGERS[idx] || DEFAULT_PASSENGERS[0];
+                        const pForm = passengersForm[idx] || createEmptyPassenger();
                         return (
                           <div
                             key={idx}
@@ -2738,7 +2321,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                           >
                             <div className="flex items-center justify-between">
                               <span className="font-bold text-slate-900">
-                                Dados do Passageiro {idx + 1}
+                                Dados do Passageiro
                               </span>
                               <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                                 <input
@@ -2756,7 +2339,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                   className="rounded text-emerald-600"
                                 />
                                 <Shield size={12} />
-                                <span>Incluir Seguro (insurance)</span>
+                                <span>Incluir Seguro Viagem</span>
                               </label>
                             </div>
 
@@ -2765,6 +2348,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 <label className="block text-[10px] font-mono text-slate-500">Nome Completo</label>
                                 <input
                                   type="text"
+                                  placeholder="Nome conforme documento"
                                   value={pForm.name}
                                   onChange={(e) => {
                                     const val = e.target.value;
@@ -2779,6 +2363,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 <label className="block text-[10px] font-mono text-slate-500">Documento (RG)</label>
                                 <input
                                   type="text"
+                                  placeholder="Número do RG"
                                   value={pForm.travelDocument}
                                   onChange={(e) => {
                                     const val = e.target.value;
@@ -2792,9 +2377,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 />
                               </div>
                               <div>
-                                <label className="block text-[10px] font-mono text-slate-500">CPF (Obrigatório p/ Seguro)</label>
+                                <label className="block text-[10px] font-mono text-slate-500">CPF</label>
                                 <input
                                   type="text"
+                                  placeholder="000.000.000-00"
                                   value={pForm.cpf}
                                   onChange={(e) => {
                                     const val = e.target.value;
@@ -2806,7 +2392,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 />
                               </div>
                               <div>
-                                <label className="block text-[10px] font-mono text-slate-500">Data Nasc. (YYYY-MM-DD)</label>
+                                <label className="block text-[10px] font-mono text-slate-500">Data de Nascimento</label>
                                 <input
                                   type="date"
                                   value={pForm.birthDate}
@@ -2824,10 +2410,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                               {pForm.includeInsurance && (
                                 <div className="sm:col-span-2">
                                   <label className="block text-[10px] font-mono text-emerald-700 font-bold">
-                                    CEP para Apólice de Seguro (insurance.cep)
+                                    CEP para Apólice de Seguro
                                   </label>
                                   <input
                                     type="text"
+                                    placeholder="00000-000"
                                     value={pForm.cep}
                                     onChange={(e) => {
                                       const val = e.target.value;
@@ -2845,7 +2432,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                       })}
                     </div>
 
-                    {/* PASSO 1: BOTÃO GERAR PRÉ-RESERVA (POST /new/booking) */}
+                    {/* PASSO 1: BOTÃO CONTINUAR PARA PAGAMENTO */}
                     <div className="space-y-2 pt-2 border-t border-slate-200">
                       {seatMapData.segments.length > 1 && !isAllSeatsSelected && (
                         <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-2">
@@ -2883,57 +2470,84 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                         {bookingLoading ? (
                           <>
                             <RefreshCw size={15} className="animate-spin" />
-                            <span>Criando Booking no Sandbox...</span>
+                            <span>Reservando poltronas...</span>
                           </>
                         ) : (
                           <>
-                            <span>1. Gerar Pré-Reserva (POST /new/booking)</span>
+                            <span>Continuar para Pagamento</span>
                           </>
                         )}
                       </button>
 
                       {bookingError && (
                         <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800">
-                          <strong>Erro no Booking:</strong> {bookingError}
+                          <strong>Não foi possível reservar:</strong> {bookingError}
                         </div>
                       )}
                     </div>
 
-                    {/* PASSO 2: CHECKOUT (POST /new/checkout) — Exibido após criar o booking */}
+                    {/* PASSO 2: CHECKOUT — Exibido após criar a pré-reserva */}
                     {createdBooking && (
                       <div className="p-4 rounded-2xl bg-white border-2 border-[#C8102E]/30 space-y-3.5 animate-in fade-in duration-200">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
                             <CheckCircle2 size={15} className="text-emerald-600" />
-                            Booking Criado: <code className="font-mono">{createdBooking.id.slice(0, 12)}...</code>
-                          </span>
-                          <span className="text-[10px] font-mono text-slate-500">
-                            Cenário {selectedScenarioTag}
+                            Poltronas reservadas · Prossiga com o pagamento
                           </span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                           <div>
-                            <label className="block text-[10px] font-mono text-slate-500">E-mail do Comprador</label>
+                            <label className="block text-[10px] font-mono text-slate-500">E-mail para envio do bilhete</label>
                             <input
                               type="email"
+                              placeholder="seu@email.com"
                               value={buyerEmail}
                               onChange={(e) => setBuyerEmail(e.target.value)}
                               className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs"
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-mono text-slate-500">Método de Pagamento</label>
+                            <label className="block text-[10px] font-mono text-slate-500">Nome do Comprador</label>
+                            <input
+                              type="text"
+                              placeholder="Nome completo"
+                              value={buyerName}
+                              onChange={(e) => setBuyerName(e.target.value)}
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-mono text-slate-500">CPF do Comprador</label>
+                            <input
+                              type="text"
+                              placeholder="000.000.000-00"
+                              value={buyerCpf}
+                              onChange={(e) => setBuyerCpf(e.target.value)}
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-mono text-slate-500">Telefone / WhatsApp</label>
+                            <input
+                              type="text"
+                              placeholder="(00) 00000-0000"
+                              value={buyerPhone}
+                              onChange={(e) => setBuyerPhone(e.target.value)}
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono"
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="block text-[10px] font-mono text-slate-500">Forma de Pagamento</label>
                             <select
                               value={paymentMethod}
                               onChange={(e) =>
-                                setPaymentMethod(e.target.value as 'preApproved' | 'creditCard' | 'pix')
+                                setPaymentMethod(e.target.value as 'creditCard' | 'pix')
                               }
                               className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-bold"
                             >
-                              <option value="creditCard">creditCard (Cartão Teste 4111... · Recomendado)</option>
-                              <option value="pix">pix (QR Code)</option>
-                              <option value="preApproved">preApproved (Requer liberação no afiliado)</option>
+                              <option value="creditCard">Cartão de Crédito</option>
+                              <option value="pix">PIX</option>
                             </select>
                           </div>
                         </div>
@@ -2942,19 +2556,33 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                           <div className="grid grid-cols-3 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                             <div className="col-span-3">
                               <label className="block text-[10px] font-mono text-slate-500">
-                                Cartão de Teste Sandbox (cardNumber)
+                                Número do Cartão
                               </label>
                               <input
                                 type="text"
+                                placeholder="0000 0000 0000 0000"
                                 value={cardNumber}
                                 onChange={(e) => setCardNumber(e.target.value)}
                                 className="w-full px-2 py-1 rounded border border-slate-200 font-mono text-xs bg-white"
                               />
                             </div>
-                            <div className="col-span-2">
-                              <label className="block text-[10px] font-mono text-slate-500">Validade (YYYY-MM)</label>
+                            <div className="col-span-3">
+                              <label className="block text-[10px] font-mono text-slate-500">
+                                Nome Impresso no Cartão
+                              </label>
                               <input
                                 type="text"
+                                placeholder="NOME COMO NO CARTÃO"
+                                value={cardHolder}
+                                onChange={(e) => setCardHolder(e.target.value)}
+                                className="w-full px-2 py-1 rounded border border-slate-200 text-xs bg-white uppercase"
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <label className="block text-[10px] font-mono text-slate-500">Validade (AAAA-MM)</label>
+                              <input
+                                type="text"
+                                placeholder="2030-10"
                                 value={cardExpiresAt}
                                 onChange={(e) => setCardExpiresAt(e.target.value)}
                                 className="w-full px-2 py-1 rounded border border-slate-200 font-mono text-xs bg-white"
@@ -2964,6 +2592,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                               <label className="block text-[10px] font-mono text-slate-500">CVV</label>
                               <input
                                 type="text"
+                                placeholder="000"
                                 value={cardCvv}
                                 onChange={(e) => setCardCvv(e.target.value)}
                                 className="w-full px-2 py-1 rounded border border-slate-200 font-mono text-xs bg-white"
@@ -2971,28 +2600,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                             </div>
                           </div>
                         )}
-
-                        {/* Callback URL Toggle (Crucial para Cenário 3.1 vs Cenários 1 e 2) */}
-                        <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 space-y-2 text-xs">
-                          <label className="flex items-center gap-2 cursor-pointer font-semibold text-amber-950">
-                            <input
-                              type="checkbox"
-                              checked={includeCallbackUrl}
-                              onChange={(e) => setIncludeCallbackUrl(e.target.checked)}
-                              className="rounded text-[#C8102E]"
-                            />
-                            <Webhook size={13} className="text-[#C8102E]" />
-                            <span>Enviar callbackURL no Checkout (Obrigatório no Cenário 3.1)</span>
-                          </label>
-                          {includeCallbackUrl && (
-                            <input
-                              type="text"
-                              value={customCallbackUrl}
-                              onChange={(e) => setCustomCallbackUrl(e.target.value)}
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white font-mono text-[11px]"
-                            />
-                          )}
-                        </div>
 
                         <button
                           type="button"
@@ -3003,19 +2610,19 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                           {checkoutLoading ? (
                             <>
                               <RefreshCw size={15} className="animate-spin" />
-                              <span>Processando Checkout no Sandbox...</span>
+                              <span>Processando pagamento...</span>
                             </>
                           ) : (
                             <>
                               <CreditCard size={15} />
-                              <span>2. Finalizar Compra de Homologação (POST /new/checkout)</span>
+                              <span>Finalizar Compra</span>
                             </>
                           )}
                         </button>
 
                         {checkoutError && (
                           <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800">
-                            <strong>Erro no Checkout:</strong> {checkoutError}
+                            <strong>Erro no Pagamento:</strong> {checkoutError}
                           </div>
                         )}
                       </div>
@@ -3023,30 +2630,23 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
                     {/* RESULTADO DO CHECKOUT */}
                     {completedPurchase && (
-                      <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 space-y-2.5 text-xs text-emerald-950">
-                        <div className="flex items-center justify-between">
+                      <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 space-y-2 text-xs text-emerald-950">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
                           <span className="font-bold text-sm flex items-center gap-1.5">
                             <CheckCircle2 size={17} className="text-emerald-600" />
-                            Compra Registrada! ID #{completedPurchase.id}
+                            Pedido Registrado! #{completedPurchase.id}
                           </span>
-                          <span className="px-2 py-0.5 rounded bg-emerald-700 text-white font-mono font-bold uppercase text-[10px]">
-                            status: {completedPurchase.status}
+                          <span className="px-2 py-0.5 rounded bg-emerald-700 text-white font-bold uppercase text-[10px]">
+                            {completedPurchase.status === 'paid'
+                              ? 'Confirmado'
+                              : completedPurchase.status === 'in_confirmation_process'
+                              ? 'Em confirmação'
+                              : completedPurchase.status}
                           </span>
                         </div>
                         <p className="text-xs text-emerald-900">
-                          O <strong>request</strong> e o <strong>response</strong> desta operação já foram gravados automaticamente no Painel de Homologação para exportação em <code>.md</code> ou <code>.json</code>.
+                          Os detalhes da sua viagem e a emissão do bilhete serão enviados para <strong>{buyerEmail}</strong>.
                         </p>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleCloseSeatMap();
-                            setShowHomologationPanel(true);
-                          }}
-                          className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                          <FileCode2 size={14} />
-                          <span>Abrir Painel de Homologação e Baixar .MD / .JSON</span>
-                        </button>
                       </div>
                     )}
 
@@ -3074,223 +2674,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =====================================================================
-          PAINEL DE HOMOLOGAÇÃO QUERO PASSAGEM (EXPORTAR .MD / .JSON & CALLBACKS)
-         ===================================================================== */}
-      {showHomologationPanel && (
-        <div
-          className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Painel de Homologação Quero Passagem"
-        >
-          <div className="bg-white rounded-3xl max-w-5xl w-full overflow-hidden shadow-2xl border border-slate-200 my-8">
-            <div className="bg-slate-900 text-white px-6 py-5 flex items-center justify-between gap-4">
-              <div>
-                <div className="text-xs font-mono uppercase tracking-wider text-[#DB8902] font-bold">
-                  Homologação Oficial Quero Passagem · Afiliado NCT
-                </div>
-                <h3 className="text-lg font-bold mt-0.5">
-                  Evidências de Requests &amp; Responses (.MD / .JSON) + Webhook Callback
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowHomologationPanel(false)}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="p-6 max-h-[82vh] overflow-y-auto space-y-6">
-              {/* Top Bar: Webhook URL + Export Actions */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <div className="lg:col-span-7 space-y-1">
-                  <div className="text-xs font-mono uppercase text-[#C8102E] font-bold flex items-center gap-1.5">
-                    <Webhook size={14} />
-                    <span>URL Oficial de Callback (Cenário 3.1 · manualConfirmation: true)</span>
-                  </div>
-                  <div className="font-mono text-xs text-slate-800 bg-white px-3 py-2 rounded-xl border border-slate-200 select-all break-all">
-                    {defaultCallbackUrl}
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    Quando a equipe da Quero Passagem aprovar uma compra e cancelar a outra no Cenário 3.1, o webhook acima receberá a notificação e sincronizará automaticamente o <code>POST /purchase/get</code>.
-                  </p>
-                </div>
-
-                <div className="lg:col-span-5 flex flex-wrap items-center justify-end gap-2.5">
-                  <button
-                    type="button"
-                    onClick={handleDownloadMarkdownLogs}
-                    className="px-4 py-2.5 rounded-xl bg-[#C8102E] hover:bg-[#a50d26] text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
-                  >
-                    <Download size={14} />
-                    <span>Baixar Dossiê Consolidado (.MD)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleDownloadJsonLogs}
-                    className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
-                  >
-                    <Download size={14} />
-                    <span>Baixar Dossiê Consolidado (.JSON)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setLogsLoading(true);
-                      const updated = await fetchHomologationLogs();
-                      setHomologationLogs(updated);
-                      setLogsLoading(false);
-                    }}
-                    className="p-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 cursor-pointer"
-                    title="Atualizar logs"
-                  >
-                    <RefreshCw size={15} className={logsLoading ? 'animate-spin' : ''} />
-                  </button>
-
-                  {homologationLogs.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await clearHomologationLogs();
-                        setHomologationLogs([]);
-                      }}
-                      className="p-2.5 rounded-xl bg-white hover:bg-red-50 border border-slate-200 text-red-600 cursor-pointer"
-                      title="Limpar logs"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Consulta Manual de Pedido (POST /purchase/get) */}
-              <form
-                onSubmit={handleLookupPurchase}
-                className="p-4 rounded-2xl bg-white border border-slate-200 flex flex-wrap items-end gap-3"
-              >
-                <div className="flex-1 min-w-[160px]">
-                  <label className="block text-[11px] font-mono uppercase text-slate-500 font-bold mb-1">
-                    Consultar Pedido (POST /purchase/get) — ID Numérico
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="Ex: 123456"
-                    value={purchaseLookupId}
-                    onChange={(e) => setPurchaseLookupId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono"
-                  />
-                </div>
-                <div className="flex-1 min-w-[220px]">
-                  <label className="block text-[11px] font-mono uppercase text-slate-500 font-bold mb-1">
-                    E-mail do Comprador
-                  </label>
-                  <input
-                    type="email"
-                    value={purchaseLookupEmail}
-                    onChange={(e) => setPurchaseLookupEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={purchaseLookupLoading}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer"
-                >
-                  {purchaseLookupLoading ? 'Consultando...' : 'Consultar Status (/purchase/get)'}
-                </button>
-                {purchaseLookupResult && (
-                  <div className="w-full mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono overflow-x-auto">
-                    Status Retornado: <strong>{purchaseLookupResult.status || purchaseLookupResult.error}</strong>
-                  </div>
-                )}
-              </form>
-
-              {/* Lista de Logs Capturados */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold">
-                  Histórico de Operações Gravadas ({homologationLogs.length})
-                </h4>
-
-                {homologationLogs.length === 0 ? (
-                  <div className="p-8 rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-center text-xs text-slate-500">
-                    Nenhuma operação de Booking ou Checkout realizada ainda. Selecione um ônibus na tela principal, escolha as poltronas e clique em <strong>Gerar Pré-Reserva</strong> e <strong>Finalizar Compra</strong> para capturar os payloads.
-                  </div>
-                ) : (
-                  homologationLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-2xs"
-                    >
-                      <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {log.scenarioTag && (
-                            <span className="px-2 py-0.5 rounded bg-[#C8102E] text-white font-mono font-bold">
-                              Cenário {log.scenarioTag}
-                            </span>
-                          )}
-                          <span className="font-mono font-bold text-slate-900">{log.operation}</span>
-                          <span className="font-mono text-slate-500">
-                            {log.method} {log.endpoint}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded font-mono font-bold ${
-                              log.ok
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            HTTP {log.httpStatus} ({log.latencyMs}ms)
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-mono text-slate-400">
-                            {new Date(log.timestamp).toLocaleTimeString('pt-BR')}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyLog(log)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 cursor-pointer"
-                          >
-                            {copiedLogId === log.id ? (
-                              <>
-                                <Check size={12} className="text-emerald-600" />
-                                <span>Copiado!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy size={12} />
-                                <span>Copiar JSON</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 text-[11px] font-mono">
-                        <div className="p-3.5 overflow-x-auto max-h-60">
-                          <div className="text-slate-400 uppercase font-bold mb-1">Request Payload</div>
-                          <pre className="text-slate-800">{JSON.stringify(log.requestPayload, null, 2)}</pre>
-                        </div>
-                        <div className="p-3.5 overflow-x-auto max-h-60 bg-slate-50/50">
-                          <div className="text-slate-400 uppercase font-bold mb-1">Response Payload</div>
-                          <pre className="text-slate-800">{JSON.stringify(log.responsePayload, null, 2)}</pre>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
             </div>
           </div>
         </div>
