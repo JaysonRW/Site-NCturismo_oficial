@@ -64,9 +64,10 @@ function loadConfig(overrideMode?: string): ServerConfig {
   const envUser = (process.env.QP_USERNAME || '').trim();
   const envPass = (process.env.QP_PASSWORD || '').trim();
   const useDefaultSandboxCredentials =
-    !envUser ||
-    envUser.toLowerCase() === 'faq' ||
-    (envUser.toLowerCase() === 'nct' && envPass.length <= 4);
+    qpEnv === 'sandbox' &&
+    (!envUser ||
+      envUser.toLowerCase() === 'faq' ||
+      (envUser.toLowerCase() === 'nct' && envPass.length <= 4));
 
   return {
     appMode,
@@ -1219,8 +1220,11 @@ async function startServer() {
       modeLabel:
         cfg.appMode === 'demo'
           ? 'Modo Demonstração (Fixtures Sintéticas)'
-          : 'Homologação Oficial Quero Passagem (Sandbox ws_v4 • NCT)',
+          : cfg.qpEnv === 'production'
+            ? `Produção Oficial Quero Passagem (ws_v4 • ${cfg.affiliateCode})`
+            : `Homologação Oficial Quero Passagem (Sandbox ws_v4 • ${cfg.affiliateCode})`,
       qpEnv: cfg.qpEnv,
+      allowProduction: cfg.allowProduction,
       baseUrl: cfg.baseUrl,
       affiliateCode: cfg.affiliateCode,
       usernamePreview: cfg.username,
@@ -1261,7 +1265,7 @@ async function startServer() {
     });
   });
 
-  // 3. GET /api/rodoviario/diagnostics — Validação Read-Only End-to-End
+  // 3. GET /api/rodoviario/diagnostics — Validação Read-Only End-to-End (Sandbox ou Produção)
   app.get('/api/rodoviario/diagnostics', async (_req, res) => {
     const cfg = loadConfig('sandbox');
     const faqAuth = Buffer.from(`${cfg.faqUsername}:${cfg.faqPassword}`).toString('base64');
@@ -1278,12 +1282,18 @@ async function startServer() {
       faqPortalProbe = { status: 503, ok: false, latencyMs: 0 };
     }
 
-    // Teste 2: Gateway Sandbox (qpdevs.com/ws_v4/companies)
-    const sandboxProbe = await callQueroPassagemUpstream(
-      { ...cfg, qpEnv: 'sandbox', baseUrl: QP_BASE_URLS.sandbox },
-      'GET',
-      '/companies'
-    );
+    // Teste 2: Gateway Ativo (Produção quando QP_ENV=production + QP_ALLOW_PRODUCTION=true, caso contrário Sandbox)
+    const upstreamProbe = await callQueroPassagemUpstream(cfg, 'GET', '/companies');
+
+    const probeSummary = {
+      ok: upstreamProbe.ok,
+      status: upstreamProbe.status,
+      latencyMs: upstreamProbe.latencyMs,
+      targetUrl: `${cfg.baseUrl}/companies`,
+      companiesCount: Array.isArray(upstreamProbe.data) ? upstreamProbe.data.length : 0,
+      errorCode: upstreamProbe.errorCode,
+      errorMessage: upstreamProbe.errorMessage,
+    };
 
     res.json({
       ok: true,
@@ -1293,6 +1303,7 @@ async function startServer() {
         expressPort: PORT,
         configuredAppMode: cfg.appMode,
         configuredQpEnv: cfg.qpEnv,
+        allowProduction: cfg.allowProduction,
         targetBaseUrl: cfg.baseUrl,
       },
       credentialsCheck: {
@@ -1305,14 +1316,8 @@ async function startServer() {
       },
       probes: {
         faqAndDocsPortal: faqPortalProbe,
-        sandboxWsV4: {
-          ok: sandboxProbe.ok,
-          status: sandboxProbe.status,
-          latencyMs: sandboxProbe.latencyMs,
-          companiesCount: Array.isArray(sandboxProbe.data) ? sandboxProbe.data.length : 0,
-          errorCode: sandboxProbe.errorCode,
-          errorMessage: sandboxProbe.errorMessage,
-        },
+        upstreamWsV4: probeSummary,
+        sandboxWsV4: probeSummary,
       },
     });
   });
@@ -2388,14 +2393,42 @@ ${urlEntries.join('\n')}
   } else {
     const distPath = path.join(__dirname, 'dist');
     app.use(express.static(distPath, { index: false }));
+
     app.get('*', (req, res) => {
+      // Nunca devolver index.html para endpoints de API não encontrados
+      if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ ok: false, message: 'Endpoint de API não encontrado.' });
+      }
+
+      // Canonicalização de host (www -> raiz sem www) e remoção de barra final em sub-rotas
+      const reqHost = String(req.get('host') || '').toLowerCase();
+      if (reqHost.startsWith('www.ncturismo.com.br')) {
+        return res.redirect(301, `https://ncturismo.com.br${req.originalUrl}`);
+      }
+      if (req.path.length > 1 && req.path.endsWith('/')) {
+        const cleanPath = req.path.replace(/\/+$/, '') || '/';
+        const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+        return res.redirect(301, `${cleanPath}${qs}`);
+      }
+      if (req.path === '/blog') return res.redirect(301, '/conhecimento');
+      if (req.path === '/passagens-rodoviarias' || req.path === '/onibus') {
+        return res.redirect(301, '/rodoviario');
+      }
+
+      // Tenta entregar o HTML pré-renderizado plano (dist/<rota>.html) antes de cair no index.html
+      const relPath = req.path.replace(/^\/+|\/+$/g, '');
+      const prerenderedPath = relPath ? path.join(distPath, `${relPath}.html`) : '';
+      if (prerenderedPath && fs.existsSync(prerenderedPath)) {
+        return res.status(200).sendFile(prerenderedPath);
+      }
+
       const distIndexPath = path.join(distPath, 'index.html');
       if (fs.existsSync(distIndexPath)) {
         const rawHtml = fs.readFileSync(distIndexPath, 'utf8');
         const seoHtml = injectSeoMetaIntoHtml(rawHtml, req);
         res.status(200).type('text/html').send(seoHtml);
       } else {
-        res.sendFile(distIndexPath);
+        res.status(404).send('Build dist/index.html não encontrado.');
       }
     });
   }

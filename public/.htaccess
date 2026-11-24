@@ -27,7 +27,10 @@ DirectoryIndex index.html
   RewriteRule ^passagens-rodoviarias$ https://ncturismo.com.br/rodoviario [R=301,L]
   RewriteRule ^onibus$ https://ncturismo.com.br/rodoviario [R=301,L]
 
-  # 5. Permite acesso direto à raiz e ao próprio index.html sem reescrita adicional
+  # 5. Não interceptar rotas de API (/api/*) — processadas pelo backend Node.js / Passenger
+  RewriteRule ^api(/|$) - [L]
+
+  # 6. Permite acesso direto à raiz e ao próprio index.html sem reescrita adicional
   RewriteRule ^$ - [L]
   RewriteRule ^index\.html$ - [L]
 
