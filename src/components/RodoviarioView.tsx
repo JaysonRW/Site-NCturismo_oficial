@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   ShieldCheck,
   Sparkles,
+  Headphones,
   AlertCircle,
   CheckCircle2,
   X,
@@ -172,6 +173,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   const [timePeriod, setTimePeriod] = useState<TimePeriodFilter>('all');
   const [travelModeFilter, setTravelModeFilter] = useState<TravelModeFilter>('all');
   const [maxPriceFilter, setMaxPriceFilter] = useState<number>(1000);
+  const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false);
 
   // =========================================================================
   // SEAT MAP & CHECKOUT MODAL STATE
@@ -204,9 +206,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [completedPurchase, setCompletedPurchase] = useState<any | null>(null);
 
-  // Refs for closing dropdowns on outside click
+  // Refs for closing dropdowns on outside click and focusing inputs after clearing
   const originRef = useRef<HTMLDivElement>(null);
   const destinationRef = useRef<HTMLDivElement>(null);
+  const originInputRef = useRef<HTMLInputElement>(null);
+  const destinationInputRef = useRef<HTMLInputElement>(null);
 
   // =========================================================================
   // INITIALIZATION & CONFIG LOAD
@@ -264,6 +268,39 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
     setDestinationStop(tempStop);
     setDestinationQuery(tempQuery);
     setValidationError(null);
+  };
+
+  // Limpa apenas a origem e devolve foco para seleção imediata na lista
+  const handleClearOrigin = () => {
+    setOriginQuery('');
+    setOriginStop(null);
+    setValidationError(null);
+    setShowOriginDropdown(true);
+    originInputRef.current?.focus();
+  };
+
+  // Limpa apenas o destino e devolve foco para seleção imediata na lista
+  const handleClearDestination = () => {
+    setDestinationQuery('');
+    setDestinationStop(null);
+    setValidationError(null);
+    setShowDestinationDropdown(true);
+    destinationInputRef.current?.focus();
+  };
+
+  // Limpa todos os campos principais da busca para recomeçar rápido
+  const handleClearSearch = () => {
+    setOriginQuery('');
+    setOriginStop(null);
+    setDestinationQuery('');
+    setDestinationStop(null);
+    setReturnDate('');
+    setStagedOutboundLeg(null);
+    setActiveTripStep('outbound');
+    setValidationError(null);
+    setShowDestinationDropdown(false);
+    setShowOriginDropdown(true);
+    originInputRef.current?.focus();
   };
 
   const handleSelectOrigin = (stop: StopItem) => {
@@ -787,22 +824,101 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
     (activeSegmentObj?.seatsLayout === 'quantity' && totalRequiredSelections > 0) ||
     (selectedSeats.length === totalRequiredSelections && totalRequiredSelections > 0);
 
+  // Renderiza uma célula da matriz (poltrona, corredor ou cabine) reutilizada tanto na visão vertical (mobile) quanto horizontal (desktop)
+  const renderSeatCell = (
+    cell: SeatMatrixCell | undefined,
+    colX: number,
+    rowY: number,
+    isVerticalMobile: boolean
+  ) => {
+    if (!activeSegmentObj || !activeFloorObj || !selectedOptionForSeats) return null;
+
+    if (!cell || cell.type === 'corridor' || cell.type === 'empty') {
+      return (
+        <div
+          key={`${colX}-${rowY}`}
+          className={`${isVerticalMobile ? 'h-11' : 'h-9'} rounded-lg flex items-center justify-center text-[9px] font-mono text-slate-300 select-none`}
+        >
+          {!isVerticalMobile &&
+          rowY === 2 &&
+          colX === Math.floor(activeFloorObj.maxX / 2)
+            ? 'CORREDOR'
+            : isVerticalMobile && cell?.type === 'corridor'
+            ? '·'
+            : ''}
+        </div>
+      );
+    }
+
+    if (cell.type === 'driver' || cell.type === 'wc' || cell.type === 'stairs') {
+      return (
+        <div
+          key={`${colX}-${rowY}`}
+          className={`${isVerticalMobile ? 'h-11' : 'h-9'} rounded-lg bg-amber-50 text-amber-900 border border-amber-200 text-[9px] font-mono font-bold flex items-center justify-center select-none text-center px-1`}
+          title={cell.label}
+        >
+          {cell.label}
+        </div>
+      );
+    }
+
+    const isSelected = selectedSeats.some(
+      (s) =>
+        s.segmentIndex === activeSegmentObj.segmentIndex &&
+        s.seatNumber === cell.seatNumber
+    );
+
+    return (
+      <button
+        key={`${colX}-${rowY}`}
+        type="button"
+        disabled={cell.occupied}
+        onClick={() =>
+          handleToggleSeat(
+            cell,
+            activeSegmentObj.segmentIndex,
+            activeFloorObj.floorIndex
+          )
+        }
+        className={`${
+          isVerticalMobile ? 'h-11 rounded-xl text-sm' : 'h-9 rounded-xl text-xs'
+        } font-mono tabular-nums font-bold transition-all flex items-center justify-center ${
+          cell.occupied
+            ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+            : isSelected
+            ? 'bg-[#C8102E] text-white border-2 border-[#C8102E] shadow-md scale-105 cursor-pointer ring-2 ring-red-200'
+            : 'bg-white text-slate-800 border-2 border-emerald-600 hover:bg-emerald-50 cursor-pointer'
+        }`}
+        title={
+          cell.occupied
+            ? `Poltrona ${cell.seatNumber} Ocupada (${activeSegmentObj.companyName || selectedOptionForSeats.company.name})`
+            : `Viação: ${activeSegmentObj.companyName || selectedOptionForSeats.company.name} · Poltrona ${cell.seatNumber} · ${formatBRL(
+                cell.pricing?.totalPrice ??
+                  selectedOptionForSeats.pricing.totalPrice
+              )}`
+        }
+      >
+        {cell.seatNumber}
+      </button>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans selection:bg-[#C8102E] selection:text-white pt-28 pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans selection:bg-[#C8102E] selection:text-white pt-24 sm:pt-28 pb-16 sm:pb-20">
       {/* =====================================================================
           TOP HEADER / BREADCRUMB
          ===================================================================== */}
-      <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 mb-6">
-        <div className="flex items-center justify-between flex-wrap gap-4 pb-5 border-b border-slate-200/90">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-12 lg:px-20 mb-5 sm:mb-6">
+        <div className="flex items-center justify-center sm:justify-between flex-wrap gap-3 sm:gap-4 pb-4 sm:pb-5 border-b border-slate-200/90">
           <button
             onClick={onBackToHome}
-            className="group flex items-center gap-2.5 text-slate-600 hover:text-[#C8102E] text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors py-2 px-4 rounded-full bg-white hover:bg-red-50/50 border border-slate-200 shadow-xs cursor-pointer"
+            className="group flex items-center gap-2 text-slate-600 hover:text-[#C8102E] text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors py-2 px-4 rounded-full bg-white hover:bg-red-50/50 border border-slate-200 shadow-xs cursor-pointer"
           >
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform text-[#C8102E]" />
             Voltar para o site principal
           </button>
 
-          <div className="flex items-center gap-3 text-xs font-mono text-slate-600 flex-wrap">
+          <div className="flex items-center gap-3 text-xs font-mono text-slate-600 flex-wrap justify-center">
             <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
               <ShieldCheck size={14} className="text-emerald-600" />
               <span>Compra Segura · +300 Viações Oficiais</span>
@@ -812,135 +928,78 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
       </div>
 
       {/* =====================================================================
-          HERO & SEARCH ENGINE CONSOLE (UNIFIED BANNER + SEARCH BAR)
+          SEARCH-FIRST COMMERCIAL HEADER & SEARCH ENGINE CONSOLE
          ===================================================================== */}
-      <section className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 mb-10">
-        <div className="relative rounded-3xl bg-white border border-slate-200/90 p-5 sm:p-8 lg:p-10 shadow-xl shadow-slate-200/60 overflow-visible">
+      <section className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-12 lg:px-20 mb-6 sm:mb-8">
+        <div className="relative rounded-3xl bg-white border border-slate-200/90 p-4 sm:p-7 lg:p-8 shadow-xl shadow-slate-200/60 overflow-visible">
           {/* Soft warm daylight radial highlights */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-red-500/5 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
-          {/* =================================================================
-              UNIFIED HERO BANNER (TEXT ON LEFT + CITIES & TRADITIONAL BUS MONTAGE ON RIGHT)
-             ================================================================= */}
-          <div className="relative z-10 rounded-2xl overflow-hidden border border-slate-200/90 bg-gradient-to-br from-white via-slate-50/90 to-red-50/30 shadow-sm mb-7">
-            <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-              {/* LEFT COLUMN: Unified Editorial Information */}
-              <div className="lg:col-span-6 xl:col-span-6 p-6 sm:p-8 lg:p-9 flex flex-col justify-center relative z-10">
-                <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-wider uppercase text-[#C8102E] mb-3">
-                  <Sparkles size={15} className="text-[#C8102E] shrink-0" />
-                  <span>Portal Rodoviário NC Turismo • Consulta e Seleção de Assentos</span>
-                </div>
-
-                <h1 className="text-2xl sm:text-3xl lg:text-[34px] xl:text-[38px] font-bold tracking-tight text-slate-900 leading-[1.15] mb-3.5">
-                  Pesquisa Rodoviária Nacional com{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C8102E] to-[#DB8902]">
-                    Mapa de Poltronas em Tempo Real
-                  </span>
-                </h1>
-
-                <p className="text-sm sm:text-[15px] text-slate-600 leading-relaxed mb-5">
-                  Consulte horários, classes de conforto, conexões garantidas e disponibilidade de assentos em mais de 300 viações brasileiras. Pesquisa aberta para todos os viajantes e condições especiais para empresas cadastradas na NC Turismo.
-                </p>
-
-                {/* Clean Destinos & Conforto Pills */}
-                <div className="flex items-center flex-wrap gap-2 pt-1">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white border border-slate-200/90 text-xs font-semibold text-slate-700 shadow-2xs">
-                    <MapPin size={13} className="text-[#C8102E]" />
-                    Curitiba • São Paulo • Rio de Janeiro
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white border border-slate-200/90 text-xs font-semibold text-slate-700 shadow-2xs">
-                    <Bus size={13} className="text-[#DB8902]" />
-                    Leito Cama, Semileito &amp; Executivo
-                  </span>
-                </div>
+          {/* COMPACT CONVERSION-FOCUSED HEADER (SEARCH BAR ABOVE THE FOLD) */}
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-3.5 sm:gap-4 mb-5 text-center lg:text-left">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-100 text-[11px] font-mono font-bold tracking-wider uppercase text-[#C8102E] mb-2.5">
+                <Sparkles size={13} className="text-[#C8102E] shrink-0" />
+                <span>Passagens Rodoviárias Oficiais • Sem Filas</span>
               </div>
+              <h1 className="text-xl sm:text-3xl lg:text-[32px] font-bold tracking-tight text-slate-900 leading-[1.2]">
+                Compare horários e escolha sua poltrona{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C8102E] to-[#DB8902]">
+                  em tempo real
+                </span>
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-600 mt-1.5 max-w-3xl mx-auto lg:mx-0">
+                Consulte tarifas em mais de 300 viações autorizadas, garanta seu bilhete digital na hora e conte com atendimento NC Turismo.
+              </p>
+            </div>
 
-              {/* RIGHT COLUMN: Visual Montage (Curitiba + São Paulo + Rio de Janeiro Backdrop + Traditional Coach Bus) */}
-              <div className="lg:col-span-6 xl:col-span-6 relative min-h-[260px] sm:min-h-[300px] lg:min-h-full overflow-hidden bg-slate-100">
-                {/* 3-City Montage Grid in Background (Curitiba | São Paulo | Rio de Janeiro) */}
-                <div className="absolute inset-0 grid grid-cols-3 gap-0.5 bg-white/80">
-                  {/* City 1: Curitiba */}
-                  <div className="relative h-full overflow-hidden group/city">
-                    <img
-                      src="/assets/rodoviario/curitiba.jpg"
-                      alt="Curitiba, PR - Jardim Botânico"
-                      className="w-full h-full object-cover object-center brightness-105 group-hover/city:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute top-3 left-2.5 z-10">
-                      <span className="px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-[10px] font-mono font-bold uppercase tracking-wider text-slate-800 shadow-2xs border border-white">
-                        Curitiba · PR
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* City 2: São Paulo */}
-                  <div className="relative h-full overflow-hidden group/city">
-                    <img
-                      src="/assets/rodoviario/sao-paulo.jpg"
-                      alt="São Paulo, SP - Avenida Paulista"
-                      className="w-full h-full object-cover object-center brightness-105 group-hover/city:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute top-3 left-2.5 z-10">
-                      <span className="px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-[10px] font-mono font-bold uppercase tracking-wider text-slate-800 shadow-2xs border border-white">
-                        São Paulo · SP
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* City 3: Rio de Janeiro */}
-                  <div className="relative h-full overflow-hidden group/city">
-                    <img
-                      src="/assets/rodoviario/rio-de-janeiro.jpg"
-                      alt="Rio de Janeiro, RJ - Pão de Açúcar"
-                      className="w-full h-full object-cover object-center brightness-105 group-hover/city:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute top-3 left-2.5 z-10">
-                      <span className="px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-[10px] font-mono font-bold uppercase tracking-wider text-slate-800 shadow-2xs border border-white">
-                        Rio · RJ
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Soft left blend into the white editorial column */}
-                <div className="hidden lg:block absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white via-white/70 to-transparent z-10 pointer-events-none" />
-                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-900/35 via-transparent to-transparent z-10 pointer-events-none" />
-
-                {/* Foreground Traditional Coach Bus Highlight Card */}
-                <div className="absolute bottom-3.5 right-3.5 left-3.5 sm:left-auto sm:w-[330px] md:w-[360px] z-20 rounded-xl overflow-hidden bg-white/95 backdrop-blur-md border-2 border-white shadow-xl">
-                  <div className="relative h-32 sm:h-36 w-full overflow-hidden">
-                    <img
-                      src="/assets/rodoviario/onibus-tradicional.jpg"
-                      alt="Ônibus Rodoviário Tradicional Brasileiro"
-                      className="w-full h-full object-cover object-center"
-                    />
-                    <div className="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between gap-2">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/95 backdrop-blur-md text-[11px] font-bold text-slate-900 shadow-xs">
-                        <Bus size={12} className="text-[#C8102E]" />
-                        Ônibus Rodoviário Tradicional
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-[#C8102E] text-white text-[10px] font-mono font-bold uppercase shadow-xs">
-                        +300 Viações
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="flex items-center justify-center lg:justify-end flex-wrap gap-2 shrink-0">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-xs font-semibold text-emerald-800">
+                <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                Emissão imediata
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs font-semibold text-slate-700">
+                <Bus size={14} className="text-[#C8102E] shrink-0" />
+                +300 Viações
+              </span>
             </div>
           </div>
 
           {/* =================================================================
-              SEARCH ENGINE BAR (LIGHT SURFACE)
+              SEARCH ENGINE BAR (HIGH-PROMINENCE LIGHT SURFACE)
              ================================================================= */}
           <form
             onSubmit={handleRunSearch}
-            className="relative z-20 bg-slate-50/70 border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-sm"
+            className="relative z-20 bg-slate-50/85 border-2 border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-md shadow-slate-200/40"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-end">
+            {/* Helper Guide + Clear Search Action */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pb-3 mb-3.5 border-b border-slate-200/80 text-center sm:text-left">
+              <p className="inline-flex items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-600">
+                <Info size={14} className="text-[#C8102E] shrink-0" />
+                <span>
+                  <strong className="text-slate-800 font-semibold">Como buscar:</strong>{' '}
+                  digite a cidade ou rodoviária, selecione na lista e clique em{' '}
+                  <strong className="text-slate-800 font-semibold">Buscar Passagens</strong>.
+                </span>
+              </p>
+
+              {(originQuery || destinationQuery || returnDate) && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-[#C8102E] hover:bg-red-50 border border-slate-200/90 hover:border-[#C8102E]/30 bg-white transition-all cursor-pointer shrink-0"
+                >
+                  <X size={13} />
+                  <span>Limpar busca</span>
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_44px_minmax(0,1.4fr)_175px_175px_176px] gap-3 items-end">
               {/* ORIGEM AUTOCOMPLETE */}
-              <div className="lg:col-span-3 relative" ref={originRef}>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5">
+              <div className="relative min-w-0" ref={originRef}>
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5 whitespace-nowrap">
                   Origem
                 </label>
                 <div className="relative">
@@ -949,16 +1008,35 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#C8102E] pointer-events-none"
                   />
                   <input
+                    ref={originInputRef}
                     type="text"
                     value={originQuery}
-                    onFocus={() => setShowOriginDropdown(true)}
+                    onFocus={(e) => {
+                      e.target.select();
+                      setShowOriginDropdown(true);
+                    }}
                     onChange={(e) => {
-                      setOriginQuery(e.target.value);
+                      const nextValue = e.target.value;
+                      setOriginQuery(nextValue);
+                      if (!nextValue.trim()) {
+                        setOriginStop(null);
+                      }
                       setShowOriginDropdown(true);
                     }}
                     placeholder="Cidade ou rodoviária de origem"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-sm font-medium text-slate-900 placeholder-slate-400 transition-all shadow-2xs"
+                    className="w-full h-[46px] pl-10 pr-10 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-sm font-medium text-slate-900 placeholder-slate-400 transition-all shadow-2xs"
                   />
+                  {originQuery && (
+                    <button
+                      type="button"
+                      onClick={handleClearOrigin}
+                      title="Limpar origem"
+                      aria-label="Limpar origem"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[#C8102E] hover:bg-red-50 transition-colors cursor-pointer"
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
                 </div>
 
                 {/* Origin Dropdown */}
@@ -1016,20 +1094,20 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               </div>
 
               {/* SWAP BUTTON */}
-              <div className="lg:col-span-1 flex justify-center">
+              <div className="md:col-span-2 lg:col-span-1 flex justify-center">
                 <button
                   type="button"
                   onClick={handleSwapStops}
                   title="Inverter Origem e Destino"
-                  className="w-full lg:w-11 h-11 rounded-xl bg-white hover:bg-red-50/60 border border-slate-200 hover:border-[#C8102E]/40 flex items-center justify-center text-slate-600 hover:text-[#C8102E] shadow-2xs transition-all cursor-pointer"
+                  className="w-full lg:w-[44px] h-[46px] rounded-xl bg-white hover:bg-red-50/60 border border-slate-200 hover:border-[#C8102E]/40 flex items-center justify-center text-slate-600 hover:text-[#C8102E] shadow-2xs transition-all cursor-pointer"
                 >
                   <ArrowLeftRight size={17} />
                 </button>
               </div>
 
               {/* DESTINO AUTOCOMPLETE */}
-              <div className="lg:col-span-3 relative" ref={destinationRef}>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5">
+              <div className="relative min-w-0" ref={destinationRef}>
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5 whitespace-nowrap">
                   Destino
                 </label>
                 <div className="relative">
@@ -1038,16 +1116,35 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#DB8902] pointer-events-none"
                   />
                   <input
+                    ref={destinationInputRef}
                     type="text"
                     value={destinationQuery}
-                    onFocus={() => setShowDestinationDropdown(true)}
+                    onFocus={(e) => {
+                      e.target.select();
+                      setShowDestinationDropdown(true);
+                    }}
                     onChange={(e) => {
-                      setDestinationQuery(e.target.value);
+                      const nextValue = e.target.value;
+                      setDestinationQuery(nextValue);
+                      if (!nextValue.trim()) {
+                        setDestinationStop(null);
+                      }
                       setShowDestinationDropdown(true);
                     }}
                     placeholder="Cidade ou rodoviária de destino"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-sm font-medium text-slate-900 placeholder-slate-400 transition-all shadow-2xs"
+                    className="w-full h-[46px] pl-10 pr-10 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-sm font-medium text-slate-900 placeholder-slate-400 transition-all shadow-2xs"
                   />
+                  {destinationQuery && (
+                    <button
+                      type="button"
+                      onClick={handleClearDestination}
+                      title="Limpar destino"
+                      aria-label="Limpar destino"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[#C8102E] hover:bg-red-50 transition-colors cursor-pointer"
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
                 </div>
 
                 {/* Destination Dropdown */}
@@ -1105,8 +1202,8 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               </div>
 
               {/* DATA DE IDA */}
-              <div className="lg:col-span-2">
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5 whitespace-nowrap">
                   Data de Ida
                 </label>
                 <div className="relative">
@@ -1119,31 +1216,37 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     min={getTodayDate()}
                     value={departureDate}
                     onChange={(e) => setDepartureDate(e.target.value)}
-                    className="w-full pl-10 pr-3 py-3 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-sm font-mono tabular-nums font-medium text-slate-900 transition-all shadow-2xs"
+                    className="w-full h-[46px] pl-10 pr-3 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-sm font-mono tabular-nums font-medium text-slate-900 transition-all shadow-2xs"
                   />
                 </div>
               </div>
 
               {/* DATA DE VOLTA (OPCIONAL) */}
-              <div className="lg:col-span-1">
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5 whitespace-nowrap">
                   Volta (Opcional)
                 </label>
-                <input
-                  type="date"
-                  min={departureDate || getTodayDate()}
-                  value={returnDate}
-                  onChange={(e) => setReturnDate(e.target.value)}
-                  className="w-full px-2.5 py-3 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-xs font-mono tabular-nums font-medium text-slate-900 transition-all shadow-2xs"
-                />
+                <div className="relative">
+                  <Calendar
+                    size={15}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  />
+                  <input
+                    type="date"
+                    min={departureDate || getTodayDate()}
+                    value={returnDate}
+                    onChange={(e) => setReturnDate(e.target.value)}
+                    className="w-full h-[46px] pl-10 pr-3 rounded-xl bg-white border border-slate-200/90 focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/15 focus:outline-none text-sm font-mono tabular-nums font-medium text-slate-900 transition-all shadow-2xs"
+                  />
+                </div>
               </div>
 
               {/* BOTÃO BUSCAR */}
-              <div className="lg:col-span-2">
+              <div className="md:col-span-2 lg:col-span-1">
                 <button
                   type="submit"
                   disabled={outboundDirectLoading}
-                  className="w-full h-[46px] rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] hover:opacity-95 text-white font-bold text-xs uppercase tracking-[0.12em] flex items-center justify-center gap-2 shadow-md shadow-red-600/20 transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full h-[46px] rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] hover:opacity-95 text-white font-bold text-xs uppercase tracking-[0.11em] flex items-center justify-center gap-2 shadow-md shadow-red-600/20 transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap px-4"
                 >
                   {outboundDirectLoading ? (
                     <>
@@ -1153,7 +1256,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                   ) : (
                     <>
                       <Search size={16} />
-                      <span>Buscar Ônibus</span>
+                      <span>Buscar Passagens</span>
                     </>
                   )}
                 </button>
@@ -1161,8 +1264,8 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
             </div>
 
             {/* Secondary Search Controls Row */}
-            <div className="mt-4 pt-3.5 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
-              <div className="flex flex-wrap items-center gap-5">
+            <div className="mt-4 pt-3.5 border-t border-slate-200/80 flex flex-col lg:flex-row items-center justify-between gap-3.5 text-xs text-slate-600">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 sm:gap-5">
                 {/* Toggle Conexões */}
                 <label className="inline-flex items-center gap-2.5 cursor-pointer select-none">
                   <input
@@ -1201,7 +1304,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               </div>
 
               {/* Quick Popular Routes */}
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                 <span className="text-slate-500 font-mono uppercase text-[11px] font-semibold">
                   Rotas populares:
                 </span>
@@ -1254,22 +1357,55 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               </div>
             )}
           </form>
+
+          {/* COMMERCIAL TRUST STRIP */}
+          <div className="relative z-10 mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+            <div className="flex items-center gap-3 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-slate-50/90 border border-slate-200/80">
+              <div className="w-9 h-9 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-[#C8102E] shrink-0">
+                <ShieldCheck size={17} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900">Bilhete Oficial e Seguro</p>
+                <p className="text-[11px] text-slate-600 leading-snug">Emissão direta com +300 viações autorizadas</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-slate-50/90 border border-slate-200/80">
+              <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-[#DB8902] shrink-0">
+                <Armchair size={17} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900">Mapa de Poltronas Real</p>
+                <p className="text-[11px] text-slate-600 leading-snug">Escolha janela ou corredor antes do pagamento</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-slate-50/90 border border-slate-200/80">
+              <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+                <Headphones size={17} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900">Suporte Humano NC Turismo</p>
+                <p className="text-[11px] text-slate-600 leading-snug">Apoio comercial antes e depois do embarque</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* =====================================================================
           MAIN WORKSPACE: FILTERS SIDEBAR + RESULTS FEED
          ===================================================================== */}
-      <section className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20">
+      <section className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-12 lg:px-20">
         {/* Round-Trip Step Tabs & Staged Outbound Banner (when returnDate is active) */}
         {returnDate && (
           <div className="mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:flex items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setActiveTripStep('outbound')}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer text-center ${
                     activeTripStep === 'outbound'
                       ? 'bg-[#C8102E] text-white shadow-sm shadow-red-600/20'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -1278,11 +1414,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                   1. Viagem de Ida · {formatDateShort(departureDate)} (
                   {(outboundDirectRes?.options.length || 0) + (outboundConnRes?.options.length || 0)})
                 </button>
-                <ArrowRight size={16} className="text-slate-400" />
+                <ArrowRight size={16} className="hidden sm:block text-slate-400" />
                 <button
                   type="button"
                   onClick={() => setActiveTripStep('inbound')}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer text-center ${
                     activeTripStep === 'inbound'
                       ? 'bg-[#C8102E] text-white shadow-sm shadow-red-600/20'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -1293,7 +1429,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                 </button>
               </div>
 
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-500 text-center sm:text-left w-full sm:w-auto">
                 Para compra de ida e volta, escolha primeiro as poltronas da ida e depois as da volta.
               </span>
             </div>
@@ -1325,11 +1461,15 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-start">
           {/* =================================================================
-              LEFT SIDEBAR: LOCAL FILTERS
+              LEFT SIDEBAR: LOCAL FILTERS (COLLAPSIBLE ON MOBILE)
              ================================================================= */}
-          <aside className="lg:col-span-3 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs">
+          <aside
+            className={`${
+              showMobileFilters ? 'block' : 'hidden'
+            } lg:block lg:col-span-3 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs`}
+          >
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <SlidersHorizontal size={16} className="text-[#C8102E]" />
@@ -1337,13 +1477,22 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                   Filtros da Busca
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="text-xs text-[#C8102E] hover:underline font-medium cursor-pointer"
-              >
-                Limpar
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="text-xs text-[#C8102E] hover:underline font-medium cursor-pointer"
+                >
+                  Limpar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMobileFilters(false)}
+                  className="lg:hidden px-2.5 py-1 rounded-lg bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer"
+                >
+                  Fechar
+                </button>
+              </div>
             </div>
 
             {/* Filter 1: Tipo de Viagem (Direto vs Conexão) */}
@@ -1526,22 +1675,22 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
              ================================================================= */}
           <div className="lg:col-span-9 space-y-4">
             {/* Top Status & Sort Bar */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-base font-bold text-slate-900">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 shadow-xs">
+              <div className="text-center sm:text-left">
+                <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900">
                     {activeTripStep === 'outbound'
                       ? `${originStop?.name.split(',')[0] || 'Origem'} → ${destinationStop?.name.split(',')[0] || 'Destino'}`
                       : `${destinationStop?.name.split(',')[0] || 'Destino'} → ${originStop?.name.split(',')[0] || 'Origem'}`}
                   </h2>
                   <span className="text-slate-300">·</span>
-                  <span className="text-xs font-mono tabular-nums text-slate-600">
+                  <span className="text-xs font-mono tabular-nums text-slate-600 font-semibold">
                     {formatDateShort(activeTripStep === 'outbound' ? departureDate : returnDate)}
                   </span>
                 </div>
 
                 {/* Progressive loading status for direct vs connection */}
-                <div className="text-xs text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
+                <div className="text-xs text-slate-500 mt-1 flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                   <span className="font-mono tabular-nums font-semibold text-slate-800">
                     {filteredAndSortedOptions.length} horários exibidos
                   </span>
@@ -1565,19 +1714,30 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                 </div>
               </div>
 
-              {/* Sort Dropdown */}
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-slate-500 font-medium">Ordenar por:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortByOption)}
-                  className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#C8102E] cursor-pointer"
+              {/* Mobile Filter Toggle + Sort Dropdown */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowMobileFilters((prev) => !prev)}
+                  className="lg:hidden inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-red-50/60 border border-slate-200 text-xs font-bold text-slate-800 cursor-pointer"
                 >
-                  <option value="departure_asc">Horário de saída (mais cedo)</option>
-                  <option value="price_asc">Menor preço total</option>
-                  <option value="duration_asc">Menor tempo de viagem</option>
-                  <option value="seats_desc">Maior disponibilidade de poltronas</option>
-                </select>
+                  <SlidersHorizontal size={14} className="text-[#C8102E]" />
+                  <span>{showMobileFilters ? 'Ocultar Filtros' : 'Filtrar Horários e Viações'}</span>
+                </button>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <span className="text-xs text-slate-500 font-medium whitespace-nowrap">Ordenar:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortByOption)}
+                    className="w-full sm:w-auto px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#C8102E] cursor-pointer"
+                  >
+                    <option value="departure_asc">Horário de saída (mais cedo)</option>
+                    <option value="price_asc">Menor preço total</option>
+                    <option value="duration_asc">Menor tempo de viagem</option>
+                    <option value="seats_desc">Maior disponibilidade de poltronas</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1685,18 +1845,18 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                 return (
                   <article
                     key={option.optionId}
-                    className="bg-white rounded-2xl border border-slate-200/90 hover:border-[#C8102E]/40 p-5 sm:p-6 shadow-xs hover:shadow-md transition-all"
+                    className="bg-white rounded-2xl border border-slate-200/90 hover:border-[#C8102E]/40 p-4 sm:p-6 shadow-xs hover:shadow-md transition-all overflow-hidden"
                   >
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6">
                       {/* Left Column: Company + Route Timeline */}
-                      <div className="flex-1 space-y-4">
+                      <div className="flex-1 space-y-3.5 sm:space-y-4 min-w-0">
                         {/* Top metadata row with Prominent Operator (Viação) Identification */}
-                        <div className="flex flex-wrap items-center gap-2.5 text-xs">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs">
                           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-50/90 border border-[#C8102E]/25 text-slate-900 shadow-2xs">
-                            <span className="w-6 h-6 rounded-lg bg-[#C8102E] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                              <Bus size={14} />
+                            <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-[#C8102E] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                              <Bus size={13} />
                             </span>
-                            <span className="text-xs sm:text-sm tracking-tight">
+                            <span className="text-xs tracking-tight">
                               <span className="text-slate-600 font-semibold">Viação:</span>{' '}
                               <strong className="text-[#C8102E] font-extrabold uppercase">
                                 {option.company.name}
@@ -1704,9 +1864,9 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                             </span>
                           </span>
 
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200/90 font-bold text-slate-700">
-                            <Armchair size={13} className="text-[#DB8902]" />
-                            <span>Classe: {option.seatClass}</span>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200/90 text-xs font-bold text-slate-700">
+                            <Armchair size={13} className="text-[#DB8902] shrink-0" />
+                            <span>{option.seatClass}</span>
                           </span>
 
                           <span
@@ -1720,7 +1880,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                           </span>
 
                           {isManual && (
-                            <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                            <span className="px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
                               Confirmação sob consulta
                             </span>
                           )}
@@ -1731,26 +1891,26 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                           )}
                         </div>
 
-                        {/* Timeline Row */}
-                        <div className="grid grid-cols-1 sm:grid-cols-7 gap-4 items-center">
+                        {/* Timeline Row (3-col scannable horizontal on Mobile + 7-col on sm+) */}
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:grid-cols-7 gap-2.5 sm:gap-4 items-center bg-slate-50/70 sm:bg-transparent rounded-xl p-3 sm:p-0 border border-slate-100 sm:border-0">
                           {/* Departure */}
-                          <div className="sm:col-span-2">
-                            <div className="text-2xl font-bold font-mono tabular-nums text-slate-900">
+                          <div className="sm:col-span-2 min-w-0">
+                            <div className="text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-900 leading-tight">
                               {option.departure.time.slice(0, 5)}
                             </div>
-                            <div className="text-xs font-medium text-slate-600 truncate" title={option.from.name}>
+                            <div className="text-[11px] sm:text-xs font-medium text-slate-600 line-clamp-2 sm:truncate mt-0.5" title={option.from.name}>
                               {option.from.name}
                             </div>
                           </div>
 
                           {/* Duration & Connector Line */}
-                          <div className="sm:col-span-3 flex flex-col items-center">
-                            <div className="text-xs font-mono tabular-nums text-slate-500 mb-1 flex items-center gap-1">
-                              <Clock size={12} className="text-[#C8102E]" />
+                          <div className="sm:col-span-3 flex flex-col items-center justify-center min-w-[82px] sm:min-w-0">
+                            <div className="text-[11px] sm:text-xs font-mono tabular-nums text-slate-600 font-semibold mb-1 flex items-center gap-1 whitespace-nowrap">
+                              <Clock size={12} className="text-[#C8102E] shrink-0" />
                               <span>{option.durationLabel}</span>
                             </div>
                             <div className="w-full flex items-center gap-1">
-                              <span className="w-2 h-2 rounded-full bg-slate-300" />
+                              <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0" />
                               <div className="flex-1 h-[2px] bg-slate-200 relative">
                                 {isConn && (
                                   <span
@@ -1759,19 +1919,19 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                   />
                                 )}
                               </div>
-                              <span className="w-2 h-2 rounded-full bg-[#C8102E]" />
+                              <span className="w-2 h-2 rounded-full bg-[#C8102E] shrink-0" />
                             </div>
-                            <div className="text-[11px] text-emerald-700 font-semibold mt-1 font-mono tabular-nums">
-                              {option.availableSeats} poltronas livres
+                            <div className="text-[11px] text-emerald-700 font-bold mt-1 font-mono tabular-nums text-center whitespace-nowrap">
+                              {option.availableSeats} livres
                             </div>
                           </div>
 
                           {/* Arrival */}
-                          <div className="sm:col-span-2 sm:text-right">
-                            <div className="text-2xl font-bold font-mono tabular-nums text-slate-900">
+                          <div className="sm:col-span-2 text-right min-w-0">
+                            <div className="text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-900 leading-tight">
                               {option.arrival.time.slice(0, 5)}
                             </div>
-                            <div className="text-xs font-medium text-slate-600 truncate" title={option.to.name}>
+                            <div className="text-[11px] sm:text-xs font-medium text-slate-600 line-clamp-2 sm:truncate mt-0.5" title={option.to.name}>
                               {option.to.name}
                             </div>
                           </div>
@@ -1781,9 +1941,9 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                         {isConn && option.connectionInfo && (
                           <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 text-xs text-amber-950 space-y-1.5">
                             <div className="font-semibold flex items-center gap-1.5">
-                              <GitBranch size={14} className="text-amber-700" />
+                              <GitBranch size={14} className="text-amber-700 shrink-0" />
                               <span>
-                                Conexão em {option.connectionInfo.connectionStopName} · Tempo de espera:{' '}
+                                Conexão em {option.connectionInfo.connectionStopName} · Espera:{' '}
                                 <strong className="font-mono tabular-nums">
                                   {option.connectionInfo.waitingMinutes} min
                                 </strong>
@@ -1791,8 +1951,8 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-amber-900/90 font-mono tabular-nums">
                               {option.connectionInfo.segments.map((seg) => (
-                                <div key={seg.segmentIndex} className="flex items-center gap-1.5">
-                                  <Bus size={12} className="text-[#C8102E] shrink-0" />
+                                <div key={seg.segmentIndex} className="flex items-start gap-1.5">
+                                  <Bus size={12} className="text-[#C8102E] shrink-0 mt-0.5" />
                                   <span>
                                     Trecho {seg.segmentIndex}: {seg.departure.time} → {seg.arrival.time} (
                                     <strong>Viação: {seg.company.name}</strong> · {seg.seatClass})
@@ -1805,8 +1965,8 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                       </div>
 
                       {/* Right Column: Price Breakdown & Seat Map Trigger */}
-                      <div className="lg:w-60 lg:border-l lg:border-slate-100 lg:pl-6 flex flex-row lg:flex-col items-center lg:items-end justify-between gap-4">
-                        <div className="text-left lg:text-right">
+                      <div className="lg:w-60 lg:border-l lg:border-slate-100 lg:pl-6 pt-3.5 border-t border-slate-100 lg:border-t-0 lg:pt-0 flex flex-col sm:flex-row lg:flex-col items-center sm:items-center lg:items-end justify-between gap-3.5 sm:gap-4">
+                        <div className="text-center sm:text-left lg:text-right">
                           {option.pricing.originalPrice && (
                             <div className="text-xs font-mono tabular-nums text-slate-400 line-through">
                               {formatBRL(option.pricing.originalPrice)}
@@ -1823,7 +1983,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                         <button
                           type="button"
                           onClick={() => handleOpenSeatMap(option)}
-                          className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider flex flex-col items-center justify-center gap-0.5 shadow-sm shadow-red-600/20 transition-all cursor-pointer shrink-0 w-auto lg:w-full"
+                          className="w-full sm:w-auto lg:w-full px-5 py-3 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider flex flex-col items-center justify-center gap-0.5 shadow-sm shadow-red-600/20 transition-all cursor-pointer"
                         >
                           <span className="flex items-center gap-2">
                             <Armchair size={15} />
@@ -1848,81 +2008,76 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
          ===================================================================== */}
       {selectedOptionForSeats && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-slate-900/55 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Mapa de Poltronas e Reserva"
         >
-          <div className="bg-white rounded-3xl max-w-6xl w-full overflow-hidden shadow-2xl border border-slate-200 my-8 animate-in fade-in zoom-in-95 duration-200">
-            {/* Modal Header with High-Visibility Bus Operator Banner */}
-            <div className="bg-gradient-to-r from-slate-50 via-white to-red-50/40 text-slate-900 px-6 py-5 border-b border-slate-200">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold flex-wrap">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-6xl w-full h-[94dvh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header with High-Visibility Bus Operator Banner & Fixed Top-Right Close */}
+            <div className="shrink-0 bg-gradient-to-r from-slate-50 via-white to-red-50/40 text-slate-900 px-4 py-3.5 sm:px-6 sm:py-5 border-b border-slate-200">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2 text-[11px] sm:text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold flex-wrap">
                     <span>
-                      {activeTripStep === 'outbound' ? 'Trecho de Ida' : 'Trecho de Volta'} · Seleção de Poltronas em Tempo Real
+                      {activeTripStep === 'outbound' ? 'Trecho de Ida' : 'Trecho de Volta'} · Mapa de Poltronas
                     </span>
                     {selectedOptionForSeats.manualConfirmation && (
-                      <>
-                        <span className="text-slate-300">·</span>
-                        <span className="px-2 py-0.5 rounded text-[10px] bg-amber-50 text-amber-900 border border-amber-200">
-                          Confirmação sob consulta
-                        </span>
-                      </>
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-amber-50 text-amber-900 border border-amber-200">
+                        Sob consulta
+                      </span>
                     )}
                   </div>
 
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-900">
+                  <h3 className="text-sm sm:text-xl font-bold text-slate-900 leading-snug">
                     {selectedOptionForSeats.from.name} → {selectedOptionForSeats.to.name}
                   </h3>
                 </div>
 
-                {/* Destaque Principal da Viação / Operadora no Topo do Modal */}
-                <div className="flex items-center justify-between lg:justify-end gap-3 flex-wrap">
-                  <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#C8102E] to-[#a50d26] text-white shadow-md shadow-red-600/20 border border-red-700/30">
-                    <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/25">
-                      <Bus size={20} className="text-white" />
+                <button
+                  type="button"
+                  onClick={handleCloseSeatMap}
+                  className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-[#C8102E] border border-slate-200 transition-colors cursor-pointer shrink-0"
+                  aria-label="Fechar mapa de poltronas"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Compact Operator + Schedule Badges */}
+              <div className="mt-3 grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#a50d26] text-white shadow-xs min-w-0">
+                  <Bus size={16} className="text-white shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-red-100 font-semibold leading-none">
+                      Operadora
                     </div>
-                    <div className="text-left">
-                      <div className="text-[10px] font-mono uppercase tracking-widest text-red-100 font-semibold leading-none">
-                        Operadora do Ônibus
-                      </div>
-                      <div className="text-sm sm:text-base font-extrabold tracking-tight leading-snug mt-0.5">
-                        Viação: {activeSegmentObj?.companyName || selectedOptionForSeats.company.name}
-                      </div>
+                    <div className="text-xs sm:text-sm font-extrabold truncate leading-tight mt-0.5">
+                      Viação: {activeSegmentObj?.companyName || selectedOptionForSeats.company.name}
                     </div>
                   </div>
+                </div>
 
-                  <div className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-amber-50 border border-amber-200/90 text-slate-900">
-                    <Armchair size={18} className="text-[#DB8902] shrink-0" />
-                    <div className="text-left">
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-amber-800 font-semibold leading-none">
-                        Classe &amp; Horário
-                      </div>
-                      <div className="text-xs sm:text-sm font-bold text-slate-900 leading-snug mt-0.5">
-                        {selectedOptionForSeats.seatClass} ·{' '}
-                        <span className="font-mono">
-                          {(activeSegmentObj?.departureTime || selectedOptionForSeats.departure.time).slice(0, 5)} →{' '}
-                          {(activeSegmentObj?.arrivalTime || selectedOptionForSeats.arrival.time).slice(0, 5)}
-                        </span>
-                      </div>
+                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200/90 text-slate-900 min-w-0">
+                  <Armchair size={16} className="text-[#DB8902] shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-amber-800 font-semibold leading-none">
+                      Classe &amp; Horário
+                    </div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-900 truncate leading-tight mt-0.5">
+                      {selectedOptionForSeats.seatClass} ·{' '}
+                      <span className="font-mono">
+                        {(activeSegmentObj?.departureTime || selectedOptionForSeats.departure.time).slice(0, 5)}–
+                        {(activeSegmentObj?.arrivalTime || selectedOptionForSeats.arrival.time).slice(0, 5)}
+                      </span>
                     </div>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={handleCloseSeatMap}
-                    className="p-2.5 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-[#C8102E] border border-slate-200 transition-colors cursor-pointer"
-                    aria-label="Fechar mapa de poltronas"
-                  >
-                    <X size={20} />
-                  </button>
                 </div>
               </div>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 max-h-[82vh] overflow-y-auto bg-white">
+            <div className="p-4 sm:p-6 flex-1 overflow-y-auto bg-white">
               {seatMapLoading && (
                 <div className="py-16 text-center space-y-3">
                   <RefreshCw size={28} className="animate-spin text-[#C8102E] mx-auto" />
@@ -1933,18 +2088,18 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               )}
 
               {seatMapError && (
-                <div className="p-6 rounded-2xl bg-red-50 border border-red-200 text-red-900 flex items-center gap-3">
+                <div className="p-5 sm:p-6 rounded-2xl bg-red-50 border border-red-200 text-red-900 flex items-center gap-3">
                   <AlertCircle size={20} className="text-red-600 shrink-0" />
-                  <div className="text-sm">{seatMapError}</div>
+                  <div className="text-xs sm:text-sm">{seatMapError}</div>
                 </div>
               )}
 
               {!seatMapLoading && !seatMapError && seatMapData && activeSegmentObj && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                  {/* Left 7 Cols: Operator Banner + Segment Selector + Floor Selector + 2D Vehicle Matrix */}
-                  <div className="lg:col-span-7 space-y-4">
-                    {/* Prominent Operator Identification Bar directly above the Seat Map */}
-                    <div className="p-4 rounded-2xl bg-gradient-to-r from-red-50/90 via-white to-amber-50/60 border-2 border-[#C8102E]/25 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+                  {/* Left 7 Cols: Segment Selector + Floor Selector + 2D Vehicle Matrix */}
+                  <div className="lg:col-span-7 space-y-3.5 sm:space-y-4">
+                    {/* Prominent Operator Identification Bar (Desktop - keeps mobile clean & compact above the fold) */}
+                    <div className="hidden sm:flex p-4 rounded-2xl bg-gradient-to-r from-red-50/90 via-white to-amber-50/60 border-2 border-[#C8102E]/25 shadow-xs flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className="w-11 h-11 rounded-2xl bg-[#C8102E] text-white flex items-center justify-center shrink-0 shadow-sm shadow-red-600/20">
                           <Bus size={22} />
@@ -1981,7 +2136,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     {/* Segment Tabs (for Connections with `|`) */}
                     {seatMapData.segments.length > 1 && (
                       <div className="space-y-2">
-                        <div className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold">
+                        <div className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold text-center sm:text-left">
                           1. Escolha as Poltronas dos 2 Trechos da Conexão
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -2026,20 +2181,20 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
                     {/* Floor Tabs (Double Decker Piso 1 / Piso 2) */}
                     {activeSegmentObj.floors.length > 1 && (
-                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4">
                         <div className="flex items-center gap-2">
                           <Layers size={15} className="text-[#C8102E]" />
                           <span className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold">
                             Andar do Ônibus ({activeSegmentObj.companyName}):
                           </span>
                         </div>
-                        <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+                        <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 w-full sm:w-auto justify-center">
                           {activeSegmentObj.floors.map((fl) => (
                             <button
                               key={fl.floorIndex}
                               type="button"
                               onClick={() => setActiveFloorTab(fl.floorIndex)}
-                              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                                 activeFloorTab === fl.floorIndex
                                   ? 'bg-[#C8102E] text-white shadow-2xs'
                                   : 'text-slate-600 hover:text-slate-900'
@@ -2052,36 +2207,29 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                       </div>
                     )}
 
-                    {/* Legend + Operator Quick Tag */}
-                    <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-700 bg-slate-50 px-4 py-3 rounded-xl border border-slate-200">
-                      <div className="flex flex-wrap items-center gap-5">
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-lg bg-white border-2 border-emerald-600 text-emerald-700 font-mono text-[10px] font-bold inline-flex items-center justify-center shadow-2xs">
-                            01
-                          </span>
-                          <span className="font-semibold">Livre (Clique p/ escolher)</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-lg bg-[#C8102E] border-2 border-[#C8102E] text-white font-mono text-[10px] font-bold inline-flex items-center justify-center shadow-2xs">
-                            ✓
-                          </span>
-                          <span className="font-semibold text-[#C8102E]">Selecionada</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-lg bg-slate-200 border border-slate-300 text-slate-400 font-mono text-[10px] font-bold inline-flex items-center justify-center">
-                            X
-                          </span>
-                          <span className="text-slate-500">Ocupada</span>
-                        </div>
+                    {/* Legend (Centralized & 1-Row Compact on Mobile) */}
+                    <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center justify-items-center sm:justify-between gap-2 sm:gap-4 text-[11px] sm:text-xs text-slate-700 bg-slate-50 px-3 py-2.5 sm:px-4 sm:py-3 rounded-xl border border-slate-200">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-white border-2 border-emerald-600 text-emerald-700 font-mono text-[10px] font-bold inline-flex items-center justify-center shadow-2xs shrink-0">
+                          01
+                        </span>
+                        <span className="font-semibold">Livre</span>
                       </div>
-
-                      <div className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
-                        <Bus size={13} className="text-[#C8102E]" />
-                        <span>Viação: {activeSegmentObj.companyName || selectedOptionForSeats.company.name}</span>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-[#C8102E] border-2 border-[#C8102E] text-white font-mono text-[10px] font-bold inline-flex items-center justify-center shadow-2xs shrink-0">
+                          ✓
+                        </span>
+                        <span className="font-semibold text-[#C8102E]">Selecionada</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-slate-200 border border-slate-300 text-slate-400 font-mono text-[10px] font-bold inline-flex items-center justify-center shrink-0">
+                          X
+                        </span>
+                        <span className="text-slate-500 font-medium">Ocupada</span>
                       </div>
                     </div>
 
-                    {/* Quantity Layout Fallback or 2D Matrix */}
+                    {/* Quantity Layout Fallback or Dual-Orientation 2D Matrix */}
                     {activeSegmentObj.seatsLayout === 'quantity' ? (
                       <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-3">
                         <Info size={24} className="text-slate-600 mx-auto" />
@@ -2098,120 +2246,117 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                       </div>
                     ) : (
                       activeFloorObj && (
-                        <div className="bg-slate-50 rounded-3xl p-5 border border-slate-200 overflow-x-auto">
-                          <div className="min-w-[540px]">
-                            {/* Cabin Top Identification Header */}
-                            <div className="flex items-center justify-between gap-2 text-[11px] font-mono uppercase tracking-wider text-slate-600 mb-3 px-3 py-2 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
-                              <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
-                                <Bus size={14} className="text-[#C8102E]" />
-                                <span>← Frente (Cabine) · Viação: {activeSegmentObj.companyName || selectedOptionForSeats.company.name}</span>
-                              </span>
-                              <span className="font-bold text-[#C8102E] bg-red-50 px-2.5 py-0.5 rounded-md border border-red-200/70">
-                                {activeFloorObj.floorLabel}
-                              </span>
-                              <span className="text-slate-500">Fundo do Veículo →</span>
-                            </div>
+                        <>
+                          {/* VISÃO VERTICAL NO MOBILE (FRENTE NO TOPO -> FUNDO EMBAIXO, SEM CORTE HORIZONTAL) */}
+                          <div className="md:hidden bg-slate-50 rounded-3xl p-3.5 border border-slate-200">
+                            <div className="max-w-[330px] mx-auto space-y-3">
+                              {/* Cabin Top Header */}
+                              <div className="flex flex-col items-center justify-center gap-1.5 text-center px-3 py-2.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+                                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider font-bold text-slate-800">
+                                  <Bus size={14} className="text-[#C8102E]" />
+                                  <span>↑ Frente do Ônibus (Motorista)</span>
+                                </span>
+                                <span className="text-[10px] font-mono font-bold uppercase text-[#C8102E] bg-red-50 px-2.5 py-0.5 rounded-md border border-red-200/70">
+                                  {activeFloorObj.floorLabel}
+                                </span>
+                              </div>
 
-                            {/* Render rows across y = 0..maxY and x = 0..maxX */}
-                            <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs space-y-2 relative">
-                              {Array.from({ length: activeFloorObj.maxY + 1 }).map((_, rowY) => (
-                                <div
-                                  key={rowY}
-                                  className="grid gap-1.5 items-center"
-                                  style={{
-                                    gridTemplateColumns: `repeat(${activeFloorObj.maxX + 1}, minmax(36px, 1fr))`,
-                                  }}
-                                >
-                                  {Array.from({ length: activeFloorObj.maxX + 1 }).map((__, colX) => {
-                                    const cell = activeFloorObj.cells.find(
-                                      (c) => c.position.x === colX && c.position.y === rowY
-                                    );
+                              {/* Vertical Coach Interior */}
+                              <div className="bg-white rounded-2xl p-3 border border-slate-200 shadow-2xs space-y-2">
+                                {activeFloorObj.maxY === 4 && (
+                                  <div
+                                    className="grid gap-1.5 items-center text-[9px] font-mono uppercase tracking-wider text-slate-400 text-center pb-1.5 border-b border-slate-100"
+                                    style={{ gridTemplateColumns: '1fr 1fr 20px 1fr 1fr' }}
+                                  >
+                                    <span>Janela</span>
+                                    <span>Corredor</span>
+                                    <span />
+                                    <span>Corredor</span>
+                                    <span>Janela</span>
+                                  </div>
+                                )}
 
-                                    if (!cell || cell.type === 'corridor' || cell.type === 'empty') {
-                                      return (
-                                        <div
-                                          key={`${colX}-${rowY}`}
-                                          className="h-9 rounded-lg flex items-center justify-center text-[9px] font-mono text-slate-300"
-                                        >
-                                          {rowY === 2 && colX === Math.floor(activeFloorObj.maxX / 2)
-                                            ? 'CORREDOR'
-                                            : ''}
-                                        </div>
+                                {Array.from({ length: activeFloorObj.maxX + 1 }).map((_, rowX) => (
+                                  <div
+                                    key={rowX}
+                                    className="grid gap-1.5 items-center"
+                                    style={{
+                                      gridTemplateColumns:
+                                        activeFloorObj.maxY === 4
+                                          ? '1fr 1fr 20px 1fr 1fr'
+                                          : `repeat(${activeFloorObj.maxY + 1}, minmax(0, 1fr))`,
+                                    }}
+                                  >
+                                    {Array.from({ length: activeFloorObj.maxY + 1 }).map((__, colY) => {
+                                      const cell = activeFloorObj.cells.find(
+                                        (c) => c.position.x === rowX && c.position.y === colY
                                       );
-                                    }
+                                      return renderSeatCell(cell, rowX, colY, true);
+                                    })}
+                                  </div>
+                                ))}
+                              </div>
 
-                                    if (cell.type === 'driver' || cell.type === 'wc' || cell.type === 'stairs') {
-                                      return (
-                                        <div
-                                          key={`${colX}-${rowY}`}
-                                          className="h-9 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 text-[9px] font-mono font-bold flex items-center justify-center select-none"
-                                          title={cell.label}
-                                        >
-                                          {cell.label}
-                                        </div>
-                                      );
-                                    }
-
-                                    const isSelected = selectedSeats.some(
-                                      (s) =>
-                                        s.segmentIndex === activeSegmentObj.segmentIndex &&
-                                        s.seatNumber === cell.seatNumber
-                                    );
-
-                                    return (
-                                      <button
-                                        key={`${colX}-${rowY}`}
-                                        type="button"
-                                        disabled={cell.occupied}
-                                        onClick={() =>
-                                          handleToggleSeat(
-                                            cell,
-                                            activeSegmentObj.segmentIndex,
-                                            activeFloorObj.floorIndex
-                                          )
-                                        }
-                                        className={`h-9 rounded-xl font-mono tabular-nums text-xs font-bold transition-all flex items-center justify-center ${
-                                          cell.occupied
-                                            ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
-                                            : isSelected
-                                            ? 'bg-[#C8102E] text-white border-2 border-[#C8102E] shadow-md scale-105 cursor-pointer ring-2 ring-red-200'
-                                            : 'bg-white text-slate-800 border-2 border-emerald-600 hover:bg-emerald-50 cursor-pointer'
-                                        }`}
-                                        title={
-                                          cell.occupied
-                                            ? `Poltrona ${cell.seatNumber} Ocupada (${activeSegmentObj.companyName || selectedOptionForSeats.company.name})`
-                                            : `Viação: ${activeSegmentObj.companyName || selectedOptionForSeats.company.name} · Poltrona ${cell.seatNumber} · ${formatBRL(
-                                                cell.pricing?.totalPrice ??
-                                                  selectedOptionForSeats.pricing.totalPrice
-                                              )}`
-                                        }
-                                      >
-                                        {cell.seatNumber}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              ))}
+                              <div className="text-center text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
+                                ↓ Fundo do Veículo
+                              </div>
                             </div>
                           </div>
-                        </div>
+
+                          {/* VISÃO HORIZONTAL NO DESKTOP / TABLET (MD+) */}
+                          <div className="hidden md:block bg-slate-50 rounded-3xl p-5 border border-slate-200 overflow-x-auto">
+                            <div className="min-w-[540px]">
+                              {/* Cabin Top Identification Header */}
+                              <div className="flex items-center justify-between gap-2 text-[11px] font-mono uppercase tracking-wider text-slate-600 mb-3 px-3 py-2 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+                                <span className="inline-flex items-center gap-1.5 font-bold text-slate-800 whitespace-nowrap">
+                                  <Bus size={14} className="text-[#C8102E]" />
+                                  <span>← Frente (Cabine) · Viação: {activeSegmentObj.companyName || selectedOptionForSeats.company.name}</span>
+                                </span>
+                                <span className="font-bold text-[#C8102E] bg-red-50 px-2.5 py-0.5 rounded-md border border-red-200/70 whitespace-nowrap">
+                                  {activeFloorObj.floorLabel}
+                                </span>
+                                <span className="text-slate-500 whitespace-nowrap">Fundo do Veículo →</span>
+                              </div>
+
+                              {/* Render rows across y = 0..maxY and x = 0..maxX */}
+                              <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs space-y-2 relative">
+                                {Array.from({ length: activeFloorObj.maxY + 1 }).map((_, rowY) => (
+                                  <div
+                                    key={rowY}
+                                    className="grid gap-1.5 items-center"
+                                    style={{
+                                      gridTemplateColumns: `repeat(${activeFloorObj.maxX + 1}, minmax(36px, 1fr))`,
+                                    }}
+                                  >
+                                    {Array.from({ length: activeFloorObj.maxX + 1 }).map((__, colX) => {
+                                      const cell = activeFloorObj.cells.find(
+                                        (c) => c.position.x === colX && c.position.y === rowY
+                                      );
+                                      return renderSeatCell(cell, colX, rowY, false);
+                                    })}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </>
                       )
                     )}
                   </div>
 
                   {/* Right 5 Cols: Passenger Form + Booking & Checkout */}
-                  <div className="lg:col-span-5 bg-slate-50/90 rounded-2xl p-5 border border-slate-200 space-y-5">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                  <div className="lg:col-span-5 bg-slate-50/90 rounded-2xl p-4 sm:p-5 border border-slate-200 space-y-4 sm:space-y-5">
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-3">
                       <div>
                         <div className="text-[11px] font-mono uppercase tracking-wider text-[#C8102E] font-bold">
                           Dados dos Passageiros &amp; Reserva
                         </div>
-                        <h4 className="text-base font-bold text-slate-900">
+                        <h4 className="text-sm sm:text-base font-bold text-slate-900">
                           {passengersCount} {passengersCount === 1 ? 'Passageiro' : 'Passageiros'}
                           {returnDate && stagedOutboundLeg ? ' · Ida + Volta' : ''}
                         </h4>
                       </div>
-                      <span className="font-mono text-xs font-bold text-slate-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                      <span className="font-mono text-xs font-bold text-slate-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shrink-0">
                         Total: {formatBRL(totalSelectedSeatsValue)}
                       </span>
                     </div>
@@ -2311,7 +2456,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     )}
 
                     {/* Dados dos Passageiros + Seguro Individual */}
-                    <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                    <div className="space-y-3 lg:max-h-64 lg:overflow-y-auto lg:pr-1">
                       {Array.from({ length: passengersCount }).map((_, idx) => {
                         const pForm = passengersForm[idx] || createEmptyPassenger();
                         return (
