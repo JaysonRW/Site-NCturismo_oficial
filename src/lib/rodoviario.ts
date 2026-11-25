@@ -591,6 +591,7 @@ export async function executeRodoviarioSearch(params: {
   travelType: 'direct' | 'connection';
   mode?: 'demo' | 'sandbox';
 }): Promise<SearchResponse> {
+  let hasServerJsonResponse = false;
   try {
     const res = await fetchRodoviarioApi('/api/rodoviario/search', {
       method: 'POST',
@@ -603,13 +604,17 @@ export async function executeRodoviarioSearch(params: {
         mode: params.mode,
       }),
     });
+    const contentType = (res.headers.get('content-type') || '').toLowerCase();
+    if (contentType.includes('application/json')) {
+      hasServerJsonResponse = true;
+    }
     const data = await res.json();
-    if (!res.ok) {
+    if (!res.ok || data?.ok === false) {
       throw new Error(data.message || `Falha na busca (${res.status})`);
     }
     return data;
   } catch (err: any) {
-    if (err?.message && err.message.includes('Origem e destino')) {
+    if (hasServerJsonResponse || (err?.message && err.message.includes('Origem e destino'))) {
       throw err;
     }
     const now = new Date();
@@ -631,6 +636,7 @@ export async function fetchRodoviarioSeats(
   option: SearchOption,
   mode?: 'demo' | 'sandbox'
 ): Promise<SeatMapResponse> {
+  let hasServerJsonResponse = false;
   try {
     const res = await fetchRodoviarioApi('/api/rodoviario/seats', {
       method: 'POST',
@@ -641,13 +647,17 @@ export async function fetchRodoviarioSeats(
         mode,
       }),
     });
+    const contentType = (res.headers.get('content-type') || '').toLowerCase();
+    if (contentType.includes('application/json')) {
+      hasServerJsonResponse = true;
+    }
     const data = await res.json();
-    if (!res.ok) {
+    if (!res.ok || data?.ok === false) {
       throw new Error(data.message || `Erro ao consultar poltronas (${res.status})`);
     }
     return data;
   } catch (err: any) {
-    if (err?.message && err.message.includes('Sandbox')) {
+    if (hasServerJsonResponse || (err?.message && err.message.includes('Sandbox'))) {
       throw err;
     }
     return buildFallbackSeatMap(option);

@@ -1380,6 +1380,15 @@ async function startServer() {
           allStops = [...topPriorityStations, ...parsedStops];
           stopsCache = { createdAtMs: now, items: allStops };
         } else {
+          if (cfg.qpEnv === 'production') {
+            return res.status(safeClientHttpStatus(upstream.status || 502)).json({
+              ok: false,
+              message:
+                upstream.errorMessage ||
+                'Não foi possível consultar a lista de rodoviárias no momento.',
+              errorCode: upstream.errorCode,
+            });
+          }
           allStops = DEMO_STOPS;
           activeMode = 'demo';
           upstreamWarning = upstream.errorMessage;
@@ -1520,6 +1529,16 @@ async function startServer() {
     const upstream = await callQueroPassagemUpstream(cfg, 'GET', endpointPath);
 
     if (!upstream.ok || !Array.isArray(upstream.data)) {
+      if (cfg.qpEnv === 'production') {
+        return res.status(safeClientHttpStatus(upstream.status || 502)).json({
+          ok: false,
+          message:
+            upstream.errorMessage ||
+            'Não foi possível consultar os horários rodoviários no momento. Tente novamente em instantes.',
+          errorCode: upstream.errorCode,
+          upstreamStatus: upstream.status,
+        });
+      }
       const fallbackOptions = generateDemoSearchOptions(from, to, travelDate, travelType);
       return res.json({
         ok: true,
@@ -1745,7 +1764,7 @@ async function startServer() {
     if (!upstream.ok) {
       return res.status(safeClientHttpStatus(upstream.status)).json({
         ok: false,
-        message: upstream.errorMessage || 'Falha ao consultar mapa de poltronas no Sandbox.',
+        message: upstream.errorMessage || 'Falha ao consultar mapa de poltronas no servidor rodoviário.',
         errorCode: upstream.errorCode,
       });
     }
@@ -2029,7 +2048,7 @@ async function startServer() {
     if (!upstream.ok) {
       return res.status(safeClientHttpStatus(upstream.status)).json({
         ok: false,
-        message: upstream.errorMessage || 'Falha ao processar checkout no Sandbox.',
+        message: upstream.errorMessage || 'Falha ao processar checkout no servidor rodoviário.',
         upstreamData: upstream.data,
         requestSent: qpCheckoutPayload,
         logEntry,
