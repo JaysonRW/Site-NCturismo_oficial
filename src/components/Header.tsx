@@ -5,6 +5,7 @@ import {
   X, 
   ArrowRight, 
   Building2, 
+  Bus,
   Cpu, 
   BarChart3, 
   ShieldCheck, 
@@ -150,7 +151,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* =========================================================================
             DESKTOP NAVIGATION
            ========================================================================= */}
-        <nav className="hidden lg:flex items-center space-x-7" aria-label="Navegação Principal">
+        <nav className="hidden lg:flex items-center space-x-5 xl:space-x-7" aria-label="Navegação Principal">
           
           {/* 1. CORPORATIVO (Mega Menu) */}
           <div 
@@ -402,13 +403,30 @@ export const Header: React.FC<HeaderProps> = ({
               e.preventDefault();
               navigateTo('/beneficios', 'beneficios');
             }}
-            className={`text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 ${
+            className={`text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 whitespace-nowrap ${
               currentView === 'beneficios'
                 ? 'text-nc-orange font-semibold'
                 : 'text-nc-warm/80 hover:text-white'
             }`}
           >
             Benefícios e Parcerias
+          </a>
+
+          {/* 3. PASSAGENS RODOVIÁRIAS (Direct Link) */}
+          <a
+            href="/rodoviario"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateTo('/rodoviario', 'rodoviario');
+            }}
+            className={`inline-flex items-center gap-1.5 text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 whitespace-nowrap ${
+              currentView === 'rodoviario'
+                ? 'text-nc-orange font-semibold'
+                : 'text-nc-warm/80 hover:text-white'
+            }`}
+          >
+            <Bus size={14} className="text-nc-orange shrink-0" />
+            <span>Passagens</span>
           </a>
 
           {/* 4. LAZER (Direct Link) */}
@@ -656,6 +674,30 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               </div>
               <ArrowRight size={15} className="text-white/40 group-hover:text-amber-400 group-hover:translate-x-1 transition-all shrink-0" />
+            </a>
+
+            {/* 3. PASSAGENS RODOVIÁRIAS */}
+            <a
+              href="/rodoviario"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('/rodoviario', 'rodoviario');
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-[#C8102E]/35 bg-gradient-to-r from-[#C8102E]/15 via-amber-500/5 to-transparent hover:border-[#C8102E]/70 transition-all text-white group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#C8102E]/20 border border-[#C8102E]/40 flex items-center justify-center text-nc-orange">
+                  <Bus size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white tracking-wide">Passagens Rodoviárias</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#C8102E]/25 text-red-200 border border-[#C8102E]/40">Online</span>
+                  </div>
+                  <p className="text-[11px] text-nc-warm/60">Pesquise horários, poltronas e compre sem filas</p>
+                </div>
+              </div>
+              <ArrowRight size={15} className="text-white/40 group-hover:text-nc-orange group-hover:translate-x-1 transition-all shrink-0" />
             </a>
 
             {/* 4. LAZER & TURISMO EXCLUSIVO */}
