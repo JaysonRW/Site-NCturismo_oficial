@@ -24,8 +24,9 @@ DirectoryIndex index.html
 
   # 4. Redirecionamento 301 de aliases legados para suas URLs canônicas
   RewriteRule ^blog$ https://ncturismo.com.br/conhecimento [R=301,L]
-  RewriteRule ^passagens-rodoviarias$ https://ncturismo.com.br/rodoviario [R=301,L]
-  RewriteRule ^onibus$ https://ncturismo.com.br/rodoviario [R=301,L]
+  RewriteRule ^rodoviario$ https://ncturismo.com.br/passagens-de-onibus [R=301,L]
+  RewriteRule ^passagens-rodoviarias$ https://ncturismo.com.br/passagens-de-onibus [R=301,L]
+  RewriteRule ^onibus$ https://ncturismo.com.br/passagens-de-onibus [R=301,L]
 
   # 5. Não interceptar rotas de API (/api/*) — processadas pelo backend Node.js / Passenger
   RewriteRule ^api(/|$) - [L]

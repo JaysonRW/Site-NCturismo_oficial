@@ -142,15 +142,15 @@ const STATIC_ROUTES = [
     priority: 0.5,
     changefreq: 'monthly',
   },
-  // Rota oculta do menu público durante homologação em produção, mas 100% funcional via URL direta
+  // Página pública de Passagens de Ônibus (indexável para SEO)
   {
-    path: '/rodoviario',
-    title: 'Portal Rodoviário Nacional • Consulta e Seleção de Assentos | NC Turismo',
+    path: '/passagens-de-onibus',
+    title: 'Passagens de Ônibus para Todo o Brasil | NC Turismo',
     description:
-      'Pesquisa rodoviária nacional com mapa de poltronas em tempo real em mais de 300 viações brasileiras.',
-    indexable: false,
-    priority: 0.7,
-    changefreq: 'weekly',
+      'Compare preços, horários e viações. Escolha sua poltrona no mapa em tempo real e viaje com a NC Turismo — Desde 1989.',
+    indexable: true,
+    priority: 0.9,
+    changefreq: 'daily',
   },
   // Rotas de apoio / internas
   {
@@ -199,21 +199,31 @@ const STATIC_ROUTES = [
   },
   // Aliases de compatibilidade para links diretos
   {
-    path: '/passagens-rodoviarias',
-    canonicalOverride: '/rodoviario',
-    title: 'Portal Rodoviário Nacional • Consulta e Seleção de Assentos | NC Turismo',
+    path: '/rodoviario',
+    canonicalOverride: '/passagens-de-onibus',
+    title: 'Passagens de Ônibus para Todo o Brasil | NC Turismo',
     description:
-      'Pesquisa rodoviária nacional com mapa de poltronas em tempo real em mais de 300 viações brasileiras.',
+      'Compare preços, horários e viações. Escolha sua poltrona no mapa em tempo real e viaje com a NC Turismo — Desde 1989.',
+    indexable: false,
+    priority: 0.5,
+    changefreq: 'weekly',
+  },
+  {
+    path: '/passagens-rodoviarias',
+    canonicalOverride: '/passagens-de-onibus',
+    title: 'Passagens de Ônibus para Todo o Brasil | NC Turismo',
+    description:
+      'Compare preços, horários e viações. Escolha sua poltrona no mapa em tempo real e viaje com a NC Turismo — Desde 1989.',
     indexable: false,
     priority: 0.5,
     changefreq: 'weekly',
   },
   {
     path: '/onibus',
-    canonicalOverride: '/rodoviario',
-    title: 'Portal Rodoviário Nacional • Consulta e Seleção de Assentos | NC Turismo',
+    canonicalOverride: '/passagens-de-onibus',
+    title: 'Passagens de Ônibus para Todo o Brasil | NC Turismo',
     description:
-      'Pesquisa rodoviária nacional com mapa de poltronas em tempo real em mais de 300 viações brasileiras.',
+      'Compare preços, horários e viações. Escolha sua poltrona no mapa em tempo real e viaje com a NC Turismo — Desde 1989.',
     indexable: false,
     priority: 0.5,
     changefreq: 'weekly',
@@ -312,7 +322,6 @@ ${urlEntries.join('\n')}
 Allow: /
 Disallow: /admin
 Disallow: /proposta
-Disallow: /rodoviario
 
 Sitemap: ${SITE_ORIGIN}/sitemap.xml
 `;

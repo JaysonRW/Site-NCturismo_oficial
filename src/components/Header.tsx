@@ -151,7 +151,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* =========================================================================
             DESKTOP NAVIGATION
            ========================================================================= */}
-        <nav className="hidden lg:flex items-center space-x-5 xl:space-x-7" aria-label="Navegação Principal">
+        <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6" aria-label="Navegação Principal">
           
           {/* 1. CORPORATIVO (Mega Menu) */}
           <div 
@@ -412,21 +412,21 @@ export const Header: React.FC<HeaderProps> = ({
             Benefícios e Parcerias
           </a>
 
-          {/* 3. PASSAGENS RODOVIÁRIAS (Direct Link) */}
+          {/* 3. PASSAGENS DE ÔNIBUS (Direct Link) */}
           <a
-            href="/rodoviario"
+            href="/passagens-de-onibus"
             onClick={(e) => {
               e.preventDefault();
-              navigateTo('/rodoviario', 'rodoviario');
+              navigateTo('/passagens-de-onibus', 'rodoviario');
             }}
-            className={`inline-flex items-center gap-1.5 text-[13px] uppercase tracking-[0.08em] font-medium transition-colors py-2 whitespace-nowrap ${
+            className={`inline-flex items-center gap-1.5 text-[12px] xl:text-[13px] uppercase tracking-[0.06em] xl:tracking-[0.08em] font-medium transition-colors py-2 whitespace-nowrap ${
               currentView === 'rodoviario'
                 ? 'text-nc-orange font-semibold'
                 : 'text-nc-warm/80 hover:text-white'
             }`}
           >
             <Bus size={14} className="text-nc-orange shrink-0" />
-            <span>Passagens</span>
+            <span>Passagens de Ônibus</span>
           </a>
 
           {/* 4. LAZER (Direct Link) */}
@@ -676,12 +676,12 @@ export const Header: React.FC<HeaderProps> = ({
               <ArrowRight size={15} className="text-white/40 group-hover:text-amber-400 group-hover:translate-x-1 transition-all shrink-0" />
             </a>
 
-            {/* 3. PASSAGENS RODOVIÁRIAS */}
+            {/* 3. PASSAGENS DE ÔNIBUS */}
             <a
-              href="/rodoviario"
+              href="/passagens-de-onibus"
               onClick={(e) => {
                 e.preventDefault();
-                navigateTo('/rodoviario', 'rodoviario');
+                navigateTo('/passagens-de-onibus', 'rodoviario');
               }}
               className="flex items-center justify-between p-3.5 rounded-2xl border border-[#C8102E]/35 bg-gradient-to-r from-[#C8102E]/15 via-amber-500/5 to-transparent hover:border-[#C8102E]/70 transition-all text-white group cursor-pointer"
             >
@@ -691,10 +691,10 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-white tracking-wide">Passagens Rodoviárias</span>
+                    <span className="text-sm font-bold text-white tracking-wide">Passagens de Ônibus</span>
                     <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#C8102E]/25 text-red-200 border border-[#C8102E]/40">Online</span>
                   </div>
-                  <p className="text-[11px] text-nc-warm/60">Pesquise horários, poltronas e compre sem filas</p>
+                  <p className="text-[11px] text-nc-warm/60">Compare preços, horários e escolha sua poltrona</p>
                 </div>
               </div>
               <ArrowRight size={15} className="text-white/40 group-hover:text-nc-orange group-hover:translate-x-1 transition-all shrink-0" />

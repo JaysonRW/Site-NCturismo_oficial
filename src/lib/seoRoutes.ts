@@ -205,13 +205,14 @@ export const SEO_ROUTES: Record<AppViewName, SeoRouteDefinition> = {
   },
   rodoviario: {
     view: 'rodoviario',
-    canonicalPath: '/rodoviario',
-    title: 'Portal Rodoviário Nacional • Consulta e Seleção de Assentos | NC Turismo',
+    canonicalPath: '/passagens-de-onibus',
+    title: 'Passagens de Ônibus para Todo o Brasil | NC Turismo',
     description:
-      'Pesquisa rodoviária nacional com mapa de poltronas em tempo real em mais de 300 viações brasileiras.',
-    indexable: false, // Oculto do sitemap público até conclusão dos testes em produção
-    priority: 0.7,
-    changefreq: 'weekly',
+      'Compare preços, horários e viações. Escolha sua poltrona no mapa em tempo real e viaje com a NC Turismo — Desde 1989.',
+    sitelinkLabel: 'Passagens de Ônibus',
+    indexable: true,
+    priority: 0.9,
+    changefreq: 'daily',
   },
   proposta: {
     view: 'proposta',
@@ -386,8 +387,14 @@ export function resolveTokenToRoute(rawToken: string, isFromHash = false): Resol
   if (lower === 'lazer') {
     return { view: 'lazer', canonicalPath: '/lazer', wasLegacyHash: isFromHash };
   }
-  if (lower === 'rodoviario' || lower === 'passagens-rodoviarias' || lower === 'onibus') {
-    return { view: 'rodoviario', canonicalPath: '/rodoviario', wasLegacyHash: isFromHash };
+  if (
+    lower === 'passagens-de-onibus' ||
+    lower === 'passagens-onibus' ||
+    lower === 'rodoviario' ||
+    lower === 'passagens-rodoviarias' ||
+    lower === 'onibus'
+  ) {
+    return { view: 'rodoviario', canonicalPath: '/passagens-de-onibus', wasLegacyHash: isFromHash };
   }
   if (
     lower === 'beneficios' ||

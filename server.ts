@@ -2431,7 +2431,6 @@ async function startServer() {
       'User-agent: *',
       'Allow: /',
       'Disallow: /admin',
-      'Disallow: /rodoviario',
       'Disallow: /proposta/',
       'Disallow: /api/',
       '',
@@ -2580,8 +2579,8 @@ ${urlEntries.join('\n')}
         return res.redirect(301, `${cleanPath}${qs}`);
       }
       if (req.path === '/blog') return res.redirect(301, '/conhecimento');
-      if (req.path === '/passagens-rodoviarias' || req.path === '/onibus') {
-        return res.redirect(301, '/rodoviario');
+      if (req.path === '/rodoviario' || req.path === '/passagens-rodoviarias' || req.path === '/onibus') {
+        return res.redirect(301, '/passagens-de-onibus');
       }
 
       // Tenta entregar o HTML pré-renderizado plano (dist/<rota>.html) antes de cair no index.html
