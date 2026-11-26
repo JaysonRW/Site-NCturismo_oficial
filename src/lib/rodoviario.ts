@@ -718,6 +718,25 @@ export async function createRodoviarioBooking(params: {
   return data;
 }
 
+/**
+ * Cancela uma pré-reserva pendente para liberar imediatamente as poltronas no gateway.
+ */
+export async function deleteRodoviarioBooking(bookingId: string): Promise<{
+  ok: boolean;
+  data?: any;
+  message?: string;
+}> {
+  const res = await fetchRodoviarioApi(
+    `/api/rodoviario/booking/${encodeURIComponent(String(bookingId).trim())}`,
+    { method: 'DELETE' }
+  );
+  const data = await parseApiResponseJson(res, 'Cancelamento de pré-reserva');
+  if (!res.ok || data.ok === false) {
+    throw new Error(data.message || `Falha ao liberar pré-reserva (${res.status})`);
+  }
+  return data;
+}
+
 export interface RodoviarioOrderSeatSummary {
   leg: 'ida' | 'volta';
   segmentIndex: number;

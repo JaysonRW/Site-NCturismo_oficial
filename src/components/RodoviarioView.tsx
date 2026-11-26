@@ -47,7 +47,9 @@ import {
   fetchRodoviarioSeats,
   fetchConnectionSuggestions,
   createRodoviarioBooking,
+  deleteRodoviarioBooking,
   executeRodoviarioCheckout,
+  fetchRodoviarioPurchaseGet,
 } from '../lib/rodoviario';
 
 interface RodoviarioViewProps {
@@ -119,6 +121,69 @@ const formatDateShort = (yyyyMmDd: string) => {
   if (parts.length !== 3) return yyyyMmDd;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 };
+
+const onlyDigits = (val: string) => val.replace(/\D/g, '');
+
+const formatCpfMask = (val: string) => {
+  const digits = onlyDigits(val).slice(0, 11);
+  return digits
+    .replace(/^(\d{3})(\d)/, '$1.$2')
+    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
+};
+
+const formatCepMask = (val: string) => {
+  const digits = onlyDigits(val).slice(0, 8);
+  return digits.replace(/^(\d{5})(\d)/, '$1-$2');
+};
+
+const formatPhoneMask = (val: string) => {
+  const digits = onlyDigits(val).slice(0, 11);
+  if (digits.length <= 2) return digits ? `(${digits}` : '';
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+};
+
+const formatCardNumberMask = (val: string) => {
+  const digits = onlyDigits(val).slice(0, 16);
+  return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+};
+
+const formatCardExpiryMask = (val: string) => {
+  const digits = onlyDigits(val).slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+};
+
+/**
+ * Converte MM/AA digitado pelo usuário para AAAA-MM esperado pelo gateway.
+ * Aceita também AAAA-MM caso colado diretamente.
+ */
+const toApiCardExpiry = (raw: string): string | null => {
+  const trimmed = raw.trim();
+  const isoMatch = /^(\d{4})[-/](\d{2})$/.exec(trimmed);
+  if (isoMatch) {
+    const monthNum = Number(isoMatch[2]);
+    return monthNum >= 1 && monthNum <= 12 ? `${isoMatch[1]}-${isoMatch[2]}` : null;
+  }
+
+  const brMatch = /^(\d{2})\/(\d{2})$/.exec(trimmed);
+  if (brMatch) {
+    const monthNum = Number(brMatch[1]);
+    if (monthNum < 1 || monthNum > 12) return null;
+    return `20${brMatch[2]}-${brMatch[1]}`;
+  }
+
+  return null;
+};
+
+const isFinalPurchaseStatus = (status?: string) =>
+  ['paid', 'confirmed', 'canceled', 'cancelled', 'refunded'].includes(
+    String(status || '').toLowerCase()
+  );
 
 interface InstitutionalLogoConfig {
   id: string;
@@ -265,6 +330,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   const [checkoutLoading, setCheckoutLoading] = useState<boolean>(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [completedPurchase, setCompletedPurchase] = useState<any | null>(null);
+  const [checkingPurchaseStatus, setCheckingPurchaseStatus] = useState<boolean>(false);
 
   // Cronômetro visual de ~10 min enquanto a pré-reserva aguarda pagamento
   useEffect(() => {
@@ -280,6 +346,38 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
     return () => clearInterval(interval);
   }, [createdBooking?.id, completedPurchase, BOOKING_HOLD_SECONDS]);
+
+  // Polling automático para confirmar pagamento PIX / pedidos em confirmação
+  useEffect(() => {
+    if (!completedPurchase?.id || isFinalPurchaseStatus(completedPurchase?.status)) {
+      return;
+    }
+
+    let attempts = 0;
+    const MAX_ATTEMPTS = 75; // ~10 min em intervalos de 8s
+
+    const timer = setInterval(async () => {
+      attempts += 1;
+      if (attempts > MAX_ATTEMPTS) {
+        clearInterval(timer);
+        return;
+      }
+
+      try {
+        const res = await fetchRodoviarioPurchaseGet({
+          id: completedPurchase.id,
+          email: buyerEmail.trim() || 'homologacao@ncturismo.com.br',
+        });
+        if (res.purchase) {
+          setCompletedPurchase(res.purchase);
+        }
+      } catch {
+        // Silencioso no polling automático; cliente também dispõe do botão manual
+      }
+    }, 8000);
+
+    return () => clearInterval(timer);
+  }, [completedPurchase?.id, completedPurchase?.status, buyerEmail]);
 
   // Refs for closing dropdowns on outside click and focusing inputs after clearing
   const originRef = useRef<HTMLDivElement>(null);
@@ -651,11 +749,23 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
     }
   };
 
+  const releaseActiveBooking = (clearSeatsOrError = false) => {
+    if (createdBooking?.id && !completedPurchase) {
+      void deleteRodoviarioBooking(String(createdBooking.id)).catch(() => {
+        // Best-effort: caso já tenha expirado no gateway, apenas segue o fluxo local
+      });
+    }
+    setCreatedBooking(null);
+    if (clearSeatsOrError) {
+      setCheckoutError(null);
+    }
+  };
+
   const handleCloseSeatMap = () => {
+    releaseActiveBooking(true);
     setSelectedOptionForSeats(null);
     setSeatMapData(null);
     setSelectedSeats([]);
-    setCreatedBooking(null);
     setCompletedPurchase(null);
   };
 
@@ -795,8 +905,12 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
         setBookingError(`Preencha todos os dados obrigatórios do Passageiro ${i + 1} (Nome, RG, CPF e Data de Nascimento).`);
         return;
       }
-      if (p.includeInsurance && !p.cep.trim()) {
-        setBookingError(`Informe o CEP do Passageiro ${i + 1} para emissão do Seguro Viagem.`);
+      if (onlyDigits(p.cpf).length !== 11) {
+        setBookingError(`Informe os 11 dígitos do CPF do Passageiro ${i + 1}.`);
+        return;
+      }
+      if (p.includeInsurance && onlyDigits(p.cep).length !== 8) {
+        setBookingError(`Informe um CEP válido com 8 dígitos para o Passageiro ${i + 1} (Seguro Viagem).`);
         return;
       }
     }
@@ -828,11 +942,37 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
         travels: travelsPayload,
       });
 
+      // Auto-preenche nome e CPF do comprador com Passageiro 1 se ainda vazios (mantendo edição livre)
+      if (!buyerName.trim() && passengersForm[0]?.name.trim()) {
+        setBuyerName(passengersForm[0].name.trim());
+      }
+      if (!buyerCpf.trim() && passengersForm[0]?.cpf.trim()) {
+        setBuyerCpf(formatCpfMask(passengersForm[0].cpf));
+      }
+
       setCreatedBooking(res.booking);
     } catch (err: any) {
       setBookingError(err.message || 'Não foi possível criar a pré-reserva. Verifique os dados e tente novamente.');
     } finally {
       setBookingLoading(false);
+    }
+  };
+
+  const handleRefreshPurchaseStatus = async () => {
+    if (!completedPurchase?.id || checkingPurchaseStatus) return;
+    setCheckingPurchaseStatus(true);
+    try {
+      const res = await fetchRodoviarioPurchaseGet({
+        id: completedPurchase.id,
+        email: buyerEmail.trim() || 'homologacao@ncturismo.com.br',
+      });
+      if (res.purchase) {
+        setCompletedPurchase(res.purchase);
+      }
+    } catch {
+      // Mantém estado atual caso consulta falhe momentaneamente
+    } finally {
+      setCheckingPurchaseStatus(false);
     }
   };
 
@@ -844,12 +984,35 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
       return;
     }
 
-    if (
-      paymentMethod === 'creditCard' &&
-      (!cardNumber.trim() || !cardHolder.trim() || !cardExpiresAt.trim() || !cardCvv.trim())
-    ) {
-      setCheckoutError('Preencha todos os dados do cartão de crédito.');
+    if (onlyDigits(buyerCpf).length !== 11) {
+      setCheckoutError('Informe um CPF válido com 11 dígitos para o comprador.');
       return;
+    }
+
+    if (onlyDigits(buyerPhone).length < 10) {
+      setCheckoutError('Informe um telefone/WhatsApp válido com DDD.');
+      return;
+    }
+
+    const formattedExpiry = paymentMethod === 'creditCard' ? toApiCardExpiry(cardExpiresAt) : null;
+
+    if (paymentMethod === 'creditCard') {
+      if (!cardNumber.trim() || !cardHolder.trim() || !cardExpiresAt.trim() || !cardCvv.trim()) {
+        setCheckoutError('Preencha todos os dados do cartão de crédito.');
+        return;
+      }
+      if (onlyDigits(cardNumber).length < 13) {
+        setCheckoutError('Número do cartão incompleto.');
+        return;
+      }
+      if (!formattedExpiry) {
+        setCheckoutError('Informe a validade do cartão no formato MM/AA (ex.: 10/30).');
+        return;
+      }
+      if (onlyDigits(cardCvv).length < 3) {
+        setCheckoutError('Informe um CVV válido (3 ou 4 dígitos).');
+        return;
+      }
     }
 
     setCheckoutLoading(true);
@@ -906,8 +1069,8 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
             ? {
               cardNumber: cardNumber.trim(),
               holder: cardHolder.trim(),
-              expiresAt: cardExpiresAt.trim(),
-              securityCode: cardCvv.trim(),
+              expiresAt: formattedExpiry || cardExpiresAt.trim(),
+              securityCode: onlyDigits(cardCvv).slice(0, 4),
               installment: 1,
             }
             : {}),
@@ -2112,6 +2275,23 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                             {isConn ? 'Com Conexão' : 'Viagem Direta'}
                           </span>
 
+                          {option.withBPE !== undefined && (
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-bold border ${
+                                option.withBPE
+                                  ? 'bg-sky-50 text-sky-800 border-sky-200'
+                                  : 'bg-slate-50 text-slate-600 border-slate-200'
+                              }`}
+                              title={
+                                option.withBPE
+                                  ? 'Bilhete de Passagem Eletrônico: embarque direto no ônibus sem passar no guichê'
+                                  : 'Necessária retirada do bilhete no guichê da viação antes do embarque'
+                              }
+                            >
+                              <Ticket size={11} className="shrink-0" />
+                              <span>{option.withBPE ? 'Embarque direto (BPE)' : 'Retirada no guichê'}</span>
+                            </span>
+                          )}
                           {isManual && (
                             <span className="px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
                               Confirmação sob consulta
@@ -2465,10 +2645,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     {createdBooking && !completedPurchase && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setCreatedBooking(null);
-                          setCheckoutError(null);
-                        }}
+                        onClick={() => releaseActiveBooking(true)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 cursor-pointer transition-colors"
                       >
                         <ArrowLeft size={13} />
@@ -2899,10 +3076,12 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 <label className="block text-[10px] font-mono text-slate-500">CPF</label>
                                 <input
                                   type="text"
+                                  inputMode="numeric"
+                                  maxLength={14}
                                   placeholder="000.000.000-00"
                                   value={pForm.cpf}
                                   onChange={(e) => {
-                                    const val = e.target.value;
+                                    const val = formatCpfMask(e.target.value);
                                     setPassengersForm((prev) =>
                                       prev.map((item, i) => (i === idx ? { ...item, cpf: val } : item))
                                     );
@@ -2976,10 +3155,12 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                   </label>
                                   <input
                                     type="text"
+                                    inputMode="numeric"
+                                    maxLength={9}
                                     placeholder="00000-000"
                                     value={pForm.cep}
                                     onChange={(e) => {
-                                      const val = e.target.value;
+                                      const val = formatCepMask(e.target.value);
                                       setPassengersForm((prev) =>
                                         prev.map((item, i) => (i === idx ? { ...item, cep: val } : item))
                                       );
@@ -3081,6 +3262,26 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 {selectedOptionForSeats.departure.time.slice(0, 5)}
                               </span>
                             </div>
+
+                            {selectedOptionForSeats.withBPE !== undefined && (
+                              <div className="flex items-center justify-between gap-2 text-[11px]">
+                                <span className="text-slate-500">Forma de embarque</span>
+                                <span
+                                  className={`inline-flex items-center gap-1 font-mono font-bold px-2 py-0.5 rounded border ${
+                                    selectedOptionForSeats.withBPE
+                                      ? 'bg-sky-50 text-sky-800 border-sky-200'
+                                      : 'bg-slate-50 text-slate-700 border-slate-200'
+                                  }`}
+                                >
+                                  <Ticket size={11} />
+                                  <span>
+                                    {selectedOptionForSeats.withBPE
+                                      ? 'Embarque direto (BPE)'
+                                      : 'Retirada no guichê'}
+                                  </span>
+                                </span>
+                              </div>
+                            )}
 
                             {stagedOutboundLeg && (
                               <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 font-medium">
@@ -3293,9 +3494,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                               </label>
                               <input
                                 type="text"
+                                inputMode="numeric"
+                                maxLength={14}
                                 placeholder="000.000.000-00"
                                 value={buyerCpf}
-                                onChange={(e) => setBuyerCpf(e.target.value)}
+                                onChange={(e) => setBuyerCpf(formatCpfMask(e.target.value))}
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-mono"
                               />
                             </div>
@@ -3305,9 +3508,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                               </label>
                               <input
                                 type="text"
+                                inputMode="tel"
+                                maxLength={15}
                                 placeholder="(00) 00000-0000"
                                 value={buyerPhone}
-                                onChange={(e) => setBuyerPhone(e.target.value)}
+                                onChange={(e) => setBuyerPhone(formatPhoneMask(e.target.value))}
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-mono"
                               />
                             </div>
@@ -3340,9 +3545,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 </label>
                                 <input
                                   type="text"
+                                  inputMode="numeric"
+                                  maxLength={19}
                                   placeholder="0000 0000 0000 0000"
                                   value={cardNumber}
-                                  onChange={(e) => setCardNumber(e.target.value)}
+                                  onChange={(e) => setCardNumber(formatCardNumberMask(e.target.value))}
                                   className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-mono text-xs bg-white"
                                 />
                               </div>
@@ -3354,19 +3561,21 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                   type="text"
                                   placeholder="NOME COMO NO CARTÃO"
                                   value={cardHolder}
-                                  onChange={(e) => setCardHolder(e.target.value)}
+                                  onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
                                   className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white uppercase"
                                 />
                               </div>
                               <div className="col-span-2">
                                 <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
-                                  Validade (AAAA-MM)
+                                  Validade (MM/AA)
                                 </label>
                                 <input
                                   type="text"
-                                  placeholder="2030-10"
+                                  inputMode="numeric"
+                                  maxLength={7}
+                                  placeholder="10/30"
                                   value={cardExpiresAt}
-                                  onChange={(e) => setCardExpiresAt(e.target.value)}
+                                  onChange={(e) => setCardExpiresAt(formatCardExpiryMask(e.target.value))}
                                   className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-mono text-xs bg-white"
                                 />
                               </div>
@@ -3376,9 +3585,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 </label>
                                 <input
                                   type="text"
+                                  inputMode="numeric"
+                                  maxLength={4}
                                   placeholder="000"
                                   value={cardCvv}
-                                  onChange={(e) => setCardCvv(e.target.value)}
+                                  onChange={(e) => setCardCvv(onlyDigits(e.target.value).slice(0, 4))}
                                   className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-mono text-xs bg-white"
                                 />
                               </div>
@@ -3484,6 +3695,31 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                 Os detalhes da sua viagem e a emissão do bilhete serão enviados para{' '}
                                 <strong>{buyerEmail}</strong>.
                               </p>
+
+                              {!isFinalPurchaseStatus(completedPurchase.status) && (
+                                <div className="pt-2 border-t border-emerald-200/80 flex flex-wrap items-center justify-between gap-2">
+                                  <span className="text-[11px] text-emerald-800 inline-flex items-center gap-1.5">
+                                    <RefreshCw size={12} className="animate-spin text-emerald-600" />
+                                    <span>Aguardando confirmação · verificando automaticamente</span>
+                                  </span>
+                                  <button
+                                    type="button"
+                                    disabled={checkingPurchaseStatus}
+                                    onClick={handleRefreshPurchaseStatus}
+                                    className="px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-[11px] inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                                  >
+                                    <RefreshCw
+                                      size={12}
+                                      className={checkingPurchaseStatus ? 'animate-spin' : ''}
+                                    />
+                                    <span>
+                                      {checkingPurchaseStatus
+                                        ? 'Verificando...'
+                                        : 'Já realizei o pagamento'}
+                                    </span>
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           );
                         })()}
