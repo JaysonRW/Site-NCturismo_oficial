@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ArrowLeft,
+  Award,
+  Building2,
   Bus,
+  ChevronDown,
   MapPin,
   Calendar,
   ArrowLeftRight,
@@ -23,6 +26,9 @@ import {
   MessageSquare,
   CreditCard,
   Shield,
+  Receipt,
+  Ticket,
+  Lock,
 } from 'lucide-react';
 import {
   StopItem,
@@ -112,8 +118,54 @@ const formatDateShort = (yyyyMmDd: string) => {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 };
 
+interface InstitutionalLogoConfig {
+  id: string;
+  src: string;
+  alt: string;
+}
+
+const INSTITUTIONAL_LOGOS: InstitutionalLogoConfig[] = [
+  {
+    id: 'cadastur',
+    src: '/logo_cadastur.png',
+    alt: 'Cadastur — Ministério do Turismo',
+  },
+  {
+    id: 'iata',
+    src: '/logo_iata.webp',
+    alt: 'IATA — Credencial institucional do setor aéreo',
+  },
+  {
+    id: 'abav',
+    src: '/logo_ABAV.jpg',
+    alt: 'ABAV — Associação Brasileira de Agências de Viagens',
+  },
+];
+
+/** Selo oficial com imagem institucional padronizada em altura e container neutro */
+const InstitutionalLogoBadge: React.FC<{
+  src: string;
+  alt: string;
+  compact?: boolean;
+}> = ({ src, alt, compact = false }) => (
+  <span
+    className={`inline-flex items-center justify-center rounded-xl bg-white border border-slate-200/90 shadow-2xs select-none overflow-hidden ${
+      compact ? 'h-8 px-2 py-1' : 'h-10 px-3 py-1.5'
+    }`}
+  >
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={`${compact ? 'h-6 max-w-[84px]' : 'h-7 max-w-[110px]'} w-auto object-contain`}
+    />
+  </span>
+);
+
 export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   onBackToHome,
+  onOpenDiagnosis,
   onOpenBeneficios,
 }) => {
   // =========================================================================
@@ -174,6 +226,9 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   const [travelModeFilter, setTravelModeFilter] = useState<TravelModeFilter>('all');
   const [maxPriceFilter, setMaxPriceFilter] = useState<number>(1000);
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false);
+  const INITIAL_VISIBLE_RESULTS = 5;
+  const RESULTS_PAGE_STEP = 10;
+  const [visibleResultsCount, setVisibleResultsCount] = useState<number>(INITIAL_VISIBLE_RESULTS);
 
   // =========================================================================
   // SEAT MAP & CHECKOUT MODAL STATE
@@ -393,7 +448,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
         .then((res) => {
           setOutboundConnRes(res);
         })
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => {
           setOutboundConnLoading(false);
         });
@@ -434,7 +489,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
           .then((res) => {
             setInboundConnRes(res);
           })
-          .catch(() => {})
+          .catch(() => { })
           .finally(() => {
             setInboundConnLoading(false);
           });
@@ -519,7 +574,30 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
     setTimePeriod('all');
     setTravelModeFilter('all');
     setMaxPriceFilter(highestOptionPrice);
+    setVisibleResultsCount(INITIAL_VISIBLE_RESULTS);
   };
+
+  // Reseta a janela de visualização para 5 itens sempre que mudar busca, trecho, filtros ou ordenação
+  useEffect(() => {
+    setVisibleResultsCount(INITIAL_VISIBLE_RESULTS);
+  }, [
+    activeTripStep,
+    outboundDirectRes,
+    inboundDirectRes,
+    travelModeFilter,
+    selectedCompanies,
+    selectedClasses,
+    maxPriceFilter,
+    timePeriod,
+    sortBy,
+  ]);
+
+  const visibleOptions = useMemo(
+    () => filteredAndSortedOptions.slice(0, visibleResultsCount),
+    [filteredAndSortedOptions, visibleResultsCount]
+  );
+  const remainingResultsCount = Math.max(0, filteredAndSortedOptions.length - visibleOptions.length);
+  const nextResultsBatchCount = Math.min(RESULTS_PAGE_STEP, remainingResultsCount);
 
   // =========================================================================
   // HANDLERS: SEAT MAP, BOOKING & CHECKOUT
@@ -676,13 +754,13 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
         includeInsurance: pForm.includeInsurance,
         ...(pForm.includeInsurance
           ? {
-              insurance: {
-                cpf: pForm.cpf.trim(),
-                birthDate: pForm.birthDate.trim(),
-                bithDate: pForm.birthDate.trim(),
-                cep: pForm.cep.trim(),
-              },
-            }
+            insurance: {
+              cpf: pForm.cpf.trim(),
+              birthDate: pForm.birthDate.trim(),
+              bithDate: pForm.birthDate.trim(),
+              cep: pForm.cep.trim(),
+            },
+          }
           : {}),
       };
     });
@@ -769,11 +847,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
       const allLegSeats = [
         ...(isRoundTripOrder && stagedOutboundLeg
           ? stagedOutboundLeg.seats.map((s) => ({
-              leg: 'ida' as const,
-              segmentIndex: s.segmentIndex,
-              seatNumber: s.seatNumber,
-              companyName: stagedOutboundLeg.option.company.name,
-            }))
+            leg: 'ida' as const,
+            segmentIndex: s.segmentIndex,
+            seatNumber: s.seatNumber,
+            companyName: stagedOutboundLeg.option.company.name,
+          }))
           : []),
         ...selectedSeats.map((s) => ({
           leg: (isRoundTripOrder ? 'volta' : 'ida') as 'ida' | 'volta',
@@ -806,42 +884,42 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
           method: paymentMethod,
           ...(paymentMethod === 'creditCard'
             ? {
-                cardNumber: cardNumber.trim(),
-                holder: cardHolder.trim(),
-                expiresAt: cardExpiresAt.trim(),
-                securityCode: cardCvv.trim(),
-                installment: 1,
-              }
+              cardNumber: cardNumber.trim(),
+              holder: cardHolder.trim(),
+              expiresAt: cardExpiresAt.trim(),
+              securityCode: cardCvv.trim(),
+              installment: 1,
+            }
             : {}),
         },
         includeCallbackUrl: Boolean(selectedOptionForSeats?.manualConfirmation),
         externalId: `NCT-${Date.now()}`,
         orderSummary: primaryLegOption
           ? {
-              travelType: isRoundTripOrder ? 'roundtrip' : primaryLegOption.travelType,
-              originName: primaryLegOption.from.name,
-              destinationName: primaryLegOption.to.name,
-              departureDate: primaryLegOption.departure.date,
-              departureTime: primaryLegOption.departure.time.slice(0, 5),
-              arrivalTime: primaryLegOption.arrival.time.slice(0, 5),
-              returnDate: isRoundTripOrder ? returnDate : undefined,
-              companyName:
-                isRoundTripOrder &&
+            travelType: isRoundTripOrder ? 'roundtrip' : primaryLegOption.travelType,
+            originName: primaryLegOption.from.name,
+            destinationName: primaryLegOption.to.name,
+            departureDate: primaryLegOption.departure.date,
+            departureTime: primaryLegOption.departure.time.slice(0, 5),
+            arrivalTime: primaryLegOption.arrival.time.slice(0, 5),
+            returnDate: isRoundTripOrder ? returnDate : undefined,
+            companyName:
+              isRoundTripOrder &&
                 selectedOptionForSeats &&
                 stagedOutboundLeg?.option.company.name !== selectedOptionForSeats.company.name
-                  ? `${stagedOutboundLeg?.option.company.name} / ${selectedOptionForSeats.company.name}`
-                  : primaryLegOption.company.name,
-              seatClass: primaryLegOption.seatClass,
-              passengersCount,
-              passengersNames: Array.from({ length: passengersCount }).map((_, idx) =>
-                (passengersForm[idx]?.name || `Passageiro ${idx + 1}`).trim()
-              ),
-              seats: allLegSeats,
-              seatPrice: seatPriceSum,
-              taxPrice: taxPriceSum,
-              insurancePrice: insurancePriceSum,
-              totalPrice: seatPriceSum + taxPriceSum + insurancePriceSum,
-            }
+                ? `${stagedOutboundLeg?.option.company.name} / ${selectedOptionForSeats.company.name}`
+                : primaryLegOption.company.name,
+            seatClass: primaryLegOption.seatClass,
+            passengersCount,
+            passengersNames: Array.from({ length: passengersCount }).map((_, idx) =>
+              (passengersForm[idx]?.name || `Passageiro ${idx + 1}`).trim()
+            ),
+            seats: allLegSeats,
+            seatPrice: seatPriceSum,
+            taxPrice: taxPriceSum,
+            insurancePrice: insurancePriceSum,
+            totalPrice: seatPriceSum + taxPriceSum + insurancePriceSum,
+          }
           : undefined,
       });
 
@@ -902,12 +980,12 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
           className={`${isVerticalMobile ? 'h-11' : 'h-9'} rounded-lg flex items-center justify-center text-[9px] font-mono text-slate-300 select-none`}
         >
           {!isVerticalMobile &&
-          rowY === 2 &&
-          colX === Math.floor(activeFloorObj.maxX / 2)
+            rowY === 2 &&
+            colX === Math.floor(activeFloorObj.maxX / 2)
             ? 'CORREDOR'
             : isVerticalMobile && cell?.type === 'corridor'
-            ? '·'
-            : ''}
+              ? '·'
+              : ''}
         </div>
       );
     }
@@ -942,22 +1020,20 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
             activeFloorObj.floorIndex
           )
         }
-        className={`${
-          isVerticalMobile ? 'h-11 rounded-xl text-sm' : 'h-9 rounded-xl text-xs'
-        } font-mono tabular-nums font-bold transition-all flex items-center justify-center ${
-          cell.occupied
+        className={`${isVerticalMobile ? 'h-11 rounded-xl text-sm' : 'h-9 rounded-xl text-xs'
+          } font-mono tabular-nums font-bold transition-all flex items-center justify-center ${cell.occupied
             ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
             : isSelected
-            ? 'bg-[#C8102E] text-white border-2 border-[#C8102E] shadow-md scale-105 cursor-pointer ring-2 ring-red-200'
-            : 'bg-white text-slate-800 border-2 border-emerald-600 hover:bg-emerald-50 cursor-pointer'
-        }`}
+              ? 'bg-[#C8102E] text-white border-2 border-[#C8102E] shadow-md scale-105 cursor-pointer ring-2 ring-red-200'
+              : 'bg-white text-slate-800 border-2 border-emerald-600 hover:bg-emerald-50 cursor-pointer'
+          }`}
         title={
           cell.occupied
             ? `Poltrona ${cell.seatNumber} Ocupada (${activeSegmentObj.companyName || selectedOptionForSeats.company.name})`
             : `Viação: ${activeSegmentObj.companyName || selectedOptionForSeats.company.name} · Poltrona ${cell.seatNumber} · ${formatBRL(
-                cell.pricing?.totalPrice ??
-                  selectedOptionForSeats.pricing.totalPrice
-              )}`
+              cell.pricing?.totalPrice ??
+              selectedOptionForSeats.pricing.totalPrice
+            )}`
         }
       >
         {cell.seatNumber}
@@ -966,22 +1042,26 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans selection:bg-[#C8102E] selection:text-white pt-24 sm:pt-28 pb-16 sm:pb-20">
+    <div className="min-h-screen bg-[#E9EEF5] text-[#0F172A] font-sans selection:bg-[#C8102E] selection:text-white pt-24 sm:pt-28 pb-16 sm:pb-20">
       {/* =====================================================================
           TOP HEADER / BREADCRUMB
          ===================================================================== */}
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-12 lg:px-20 mb-5 sm:mb-6">
-        <div className="flex items-center justify-center sm:justify-between flex-wrap gap-3 sm:gap-4 pb-4 sm:pb-5 border-b border-slate-200/90">
+        <div className="flex items-center justify-center sm:justify-between flex-wrap gap-3 sm:gap-4 pb-4 sm:pb-5 border-b border-slate-300/80">
           <button
             onClick={onBackToHome}
-            className="group flex items-center gap-2 text-slate-600 hover:text-[#C8102E] text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors py-2 px-4 rounded-full bg-white hover:bg-red-50/50 border border-slate-200 shadow-xs cursor-pointer"
+            className="group flex items-center gap-2 text-slate-700 hover:text-[#C8102E] text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors py-2 px-4 rounded-full bg-white hover:bg-red-50/60 border border-slate-300/90 shadow-xs cursor-pointer"
           >
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform text-[#C8102E]" />
             Voltar para o site principal
           </button>
 
-          <div className="flex items-center gap-3 text-xs font-mono text-slate-600 flex-wrap justify-center">
-            <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
+          <div className="flex items-center gap-2 sm:gap-3 text-xs font-mono text-slate-600 flex-wrap justify-center">
+            <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800 bg-white border border-slate-300/90 px-3 py-1.5 rounded-full shadow-2xs">
+              <Award size={14} className="text-[#DB8902]" />
+              <span>NC Turismo · Desde 1989</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full shadow-2xs">
               <ShieldCheck size={14} className="text-emerald-600" />
               <span>Compra Segura · +300 Viações Oficiais</span>
             </span>
@@ -993,7 +1073,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
           SEARCH-FIRST COMMERCIAL HEADER & SEARCH ENGINE CONSOLE
          ===================================================================== */}
       <section className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-12 lg:px-20 mb-6 sm:mb-8">
-        <div className="relative rounded-3xl bg-white border border-slate-200/90 p-4 sm:p-7 lg:p-8 shadow-xl shadow-slate-200/60 overflow-visible">
+        <div className="relative rounded-3xl bg-white border border-slate-300/80 p-4 sm:p-7 lg:p-8 shadow-lg shadow-slate-900/5 overflow-visible">
           {/* Soft warm daylight radial highlights */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-red-500/5 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -1033,7 +1113,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
              ================================================================= */}
           <form
             onSubmit={handleRunSearch}
-            className="relative z-20 bg-slate-50/85 border-2 border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-md shadow-slate-200/40"
+            className="relative z-20 bg-[#F3F6FA] border border-slate-300/75 rounded-2xl p-4 sm:p-5 shadow-inner"
           >
             {/* Helper Guide + Clear Search Action */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pb-3 mb-3.5 border-b border-slate-200/80 text-center sm:text-left">
@@ -1422,7 +1502,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
           {/* COMMERCIAL TRUST STRIP */}
           <div className="relative z-10 mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
-            <div className="flex items-center gap-3 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-slate-50/90 border border-slate-200/80">
+            <div className="flex items-center gap-3 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-[#F3F6FA] border border-slate-200/90">
               <div className="w-9 h-9 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-[#C8102E] shrink-0">
                 <ShieldCheck size={17} />
               </div>
@@ -1432,7 +1512,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-3 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-slate-50/90 border border-slate-200/80">
+            <div className="flex items-center gap-3 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-[#F3F6FA] border border-slate-200/90">
               <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-[#DB8902] shrink-0">
                 <Armchair size={17} />
               </div>
@@ -1442,7 +1522,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-3 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-slate-50/90 border border-slate-200/80">
+            <div className="flex items-center gap-3 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-[#F3F6FA] border border-slate-200/90">
               <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
                 <Headphones size={17} />
               </div>
@@ -1456,22 +1536,101 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
       </section>
 
       {/* =====================================================================
-          MAIN WORKSPACE: FILTERS SIDEBAR + RESULTS FEED
+          MAIN WORKSPACE: FULL-WIDTH CORPORATE BANNER + FILTERS + RESULTS
          ===================================================================== */}
       <section className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-12 lg:px-20">
+        {/* CORPORATE BENEFITS FULL-WIDTH BANNER STRIP (NC TURISMO ID) */}
+        <div className="mb-6 relative overflow-hidden rounded-2xl bg-[#0B0D13] border border-white/10 shadow-md shadow-slate-900/15">
+          {/* Subtle NC brand glow & architectural wave lines */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-90"
+            style={{
+              background:
+                'radial-gradient(circle at 10% 50%, rgba(200, 16, 46, 0.28), transparent 45%), radial-gradient(circle at 88% 50%, rgba(219, 137, 2, 0.18), transparent 45%)',
+            }}
+          />
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.07]"
+            style={{
+              backgroundImage:
+                'repeating-linear-gradient(-28deg, #DB8902 0px, #DB8902 1px, transparent 1px, transparent 18px)',
+            }}
+          />
+
+          <div className="relative z-10 px-5 py-4 sm:px-7 sm:py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            {/* Left: Title & Corporate Description */}
+            <div className="text-center lg:text-left min-w-0 flex-1">
+              <div className="text-base sm:text-lg lg:text-[20px] font-bold tracking-tight text-white leading-snug">
+                Soluções para{' '}
+                <span className="text-[#F5B041]">Viagens Corporativas &amp; Grupos</span>
+              </div>
+              <p className="mt-1 flex items-start lg:items-center justify-center lg:justify-start gap-1.5 text-xs sm:text-[13px] text-slate-300 leading-snug">
+                <Building2 size={14} className="text-[#DB8902] shrink-0 mt-0.5 lg:mt-0" />
+                <span>
+                  Empresas cadastradas contam com faturamento centralizado, política de viagens e cupons mensais conforme elegibilidade.
+                </span>
+              </p>
+            </div>
+
+            {/* Center + Right: Benefit Icons + 24h Badge + CTA Button */}
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-end gap-4 sm:gap-5 shrink-0">
+              <div className="flex items-center gap-4">
+                <span
+                  title="Faturamento centralizado"
+                  className="text-[#F5B041]/90 hover:text-[#F5B041] transition-colors"
+                >
+                  <Receipt size={18} />
+                </span>
+                <span
+                  title="Política de viagens e governança"
+                  className="text-[#F5B041]/90 hover:text-[#F5B041] transition-colors"
+                >
+                  <ShieldCheck size={18} />
+                </span>
+                <span
+                  title="Cupons mensais conforme elegibilidade"
+                  className="text-[#F5B041]/90 hover:text-[#F5B041] transition-colors"
+                >
+                  <Ticket size={18} />
+                </span>
+
+                <div className="h-5 w-px bg-white/15" />
+
+                <div className="inline-flex items-center gap-1.5 text-white">
+                  <Clock size={22} className="text-[#F5B041] shrink-0" />
+                  <div className="leading-none text-left">
+                    <span className="block text-[10px] font-medium text-slate-300">Suporte</span>
+                    <span className="block text-sm font-extrabold font-mono tracking-tight">24h</span>
+                  </div>
+                </div>
+              </div>
+
+              {(onOpenBeneficios || onOpenDiagnosis) && (
+                <button
+                  type="button"
+                  onClick={() => (onOpenBeneficios ? onOpenBeneficios() : onOpenDiagnosis?.())}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/[0.04] hover:bg-gradient-to-r hover:from-[#C8102E] hover:to-[#DB8902] border border-[#DB8902]/70 hover:border-transparent text-[#F5B041] hover:text-white text-[11px] font-bold uppercase tracking-[0.1em] inline-flex items-center justify-center gap-2 transition-all cursor-pointer whitespace-nowrap shadow-xs"
+                >
+                  <span>Conhecer benefícios corporativos</span>
+                  <ArrowRight size={13} />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Round-Trip Step Tabs & Staged Outbound Banner (when returnDate is active) */}
         {returnDate && (
-          <div className="mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <div className="mb-6 bg-white p-4 rounded-2xl border border-slate-300/80 shadow-sm shadow-slate-900/5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
               <div className="grid grid-cols-1 sm:flex items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setActiveTripStep('outbound')}
-                  className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer text-center ${
-                    activeTripStep === 'outbound'
-                      ? 'bg-[#C8102E] text-white shadow-sm shadow-red-600/20'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                  className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer text-center ${activeTripStep === 'outbound'
+                    ? 'bg-[#C8102E] text-white shadow-sm shadow-red-600/20'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
                 >
                   1. Viagem de Ida · {formatDateShort(departureDate)} (
                   {(outboundDirectRes?.options.length || 0) + (outboundConnRes?.options.length || 0)})
@@ -1480,11 +1639,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveTripStep('inbound')}
-                  className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer text-center ${
-                    activeTripStep === 'inbound'
-                      ? 'bg-[#C8102E] text-white shadow-sm shadow-red-600/20'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                  className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer text-center ${activeTripStep === 'inbound'
+                    ? 'bg-[#C8102E] text-white shadow-sm shadow-red-600/20'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
                 >
                   2. Viagem de Volta · {formatDateShort(returnDate)} (
                   {(inboundDirectRes?.options.length || 0) + (inboundConnRes?.options.length || 0)})
@@ -1528,9 +1686,8 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               LEFT SIDEBAR: LOCAL FILTERS (COLLAPSIBLE ON MOBILE)
              ================================================================= */}
           <aside
-            className={`${
-              showMobileFilters ? 'block' : 'hidden'
-            } lg:block lg:col-span-3 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs`}
+            className={`${showMobileFilters ? 'block' : 'hidden'
+              } lg:block lg:col-span-3 bg-white rounded-2xl border border-slate-300/80 p-5 shadow-sm shadow-slate-900/5`}
           >
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
@@ -1572,11 +1729,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     key={tab.id}
                     type="button"
                     onClick={() => setTravelModeFilter(tab.id as TravelModeFilter)}
-                    className={`py-1.5 px-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
-                      travelModeFilter === tab.id
-                        ? 'bg-white text-[#C8102E] shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                    className={`py-1.5 px-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${travelModeFilter === tab.id
+                      ? 'bg-white text-[#C8102E] shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -1601,11 +1757,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     key={p.id}
                     type="button"
                     onClick={() => setTimePeriod(p.id as TimePeriodFilter)}
-                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                      timePeriod === p.id
-                        ? 'border-[#C8102E] bg-red-50/50 text-slate-900'
-                        : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
-                    }`}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${timePeriod === p.id
+                      ? 'border-[#C8102E] bg-red-50/50 text-slate-900'
+                      : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
+                      }`}
                   >
                     <div className="text-xs font-bold">{p.label}</div>
                     <div className="text-[10px] font-mono tabular-nums text-slate-400">{p.sub}</div>
@@ -1708,28 +1863,6 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                 className="w-full accent-[#C8102E] cursor-pointer"
               />
             </div>
-
-            {/* Corporate Support Box */}
-            <div className="mt-6 pt-5 border-t border-slate-100">
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/90 via-white to-red-50/50 border border-amber-200/80 space-y-2.5">
-                <div className="text-[11px] font-mono uppercase tracking-wider text-[#C8102E] font-bold">
-                  Viagens Corporativas &amp; Grupos
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Empresas cadastradas contam com faturamento centralizado, política de viagens e cupons mensais conforme elegibilidade.
-                </p>
-                {onOpenBeneficios && (
-                  <button
-                    type="button"
-                    onClick={onOpenBeneficios}
-                    className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-red-50/60 border border-amber-300/80 text-xs font-bold text-[#C8102E] flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    <span>Conhecer benefícios corporativos</span>
-                    <ArrowRight size={13} />
-                  </button>
-                )}
-              </div>
-            </div>
           </aside>
 
           {/* =================================================================
@@ -1737,7 +1870,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
              ================================================================= */}
           <div className="lg:col-span-9 space-y-4">
             {/* Top Status & Sort Bar */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 shadow-xs">
+            <div className="bg-white rounded-2xl border border-slate-300/80 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 shadow-sm shadow-slate-900/5">
               <div className="text-center sm:text-left">
                 <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                   <h2 className="text-sm sm:text-base font-bold text-slate-900">
@@ -1754,7 +1887,9 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                 {/* Progressive loading status for direct vs connection */}
                 <div className="text-xs text-slate-500 mt-1 flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                   <span className="font-mono tabular-nums font-semibold text-slate-800">
-                    {filteredAndSortedOptions.length} horários exibidos
+                    {remainingResultsCount > 0
+                      ? `Exibindo ${visibleOptions.length} de ${filteredAndSortedOptions.length} horários`
+                      : `${filteredAndSortedOptions.length} horários exibidos`}
                   </span>
                   <span>·</span>
                   <span>
@@ -1831,7 +1966,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                 {[1, 2, 3].map((n) => (
                   <div
                     key={n}
-                    className="bg-white rounded-2xl border border-slate-200 p-6 animate-pulse flex flex-col md:flex-row justify-between gap-6"
+                    className="bg-white rounded-2xl border border-slate-300/80 p-6 animate-pulse flex flex-col md:flex-row justify-between gap-6 shadow-sm shadow-slate-900/5"
                   >
                     <div className="space-y-3 flex-1">
                       <div className="h-4 w-48 bg-slate-200 rounded" />
@@ -1849,7 +1984,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
             {/* Empty State + Connection Availability Fallback */}
             {!isDirectLoading && !activeError && filteredAndSortedOptions.length === 0 && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-4">
+              <div className="bg-white rounded-2xl border border-slate-300/80 p-8 text-center space-y-4 shadow-sm shadow-slate-900/5">
                 <div className="w-12 h-12 rounded-2xl bg-red-50 text-[#C8102E] flex items-center justify-center mx-auto">
                   <Bus size={24} />
                 </div>
@@ -1898,16 +2033,16 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
             )}
 
             {/* ===============================================================
-                TRIP OPTION CARDS
+                TRIP OPTION CARDS (PAGINAÇÃO SUTIL INICIAL DE 5 RESULTADOS)
                =============================================================== */}
             <div className="space-y-3.5">
-              {filteredAndSortedOptions.map((option) => {
+              {visibleOptions.map((option) => {
                 const isConn = option.travelType === 'connection';
                 const isManual = Boolean(option.manualConfirmation);
                 return (
                   <article
                     key={option.optionId}
-                    className="bg-white rounded-2xl border border-slate-200/90 hover:border-[#C8102E]/40 p-4 sm:p-6 shadow-xs hover:shadow-md transition-all overflow-hidden"
+                    className="bg-white rounded-2xl border border-slate-300/80 hover:border-[#C8102E]/45 p-4 sm:p-6 shadow-sm shadow-slate-900/5 hover:shadow-md transition-all overflow-hidden"
                   >
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6">
                       {/* Left Column: Company + Route Timeline */}
@@ -1932,11 +2067,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                           </span>
 
                           <span
-                            className={`px-2.5 py-1 rounded-lg font-mono text-[11px] uppercase font-bold border ${
-                              isConn
-                                ? 'bg-amber-50 text-[#DB8902] border-amber-200'
-                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            }`}
+                            className={`px-2.5 py-1 rounded-lg font-mono text-[11px] uppercase font-bold border ${isConn
+                              ? 'bg-amber-50 text-[#DB8902] border-amber-200'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              }`}
                           >
                             {isConn ? 'Com Conexão' : 'Viagem Direta'}
                           </span>
@@ -2060,10 +2194,116 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                   </article>
                 );
               })}
+
+              {/* Botão sutil "Ver mais" para evitar rolagem excessiva */}
+              {filteredAndSortedOptions.length > INITIAL_VISIBLE_RESULTS && (
+                <div className="bg-white/95 rounded-2xl border border-slate-300/80 px-4 py-3.5 sm:px-5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+                  <span className="text-xs text-slate-600 text-center sm:text-left">
+                    Mostrando{' '}
+                    <strong className="font-mono tabular-nums text-slate-900">{visibleOptions.length}</strong> de{' '}
+                    <strong className="font-mono tabular-nums text-slate-900">
+                      {filteredAndSortedOptions.length}
+                    </strong>{' '}
+                    horários encontrados
+                  </span>
+
+                  <div className="flex items-center justify-center gap-2.5 flex-wrap w-full sm:w-auto">
+                    {remainingResultsCount > 0 ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setVisibleResultsCount((prev) => prev + RESULTS_PAGE_STEP)
+                          }
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-red-50/70 border border-slate-300/90 hover:border-[#C8102E]/40 text-xs font-bold text-slate-800 hover:text-[#C8102E] transition-all cursor-pointer"
+                        >
+                          <ChevronDown size={14} className="text-[#C8102E]" />
+                          <span>Ver mais (+{nextResultsBatchCount})</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVisibleResultsCount(filteredAndSortedOptions.length)}
+                          className="text-xs font-semibold text-slate-500 hover:text-[#C8102E] underline decoration-slate-300 px-2 py-1 cursor-pointer transition-colors"
+                        >
+                          Ver todos ({filteredAndSortedOptions.length})
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setVisibleResultsCount(INITIAL_VISIBLE_RESULTS)}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-300/90 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                      >
+                        <span>Mostrar apenas os 5 primeiros</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </section>
+
+      {/* =====================================================================
+          INSTITUTIONAL CREDIBILITY & SECURITY FOOTER (OFFICIAL BADGES)
+         ===================================================================== */}
+      <footer className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-12 lg:px-20 mt-10">
+        <div className="bg-white rounded-3xl border border-slate-300/80 p-5 sm:p-7 shadow-sm shadow-slate-900/5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-5 border-b border-slate-200/80">
+            {/* Coluna 1: Credibilidade Institucional */}
+            <div className="space-y-3 text-center md:text-left">
+              <div className="text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold">
+                Credibilidade Institucional
+              </div>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+                {INSTITUTIONAL_LOGOS.map((logo) => (
+                  <InstitutionalLogoBadge key={logo.id} src={logo.src} alt={logo.alt} />
+                ))}
+                <span className="inline-flex items-center gap-1.5 h-10 px-3 rounded-xl bg-amber-50 border border-amber-200 text-xs font-bold text-slate-900">
+                  <Award size={14} className="text-[#DB8902] shrink-0" />
+                  <span>Desde 1989</span>
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Selos exibidos em caráter institucional conforme aplicabilidade e regularidade vigente de cada registro (Cadastur / Ministério do Turismo; IATA aplicável à intermediação aérea).
+              </p>
+            </div>
+
+            {/* Coluna 2: Segurança & Proteção de Dados */}
+            <div className="space-y-3 text-center md:text-left">
+              <div className="text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold">
+                Segurança &amp; Proteção na Compra
+              </div>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-900">
+                  <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+                  <span>Conexão Segura SSL / HTTPS</span>
+                </span>
+                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800">
+                  <Lock size={15} className="text-[#C8102E] shrink-0" />
+                  <span>Padrão PCI-DSS &amp; LGPD</span>
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Transações processadas com criptografia de ponta a ponta e sem retenção local de dados completos de cartão ou CVV.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left text-xs text-slate-600">
+            <div className="font-bold text-slate-900">
+              NC Turismo — Desde 1989{' '}
+              <span className="font-normal text-slate-500">
+                · Tecnologia, experiência e atendimento especializado.
+              </span>
+            </div>
+            <div className="text-[11px] font-mono text-slate-500">
+              N C TURISMO LTDA. · CNPJ 81.102.709/0001-08 · Curitiba/PR
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {/* =====================================================================
           STAGE C: 2D MULTI-FLOOR SEAT MAP + BOOKING & CHECKOUT
@@ -2215,11 +2455,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                   setActiveSegmentTab(seg.segmentIndex);
                                   setActiveFloorTab(seg.floors[0]?.floorIndex ?? 0);
                                 }}
-                                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
-                                  isCurrent
-                                    ? 'border-[#C8102E] bg-red-50/40 text-slate-900 shadow-2xs'
-                                    : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
-                                }`}
+                                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${isCurrent
+                                  ? 'border-[#C8102E] bg-red-50/40 text-slate-900 shadow-2xs'
+                                  : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
+                                  }`}
                               >
                                 <div className="flex items-center justify-between gap-2">
                                   <span className="text-xs font-bold">{seg.segmentLabel}</span>
@@ -2256,11 +2495,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                               key={fl.floorIndex}
                               type="button"
                               onClick={() => setActiveFloorTab(fl.floorIndex)}
-                              className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                activeFloorTab === fl.floorIndex
-                                  ? 'bg-[#C8102E] text-white shadow-2xs'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
+                              className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeFloorTab === fl.floorIndex
+                                ? 'bg-[#C8102E] text-white shadow-2xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                                }`}
                             >
                               {fl.floorLabel}
                             </button>
@@ -2847,8 +3085,8 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                             {completedPurchase.status === 'paid'
                               ? 'Confirmado'
                               : completedPurchase.status === 'in_confirmation_process'
-                              ? 'Em confirmação'
-                              : completedPurchase.status}
+                                ? 'Em confirmação'
+                                : completedPurchase.status}
                           </span>
                         </div>
                         <p className="text-xs text-emerald-900">
@@ -2856,6 +3094,49 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                         </p>
                       </div>
                     )}
+
+                    {/* TRUST & CREDIBILITY BLOCK (CADASTRO E PAGAMENTO) */}
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 space-y-3 shadow-2xs">
+                      <div className="text-xs font-bold text-slate-900 text-center">
+                        Finalize sua compra com segurança
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center items-start">
+                        <div className="flex flex-col items-center gap-1.5">
+                          <InstitutionalLogoBadge
+                            src="/logo_cadastur.png"
+                            alt="Cadastur — Ministério do Turismo"
+                            compact
+                          />
+                          <span className="text-[10px] font-medium text-slate-600 leading-tight">
+                            Agência cadastrada
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span className="w-9 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                            <ShieldCheck size={16} />
+                          </span>
+                          <span className="text-[10px] font-medium text-slate-600 leading-tight">
+                            Conexão segura SSL
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span className="w-9 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
+                            <Headphones size={15} />
+                          </span>
+                          <span className="text-[10px] font-medium text-slate-600 leading-tight">
+                            Suporte humano NC
+                          </span>
+                        </div>
+                      </div>
+                      <div className="pt-2.5 border-t border-slate-100 text-center">
+                        <div className="text-xs font-bold text-slate-900">
+                          NC Turismo — Desde 1989
+                        </div>
+                        <div className="text-[10px] text-slate-500 mt-0.5">
+                          Tecnologia, experiência e atendimento especializado.
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Atendimento Consultivo NC Turismo */}
                     <div className="pt-2 border-t border-slate-200 flex items-center justify-between gap-2">
@@ -2866,8 +3147,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                         href={`https://wa.me/554132811153?text=${encodeURIComponent(
                           `Olá! Consultei no Portal Rodoviário NC Turismo a viagem ${selectedOptionForSeats.from.name} -> ${selectedOptionForSeats.to.name} em ${formatDateShort(
                             selectedOptionForSeats.departure.date
-                          )} às ${selectedOptionForSeats.departure.time.slice(0, 5)} (${
-                            selectedOptionForSeats.company.name
+                          )} às ${selectedOptionForSeats.departure.time.slice(0, 5)} (${selectedOptionForSeats.company.name
                           }).`
                         )}`}
                         target="_blank"
