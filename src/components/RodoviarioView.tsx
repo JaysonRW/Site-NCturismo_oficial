@@ -2359,7 +2359,8 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2 text-[11px] sm:text-xs font-mono uppercase tracking-wider text-[#C8102E] font-bold flex-wrap">
                     <span>
-                      {activeTripStep === 'outbound' ? 'Trecho de Ida' : 'Trecho de Volta'} · Mapa de Poltronas
+                      {activeTripStep === 'outbound' ? 'Trecho de Ida' : 'Trecho de Volta'} ·{' '}
+                      {createdBooking ? 'Checkout Seguro' : 'Mapa de Poltronas'}
                     </span>
                     {selectedOptionForSeats.manualConfirmation && (
                       <span className="px-2 py-0.5 rounded text-[10px] bg-amber-50 text-amber-900 border border-amber-200">
@@ -2434,9 +2435,52 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
               )}
 
               {!seatMapLoading && !seatMapError && seatMapData && activeSegmentObj && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-                  {/* Left 7 Cols: Segment Selector + Floor Selector + 2D Vehicle Matrix */}
-                  <div className="lg:col-span-7 space-y-3.5 sm:space-y-4">
+                <div className="space-y-5">
+                  {/* Indicador de Fluxo: Etapa 1 (Poltronas & Passageiro) -> Etapa 2 (Checkout Seguro) */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200/90">
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs font-semibold">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${
+                          !createdBooking
+                            ? 'bg-[#C8102E] text-white border-[#C8102E]'
+                            : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        }`}
+                      >
+                        {createdBooking ? <Check size={13} /> : <span className="font-mono">1</span>}
+                        <span>Poltronas &amp; Passageiro</span>
+                      </span>
+                      <ArrowRight size={14} className="text-slate-400 shrink-0" />
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${
+                          createdBooking
+                            ? 'bg-[#C8102E] text-white border-[#C8102E]'
+                            : 'bg-white text-slate-500 border-slate-200'
+                        }`}
+                      >
+                        <span className="font-mono">2</span>
+                        <span>Pagamento Seguro (Checkout)</span>
+                      </span>
+                    </div>
+
+                    {createdBooking && !completedPurchase && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreatedBooking(null);
+                          setCheckoutError(null);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 cursor-pointer transition-colors"
+                      >
+                        <ArrowLeft size={13} />
+                        <span>Voltar para poltronas e dados</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {!createdBooking ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+                      {/* Left 7 Cols: Segment Selector + Floor Selector + 2D Vehicle Matrix */}
+                      <div className="lg:col-span-7 space-y-3.5 sm:space-y-4">
                     {/* Prominent Operator Identification Bar (Desktop - keeps mobile clean & compact above the fold) */}
                     <div className="hidden sm:flex p-4 rounded-2xl bg-gradient-to-r from-red-50/90 via-white to-amber-50/60 border-2 border-[#C8102E]/25 shadow-xs flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -2681,12 +2725,12 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     )}
                   </div>
 
-                  {/* Right 5 Cols: Passenger Form + Booking & Checkout */}
+                  {/* Right 5 Cols: Passenger Form + Optional Insurance + Checkout Trigger */}
                   <div className="lg:col-span-5 bg-slate-50/90 rounded-2xl p-4 sm:p-5 border border-slate-200 space-y-4 sm:space-y-5">
                     <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-3">
                       <div>
                         <div className="text-[11px] font-mono uppercase tracking-wider text-[#C8102E] font-bold">
-                          Dados dos Passageiros &amp; Reserva
+                          Etapa 1 · Passageiro &amp; Poltrona
                         </div>
                         <h4 className="text-sm sm:text-base font-bold text-slate-900">
                           {passengersCount} {passengersCount === 1 ? 'Passageiro' : 'Passageiros'}
@@ -2694,12 +2738,12 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                         </h4>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="font-mono text-xs font-bold text-slate-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 inline-block">
-                          Total: {formatBRL(totalDisplayedValue)}
+                        <span className="font-mono text-xs font-bold text-slate-800 bg-white px-2.5 py-1 rounded-lg border border-slate-200 inline-block">
+                          Passagem: {formatBRL(totalSelectedSeatsValue)}
                         </span>
                         {selectedInsuranceTotal > 0 && (
                           <div className="text-[10px] font-mono text-emerald-700 font-semibold mt-0.5">
-                            + Seguro ({formatBRL(selectedInsuranceTotal)})
+                            + {formatBRL(selectedInsuranceTotal)} seguro opcional
                           </div>
                         )}
                       </div>
@@ -2799,42 +2843,23 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                       </div>
                     )}
 
-                    {/* Dados dos Passageiros + Seguro Individual */}
-                    <div className="space-y-3 lg:max-h-64 lg:overflow-y-auto lg:pr-1">
+                    {/* Dados dos Passageiros + Oferta Opcional Agradável de Seguro */}
+                    <div className="space-y-3">
                       {Array.from({ length: passengersCount }).map((_, idx) => {
                         const pForm = passengersForm[idx] || createEmptyPassenger();
+                        const insPrice = selectedOptionForSeats.insurancePrice;
                         return (
                           <div
                             key={idx}
-                            className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-2.5 text-xs"
+                            className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-3 text-xs shadow-2xs"
                           >
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                               <span className="font-bold text-slate-900">
-                                Dados do Passageiro
+                                {passengersCount > 1 ? `Dados do Passageiro ${idx + 1}` : 'Dados do Passageiro'}
                               </span>
-                              <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                <input
-                                  type="checkbox"
-                                  checked={pForm.includeInsurance}
-                                  onChange={(e) => {
-                                    const checked = e.target.checked;
-                                    setPassengersForm((prev) =>
-                                      prev.map((item, i) =>
-                                        i === idx ? { ...item, includeInsurance: checked } : item
-                                      )
-                                    );
-                                    setCreatedBooking(null);
-                                  }}
-                                  className="rounded text-emerald-600"
-                                />
-                                <Shield size={12} />
-                                <span>
-                                  Incluir Seguro Viagem
-                                  {selectedOptionForSeats.insurancePrice > 0
-                                    ? ` (+${formatBRL(selectedOptionForSeats.insurancePrice)})`
-                                    : ''}
-                                </span>
-                              </label>
+                              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+                                Documento com foto no embarque
+                              </span>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -2901,10 +2926,53 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                   className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono"
                                 />
                               </div>
+                            </div>
+
+                            {/* Oferta Opcional Convidativa de Seguro Viagem */}
+                            <div
+                              className={`rounded-xl border p-3 transition-colors ${
+                                pForm.includeInsurance
+                                  ? 'bg-emerald-50/80 border-emerald-300'
+                                  : 'bg-slate-50/80 border-slate-200 hover:border-emerald-300/70'
+                              }`}
+                            >
+                              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={pForm.includeInsurance}
+                                  onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setPassengersForm((prev) =>
+                                      prev.map((item, i) =>
+                                        i === idx ? { ...item, includeInsurance: checked } : item
+                                      )
+                                    );
+                                    setCreatedBooking(null);
+                                  }}
+                                  className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                                    <span className="inline-flex items-center gap-1.5 font-bold text-slate-900 text-xs">
+                                      <Shield size={13} className="text-emerald-600 shrink-0" />
+                                      <span>Proteja sua viagem</span>
+                                    </span>
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-100/90 text-emerald-900 font-mono text-[11px] font-bold">
+                                      {insPrice > 0
+                                        ? `por apenas + ${formatBRL(insPrice)}`
+                                        : 'Seguro opcional'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-600 mt-1 leading-snug">
+                                    Seguro viagem opcional para tranquilidade contra imprevistos durante o trajeto.
+                                  </p>
+                                </div>
+                              </label>
+
                               {pForm.includeInsurance && (
-                                <div className="sm:col-span-2">
-                                  <label className="block text-[10px] font-mono text-emerald-700 font-bold">
-                                    CEP para Apólice de Seguro
+                                <div className="mt-2.5 pt-2.5 border-t border-emerald-200/80">
+                                  <label className="block text-[10px] font-mono text-emerald-800 font-bold mb-1">
+                                    CEP para emissão da Apólice de Seguro
                                   </label>
                                   <input
                                     type="text"
@@ -2916,7 +2984,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                         prev.map((item, i) => (i === idx ? { ...item, cep: val } : item))
                                       );
                                     }}
-                                    className="w-full px-2.5 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50/40 text-xs font-mono"
+                                    className="w-full px-2.5 py-1.5 rounded-lg border border-emerald-300 bg-white text-xs font-mono"
                                   />
                                 </div>
                               )}
@@ -2926,7 +2994,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                       })}
                     </div>
 
-                    {/* PASSO 1: BOTÃO CONTINUAR PARA PAGAMENTO */}
+                    {/* PASSO 1: BOTÃO CONTINUAR PARA CHECKOUT */}
                     <div className="space-y-2 pt-2 border-t border-slate-200">
                       {seatMapData.segments.length > 1 && !isAllSeatsSelected && (
                         <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-2">
@@ -2959,16 +3027,17 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                         type="button"
                         disabled={!isAllSeatsSelected || bookingLoading}
                         onClick={handleExecuteBooking}
-                        className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer disabled:cursor-not-allowed shadow-sm"
+                        className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer disabled:cursor-not-allowed shadow-sm"
                       >
                         {bookingLoading ? (
                           <>
                             <RefreshCw size={15} className="animate-spin" />
-                            <span>Reservando poltronas...</span>
+                            <span>Reservando poltronas e abrindo checkout...</span>
                           </>
                         ) : (
                           <>
-                            <span>Continuar para Pagamento</span>
+                            <span>Continuar para o Checkout</span>
+                            <ArrowRight size={15} />
                           </>
                         )}
                       </button>
@@ -2979,318 +3048,469 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                         </div>
                       )}
                     </div>
-
-                    {/* PASSO 2: CHECKOUT — Exibido após criar a pré-reserva */}
-                    {createdBooking && (
-                      <div className="p-4 rounded-2xl bg-white border-2 border-[#C8102E]/30 space-y-3.5 animate-in fade-in duration-200">
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
-                              <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-                              <span>Poltronas reservadas · Prossiga com o pagamento</span>
-                            </span>
-
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-bold border shrink-0 ${
-                                bookingSecondsLeft === 0
-                                  ? 'bg-red-50 text-red-700 border-red-200'
-                                  : bookingSecondsLeft <= 120
-                                  ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                  : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                              }`}
-                              title="Tempo estimado que a poltrona permanece bloqueada antes do pagamento"
-                            >
-                              <Clock size={12} />
-                              <span>{formatCountdownMmSs(bookingSecondsLeft)}</span>
-                            </span>
-                          </div>
-
-                          <p
-                            className={`text-[11px] leading-snug ${
-                              bookingSecondsLeft === 0 ? 'text-red-700 font-semibold' : 'text-slate-500'
-                            }`}
-                          >
-                            {bookingSecondsLeft === 0
-                              ? 'Tempo estimado de 10 minutos expirado. Caso o gateway recuse o pagamento, atualize o mapa e refaça a pré-reserva.'
-                              : 'A poltrona permanece bloqueada por cerca de 10 minutos aguardando a confirmação do pagamento.'}
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <label className="block text-[10px] font-mono text-slate-500">E-mail para envio do bilhete</label>
-                            <input
-                              type="email"
-                              placeholder="seu@email.com"
-                              value={buyerEmail}
-                              onChange={(e) => setBuyerEmail(e.target.value)}
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-mono text-slate-500">Nome do Comprador</label>
-                            <input
-                              type="text"
-                              placeholder="Nome completo"
-                              value={buyerName}
-                              onChange={(e) => setBuyerName(e.target.value)}
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-mono text-slate-500">CPF do Comprador</label>
-                            <input
-                              type="text"
-                              placeholder="000.000.000-00"
-                              value={buyerCpf}
-                              onChange={(e) => setBuyerCpf(e.target.value)}
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-mono text-slate-500">Telefone / WhatsApp</label>
-                            <input
-                              type="text"
-                              placeholder="(00) 00000-0000"
-                              value={buyerPhone}
-                              onChange={(e) => setBuyerPhone(e.target.value)}
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono"
-                            />
-                          </div>
-                          <div className="sm:col-span-2">
-                            <label className="block text-[10px] font-mono text-slate-500">Forma de Pagamento</label>
-                            <select
-                              value={paymentMethod}
-                              onChange={(e) =>
-                                setPaymentMethod(e.target.value as 'creditCard' | 'pix')
-                              }
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-bold"
-                            >
-                              <option value="creditCard">Cartão de Crédito (à vista · 1x)</option>
-                              <option value="pix">PIX (Pagamento instantâneo)</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        {paymentMethod === 'creditCard' ? (
-                          <div className="grid grid-cols-3 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                            <div className="col-span-3 flex items-center justify-between gap-2 pb-1 border-b border-slate-200/80 text-[10px] font-mono text-slate-600">
-                              <span>Parcelamento:</span>
-                              <strong className="text-slate-900">À vista (1x sem parcelamento)</strong>
-                            </div>
-                            <div className="col-span-3">
-                              <label className="block text-[10px] font-mono text-slate-500">
-                                Número do Cartão
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="0000 0000 0000 0000"
-                                value={cardNumber}
-                                onChange={(e) => setCardNumber(e.target.value)}
-                                className="w-full px-2 py-1 rounded border border-slate-200 font-mono text-xs bg-white"
-                              />
-                            </div>
-                            <div className="col-span-3">
-                              <label className="block text-[10px] font-mono text-slate-500">
-                                Nome Impresso no Cartão
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="NOME COMO NO CARTÃO"
-                                value={cardHolder}
-                                onChange={(e) => setCardHolder(e.target.value)}
-                                className="w-full px-2 py-1 rounded border border-slate-200 text-xs bg-white uppercase"
-                              />
-                            </div>
-                            <div className="col-span-2">
-                              <label className="block text-[10px] font-mono text-slate-500">Validade (AAAA-MM)</label>
-                              <input
-                                type="text"
-                                placeholder="2030-10"
-                                value={cardExpiresAt}
-                                onChange={(e) => setCardExpiresAt(e.target.value)}
-                                className="w-full px-2 py-1 rounded border border-slate-200 font-mono text-xs bg-white"
-                              />
-                            </div>
+                  </div>
+                </div>
+                  ) : (
+                    /* ETAPA 2: TELA DEDICADA DE CHECKOUT SEGURO */
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start animate-in fade-in duration-200">
+                      {/* Coluna Esquerda (5 cols): Resumo da Viagem, Valores Separados & Credibilidade */}
+                      <div className="lg:col-span-5 space-y-4">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                          <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-3">
                             <div>
-                              <label className="block text-[10px] font-mono text-slate-500">CVV</label>
-                              <input
-                                type="text"
-                                placeholder="000"
-                                value={cardCvv}
-                                onChange={(e) => setCardCvv(e.target.value)}
-                                className="w-full px-2 py-1 rounded border border-slate-200 font-mono text-xs bg-white"
-                              />
+                              <div className="text-[11px] font-mono uppercase tracking-wider text-[#C8102E] font-bold">
+                                Resumo da Reserva
+                              </div>
+                              <h4 className="text-sm sm:text-base font-bold text-slate-900">
+                                {selectedOptionForSeats.from.name} → {selectedOptionForSeats.to.name}
+                              </h4>
+                            </div>
+                            <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 shrink-0">
+                              {selectedOptionForSeats.seatClass}
+                            </span>
+                          </div>
+
+                          <div className="p-3 rounded-xl bg-white border border-slate-200/90 space-y-2 text-xs">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="inline-flex items-center gap-1.5 font-bold text-slate-900">
+                                <Bus size={14} className="text-[#C8102E]" />
+                                <span>{selectedOptionForSeats.company.name}</span>
+                              </span>
+                              <span className="font-mono text-slate-600">
+                                {formatDateShort(selectedOptionForSeats.departure.date)} ·{' '}
+                                {selectedOptionForSeats.departure.time.slice(0, 5)}
+                              </span>
+                            </div>
+
+                            {stagedOutboundLeg && (
+                              <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 font-medium">
+                                Inclui viagem de ida ({stagedOutboundLeg.option.from.name} →{' '}
+                                {stagedOutboundLeg.option.to.name}) + volta selecionada.
+                              </div>
+                            )}
+
+                            <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                              {selectedSeats.map((s) => (
+                                <div
+                                  key={`summary-${s.segmentIndex}-${s.seatNumber}`}
+                                  className="flex items-center justify-between text-xs"
+                                >
+                                  <span className="text-slate-700">
+                                    Passageiro {s.passengerNumber} ·{' '}
+                                    <strong className="text-[#C8102E]">Poltrona {s.seatNumber}</strong>
+                                    {seatMapData.segments.length > 1
+                                      ? ` (${s.segmentIndex === 1 ? '1º Trecho' : '2º Trecho'})`
+                                      : ''}
+                                  </span>
+                                  <span className="font-mono font-semibold text-slate-900">
+                                    {formatBRL(s.totalPrice)}
+                                  </span>
+                                </div>
+                              ))}
                             </div>
                           </div>
-                        ) : (
-                          <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-[11px] text-emerald-900">
-                            Ao clicar em <strong>Finalizar Compra</strong>, seu pedido PIX será gerado para confirmação instantânea dentro da janela de reserva.
-                          </div>
-                        )}
 
-                        <button
-                          type="button"
-                          disabled={checkoutLoading}
-                          onClick={handleExecuteCheckout}
-                          className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
-                        >
-                          {checkoutLoading ? (
-                            <>
-                              <RefreshCw size={15} className="animate-spin" />
-                              <span>Processando pagamento...</span>
-                            </>
-                          ) : (
-                            <>
-                              <CreditCard size={15} />
-                              <span>Finalizar Compra</span>
-                            </>
-                          )}
-                        </button>
-
-                        {checkoutError && (
-                          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800">
-                            <strong>Erro no Pagamento:</strong> {checkoutError}
+                          {/* Passageiros Vinculados */}
+                          <div className="p-3 rounded-xl bg-white border border-slate-200/90 space-y-1.5 text-xs">
+                            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold">
+                              Passageiros na Reserva
+                            </div>
+                            {Array.from({ length: passengersCount }).map((_, idx) => {
+                              const pForm = passengersForm[idx] || createEmptyPassenger();
+                              return (
+                                <div
+                                  key={`pax-sum-${idx}`}
+                                  className="flex items-center justify-between gap-2 text-slate-800"
+                                >
+                                  <span className="font-semibold truncate">
+                                    {pForm.name || `Passageiro ${idx + 1}`}
+                                  </span>
+                                  <span className="font-mono text-[11px] text-slate-500 shrink-0">
+                                    {pForm.cpf || 'CPF não informado'}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
-                        )}
+
+                          {/* Valores Separados com Transparência */}
+                          <div className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-2 text-xs">
+                            <div className="flex items-center justify-between text-slate-700">
+                              <span>Passagens e taxas rodoviárias</span>
+                              <span className="font-mono font-semibold text-slate-900">
+                                {formatBRL(totalSelectedSeatsValue)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-700">Seguro viagem opcional</span>
+                              {selectedInsuranceTotal > 0 ? (
+                                <span className="font-mono font-semibold text-emerald-700">
+                                  + {formatBRL(selectedInsuranceTotal)}
+                                </span>
+                              ) : (
+                                <span className="text-[11px] font-mono text-slate-400">
+                                  Não contratado
+                                </span>
+                              )}
+                            </div>
+                            <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
+                              <span className="font-bold text-slate-900 text-sm">Total a pagar</span>
+                              <span className="font-mono font-extrabold text-base text-[#C8102E]">
+                                {formatBRL(totalDisplayedValue)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bloco de Credibilidade NC Turismo */}
+                        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 space-y-3 shadow-2xs">
+                          <div className="text-xs font-bold text-slate-900 text-center">
+                            Finalize sua compra com segurança
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-center items-start">
+                            <div className="flex flex-col items-center gap-1.5">
+                              <InstitutionalLogoBadge
+                                src="/logo_cadastur.png"
+                                alt="Cadastur — Ministério do Turismo"
+                                compact
+                              />
+                              <span className="text-[10px] font-medium text-slate-600 leading-tight">
+                                Agência cadastrada
+                              </span>
+                            </div>
+                            <div className="flex flex-col items-center gap-1.5">
+                              <span className="w-9 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                                <ShieldCheck size={16} />
+                              </span>
+                              <span className="text-[10px] font-medium text-slate-600 leading-tight">
+                                Conexão segura SSL
+                              </span>
+                            </div>
+                            <div className="flex flex-col items-center gap-1.5">
+                              <span className="w-9 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
+                                <Headphones size={15} />
+                              </span>
+                              <span className="text-[10px] font-medium text-slate-600 leading-tight">
+                                Suporte humano NC
+                              </span>
+                            </div>
+                          </div>
+                          <div className="pt-2.5 border-t border-slate-100 text-center">
+                            <div className="text-xs font-bold text-slate-900">
+                              NC Turismo — Desde 1989
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              Tecnologia, experiência e atendimento especializado.
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    )}
 
-                    {/* RESULTADO DO CHECKOUT */}
-                    {completedPurchase && (() => {
-                      const pixCopyCode =
-                        completedPurchase?.pix?.qrCode ||
-                        completedPurchase?.pix?.code ||
-                        completedPurchase?.pix?.emv ||
-                        completedPurchase?.qrCode ||
-                        completedPurchase?.pixCode ||
-                        completedPurchase?.payment?.qrCode ||
-                        completedPurchase?.payment?.emv ||
-                        '';
-                      const pixImageUrl =
-                        completedPurchase?.pix?.qrCodeImage ||
-                        completedPurchase?.qrCodeImage ||
-                        '';
+                      {/* Coluna Direita (7 cols): Timer 10min + Dados do Comprador + Pagamento */}
+                      <div className="lg:col-span-7 space-y-4">
+                        <div className="p-4 sm:p-6 rounded-2xl bg-white border-2 border-[#C8102E]/25 space-y-4 shadow-sm">
+                          {/* Banner de Reserva Temporária + Contador 10 min */}
+                          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className="text-xs sm:text-sm font-bold text-emerald-800 flex items-center gap-1.5">
+                                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                                <span>Poltronas reservadas · Prossiga com o pagamento</span>
+                              </span>
 
-                      return (
-                        <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 space-y-2.5 text-xs text-emerald-950">
-                          <div className="flex items-center justify-between flex-wrap gap-2">
-                            <span className="font-bold text-sm flex items-center gap-1.5">
-                              <CheckCircle2 size={17} className="text-emerald-600" />
-                              Pedido Registrado! #{completedPurchase.id}
-                            </span>
-                            <span className="px-2 py-0.5 rounded bg-emerald-700 text-white font-bold uppercase text-[10px]">
-                              {completedPurchase.status === 'paid'
-                                ? 'Confirmado'
-                                : completedPurchase.status === 'in_confirmation_process'
-                                  ? 'Em confirmação'
-                                  : completedPurchase.status}
-                            </span>
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono text-xs font-bold border shrink-0 ${
+                                  bookingSecondsLeft === 0
+                                    ? 'bg-red-50 text-red-700 border-red-200'
+                                    : bookingSecondsLeft <= 120
+                                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                    : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                }`}
+                                title="Tempo estimado que a poltrona permanece bloqueada antes do pagamento"
+                              >
+                                <Clock size={13} />
+                                <span>{formatCountdownMmSs(bookingSecondsLeft)}</span>
+                              </span>
+                            </div>
+
+                            <p
+                              className={`text-[11px] leading-snug ${
+                                bookingSecondsLeft === 0 ? 'text-red-700 font-semibold' : 'text-slate-600'
+                              }`}
+                            >
+                              {bookingSecondsLeft === 0
+                                ? 'Tempo estimado de 10 minutos expirado. Caso o gateway recuse o pagamento, volte ao mapa e refaça a pré-reserva.'
+                                : 'A poltrona permanece bloqueada por cerca de 10 minutos aguardando a confirmação do pagamento.'}
+                            </p>
                           </div>
 
-                          {pixImageUrl && (
-                            <div className="bg-white p-3 rounded-xl border border-emerald-200 flex justify-center">
-                              <img
-                                src={pixImageUrl}
-                                alt="QR Code PIX para pagamento"
-                                className="w-36 h-36 object-contain"
-                              />
+                          {/* Cabeçalho Comprador + Atalho */}
+                          <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
+                            <div className="text-xs font-bold text-slate-900">
+                              Dados do Comprador &amp; Pagamento
                             </div>
-                          )}
-
-                          {pixCopyCode && (
-                            <div className="bg-white p-2.5 rounded-xl border border-emerald-200 space-y-2">
-                              <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold">
-                                PIX Copia e Cola
-                              </div>
-                              <div className="font-mono text-[11px] text-slate-700 break-all bg-slate-50 p-2 rounded border border-slate-200 max-h-20 overflow-y-auto">
-                                {String(pixCopyCode)}
-                              </div>
+                            {(passengersForm[0]?.name || passengersForm[0]?.cpf) && (
                               <button
                                 type="button"
                                 onClick={() => {
-                                  navigator.clipboard?.writeText(String(pixCopyCode));
-                                  setPixCopied(true);
-                                  setTimeout(() => setPixCopied(false), 3000);
+                                  if (passengersForm[0]?.name) setBuyerName(passengersForm[0].name);
+                                  if (passengersForm[0]?.cpf) setBuyerCpf(passengersForm[0].cpf);
                                 }}
-                                className="w-full py-1.5 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[11px] inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                                className="text-[11px] font-semibold text-[#C8102E] hover:underline cursor-pointer"
                               >
-                                {pixCopied ? <Check size={13} /> : <Copy size={13} />}
-                                <span>{pixCopied ? 'Código PIX copiado!' : 'Copiar código PIX'}</span>
+                                Usar nome e CPF do passageiro
                               </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div>
+                              <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
+                                E-mail para envio do bilhete
+                              </label>
+                              <input
+                                type="email"
+                                placeholder="seu@email.com"
+                                value={buyerEmail}
+                                onChange={(e) => setBuyerEmail(e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
+                                Nome do Comprador
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Nome completo"
+                                value={buyerName}
+                                onChange={(e) => setBuyerName(e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
+                                CPF do Comprador
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="000.000.000-00"
+                                value={buyerCpf}
+                                onChange={(e) => setBuyerCpf(e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-mono"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
+                                Telefone / WhatsApp
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="(00) 00000-0000"
+                                value={buyerPhone}
+                                onChange={(e) => setBuyerPhone(e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-mono"
+                              />
+                            </div>
+                            <div className="sm:col-span-2">
+                              <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
+                                Forma de Pagamento
+                              </label>
+                              <select
+                                value={paymentMethod}
+                                onChange={(e) =>
+                                  setPaymentMethod(e.target.value as 'creditCard' | 'pix')
+                                }
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-bold bg-white"
+                              >
+                                <option value="creditCard">Cartão de Crédito (à vista · 1x)</option>
+                                <option value="pix">PIX (Pagamento instantâneo)</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {paymentMethod === 'creditCard' ? (
+                            <div className="grid grid-cols-3 gap-2.5 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                              <div className="col-span-3 flex items-center justify-between gap-2 pb-1.5 border-b border-slate-200/80 text-[11px] font-mono text-slate-600">
+                                <span>Parcelamento:</span>
+                                <strong className="text-slate-900">À vista (1x sem parcelamento)</strong>
+                              </div>
+                              <div className="col-span-3">
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
+                                  Número do Cartão
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="0000 0000 0000 0000"
+                                  value={cardNumber}
+                                  onChange={(e) => setCardNumber(e.target.value)}
+                                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-mono text-xs bg-white"
+                                />
+                              </div>
+                              <div className="col-span-3">
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
+                                  Nome Impresso no Cartão
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="NOME COMO NO CARTÃO"
+                                  value={cardHolder}
+                                  onChange={(e) => setCardHolder(e.target.value)}
+                                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white uppercase"
+                                />
+                              </div>
+                              <div className="col-span-2">
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
+                                  Validade (AAAA-MM)
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="2030-10"
+                                  value={cardExpiresAt}
+                                  onChange={(e) => setCardExpiresAt(e.target.value)}
+                                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-mono text-xs bg-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
+                                  CVV
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="000"
+                                  value={cardCvv}
+                                  onChange={(e) => setCardCvv(e.target.value)}
+                                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-mono text-xs bg-white"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-900">
+                              Ao clicar em <strong>Finalizar Compra</strong>, seu código PIX será gerado para confirmação instantânea dentro da janela de reserva.
                             </div>
                           )}
 
-                          <p className="text-xs text-emerald-900">
-                            Os detalhes da sua viagem e a emissão do bilhete serão enviados para <strong>{buyerEmail}</strong>.
-                          </p>
-                        </div>
-                      );
-                    })()}
+                          <button
+                            type="button"
+                            disabled={checkoutLoading}
+                            onClick={handleExecuteCheckout}
+                            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#DB8902] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            {checkoutLoading ? (
+                              <>
+                                <RefreshCw size={15} className="animate-spin" />
+                                <span>Processando pagamento...</span>
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard size={15} />
+                                <span>Finalizar Compra · {formatBRL(totalDisplayedValue)}</span>
+                              </>
+                            )}
+                          </button>
 
-                    {/* TRUST & CREDIBILITY BLOCK (CADASTRO E PAGAMENTO) */}
-                    <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 space-y-3 shadow-2xs">
-                      <div className="text-xs font-bold text-slate-900 text-center">
-                        Finalize sua compra com segurança
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-center items-start">
-                        <div className="flex flex-col items-center gap-1.5">
-                          <InstitutionalLogoBadge
-                            src="/logo_cadastur.png"
-                            alt="Cadastur — Ministério do Turismo"
-                            compact
-                          />
-                          <span className="text-[10px] font-medium text-slate-600 leading-tight">
-                            Agência cadastrada
-                          </span>
+                          {checkoutError && (
+                            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800">
+                              <strong>Erro no Pagamento:</strong> {checkoutError}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex flex-col items-center gap-1.5">
-                          <span className="w-9 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-                            <ShieldCheck size={16} />
-                          </span>
-                          <span className="text-[10px] font-medium text-slate-600 leading-tight">
-                            Conexão segura SSL
-                          </span>
-                        </div>
-                        <div className="flex flex-col items-center gap-1.5">
-                          <span className="w-9 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
-                            <Headphones size={15} />
-                          </span>
-                          <span className="text-[10px] font-medium text-slate-600 leading-tight">
-                            Suporte humano NC
-                          </span>
-                        </div>
-                      </div>
-                      <div className="pt-2.5 border-t border-slate-100 text-center">
-                        <div className="text-xs font-bold text-slate-900">
-                          NC Turismo — Desde 1989
-                        </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
-                          Tecnologia, experiência e atendimento especializado.
-                        </div>
+
+                        {/* RESULTADO DO CHECKOUT */}
+                        {completedPurchase && (() => {
+                          const pixCopyCode =
+                            completedPurchase?.pix?.qrCode ||
+                            completedPurchase?.pix?.code ||
+                            completedPurchase?.pix?.emv ||
+                            completedPurchase?.qrCode ||
+                            completedPurchase?.pixCode ||
+                            completedPurchase?.payment?.qrCode ||
+                            completedPurchase?.payment?.emv ||
+                            '';
+                          const pixImageUrl =
+                            completedPurchase?.pix?.qrCodeImage ||
+                            completedPurchase?.qrCodeImage ||
+                            '';
+
+                          return (
+                            <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50 border-2 border-emerald-300 space-y-3 text-xs text-emerald-950">
+                              <div className="flex items-center justify-between flex-wrap gap-2">
+                                <span className="font-bold text-sm flex items-center gap-1.5">
+                                  <CheckCircle2 size={17} className="text-emerald-600" />
+                                  Pedido Registrado! #{completedPurchase.id}
+                                </span>
+                                <span className="px-2 py-0.5 rounded bg-emerald-700 text-white font-bold uppercase text-[10px]">
+                                  {completedPurchase.status === 'paid'
+                                    ? 'Confirmado'
+                                    : completedPurchase.status === 'in_confirmation_process'
+                                      ? 'Em confirmação'
+                                      : completedPurchase.status}
+                                </span>
+                              </div>
+
+                              {pixImageUrl && (
+                                <div className="bg-white p-3 rounded-xl border border-emerald-200 flex justify-center">
+                                  <img
+                                    src={pixImageUrl}
+                                    alt="QR Code PIX para pagamento"
+                                    className="w-36 h-36 object-contain"
+                                  />
+                                </div>
+                              )}
+
+                              {pixCopyCode && (
+                                <div className="bg-white p-3 rounded-xl border border-emerald-200 space-y-2">
+                                  <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold">
+                                    PIX Copia e Cola
+                                  </div>
+                                  <div className="font-mono text-[11px] text-slate-700 break-all bg-slate-50 p-2 rounded border border-slate-200 max-h-24 overflow-y-auto">
+                                    {String(pixCopyCode)}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard?.writeText(String(pixCopyCode));
+                                      setPixCopied(true);
+                                      setTimeout(() => setPixCopied(false), 3000);
+                                    }}
+                                    className="w-full py-2 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[11px] inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                                  >
+                                    {pixCopied ? <Check size={13} /> : <Copy size={13} />}
+                                    <span>{pixCopied ? 'Código PIX copiado!' : 'Copiar código PIX'}</span>
+                                  </button>
+                                </div>
+                              )}
+
+                              <p className="text-xs text-emerald-900">
+                                Os detalhes da sua viagem e a emissão do bilhete serão enviados para{' '}
+                                <strong>{buyerEmail}</strong>.
+                              </p>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
+                  )}
 
-                    {/* Atendimento Consultivo NC Turismo */}
-                    <div className="pt-2 border-t border-slate-200 flex items-center justify-between gap-2">
-                      <span className="text-[11px] text-slate-500">
-                        Precisa de apoio da equipe NC Turismo?
-                      </span>
-                      <a
-                        href={`https://wa.me/554132811153?text=${encodeURIComponent(
-                          `Olá! Consultei no Portal Rodoviário NC Turismo a viagem ${selectedOptionForSeats.from.name} -> ${selectedOptionForSeats.to.name} em ${formatDateShort(
-                            selectedOptionForSeats.departure.date
-                          )} às ${selectedOptionForSeats.departure.time.slice(0, 5)} (${selectedOptionForSeats.company.name
-                          }).`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:underline"
-                      >
-                        <MessageSquare size={13} />
-                        <span>Atendimento WhatsApp</span>
-                      </a>
-                    </div>
+                  {/* Atendimento Consultivo NC Turismo */}
+                  <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[11px] text-slate-500">
+                      Precisa de apoio da equipe NC Turismo?
+                    </span>
+                    <a
+                      href={`https://wa.me/554132811153?text=${encodeURIComponent(
+                        `Olá! Consultei no Portal Rodoviário NC Turismo a viagem ${selectedOptionForSeats.from.name} -> ${selectedOptionForSeats.to.name} em ${formatDateShort(
+                          selectedOptionForSeats.departure.date
+                        )} às ${selectedOptionForSeats.departure.time.slice(0, 5)} (${
+                          selectedOptionForSeats.company.name
+                        }).`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:underline"
+                    >
+                      <MessageSquare size={13} />
+                      <span>Atendimento WhatsApp</span>
+                    </a>
                   </div>
                 </div>
               )}
