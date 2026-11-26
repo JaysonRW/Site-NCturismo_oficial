@@ -15,7 +15,9 @@ import {
   Sparkles,
   Headphones,
   AlertCircle,
+  Check,
   CheckCircle2,
+  Copy,
   X,
   Info,
   RefreshCw,
@@ -256,10 +258,28 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
   const [bookingLoading, setBookingLoading] = useState<boolean>(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [createdBooking, setCreatedBooking] = useState<any | null>(null);
+  const BOOKING_HOLD_SECONDS = 10 * 60;
+  const [bookingSecondsLeft, setBookingSecondsLeft] = useState<number>(BOOKING_HOLD_SECONDS);
+  const [pixCopied, setPixCopied] = useState<boolean>(false);
 
   const [checkoutLoading, setCheckoutLoading] = useState<boolean>(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [completedPurchase, setCompletedPurchase] = useState<any | null>(null);
+
+  // Cronômetro visual de ~10 min enquanto a pré-reserva aguarda pagamento
+  useEffect(() => {
+    if (!createdBooking?.id || completedPurchase) {
+      setBookingSecondsLeft(BOOKING_HOLD_SECONDS);
+      return;
+    }
+
+    setBookingSecondsLeft(BOOKING_HOLD_SECONDS);
+    const interval = setInterval(() => {
+      setBookingSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [createdBooking?.id, completedPurchase, BOOKING_HOLD_SECONDS]);
 
   // Refs for closing dropdowns on outside click and focusing inputs after clearing
   const originRef = useRef<HTMLDivElement>(null);
@@ -957,6 +977,23 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
         : 0;
     return currentLegTotal + outboundStagedTotal;
   }, [selectedSeats, activeTripStep, stagedOutboundLeg]);
+
+  const selectedInsuranceTotal = useMemo(() => {
+    const unitPrice = Number(selectedOptionForSeats?.insurancePrice || 0);
+    if (unitPrice <= 0) return 0;
+    const count = Array.from({ length: passengersCount }).filter(
+      (_, idx) => (passengersForm[idx] || createEmptyPassenger()).includeInsurance
+    ).length;
+    return count * unitPrice;
+  }, [passengersForm, passengersCount, selectedOptionForSeats?.insurancePrice]);
+
+  const totalDisplayedValue = totalSelectedSeatsValue + selectedInsuranceTotal;
+
+  const formatCountdownMmSs = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
 
   const requiredSegmentsCount = seatMapData?.segments.length || 1;
   const totalRequiredSelections = requiredSegmentsCount * passengersCount;
@@ -2082,7 +2119,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                           )}
                           {option.insurancePrice !== undefined && option.insurancePrice > 0 && (
                             <span className="text-slate-600 font-mono text-[11px] bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                              Seguro: {formatBRL(option.insurancePrice)}
+                              Seguro opcional: {formatBRL(option.insurancePrice)}
                             </span>
                           )}
                         </div>
@@ -2656,9 +2693,16 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                           {returnDate && stagedOutboundLeg ? ' · Ida + Volta' : ''}
                         </h4>
                       </div>
-                      <span className="font-mono text-xs font-bold text-slate-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shrink-0">
-                        Total: {formatBRL(totalSelectedSeatsValue)}
-                      </span>
+                      <div className="text-right shrink-0">
+                        <span className="font-mono text-xs font-bold text-slate-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 inline-block">
+                          Total: {formatBRL(totalDisplayedValue)}
+                        </span>
+                        {selectedInsuranceTotal > 0 && (
+                          <div className="text-[10px] font-mono text-emerald-700 font-semibold mt-0.5">
+                            + Seguro ({formatBRL(selectedInsuranceTotal)})
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Resumo Evidente da Viação no Painel Lateral de Confirmação */}
@@ -2784,7 +2828,12 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                                   className="rounded text-emerald-600"
                                 />
                                 <Shield size={12} />
-                                <span>Incluir Seguro Viagem</span>
+                                <span>
+                                  Incluir Seguro Viagem
+                                  {selectedOptionForSeats.insurancePrice > 0
+                                    ? ` (+${formatBRL(selectedOptionForSeats.insurancePrice)})`
+                                    : ''}
+                                </span>
                               </label>
                             </div>
 
@@ -2934,11 +2983,37 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     {/* PASSO 2: CHECKOUT — Exibido após criar a pré-reserva */}
                     {createdBooking && (
                       <div className="p-4 rounded-2xl bg-white border-2 border-[#C8102E]/30 space-y-3.5 animate-in fade-in duration-200">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
-                            <CheckCircle2 size={15} className="text-emerald-600" />
-                            Poltronas reservadas · Prossiga com o pagamento
-                          </span>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                              <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                              <span>Poltronas reservadas · Prossiga com o pagamento</span>
+                            </span>
+
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-bold border shrink-0 ${
+                                bookingSecondsLeft === 0
+                                  ? 'bg-red-50 text-red-700 border-red-200'
+                                  : bookingSecondsLeft <= 120
+                                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                  : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              }`}
+                              title="Tempo estimado que a poltrona permanece bloqueada antes do pagamento"
+                            >
+                              <Clock size={12} />
+                              <span>{formatCountdownMmSs(bookingSecondsLeft)}</span>
+                            </span>
+                          </div>
+
+                          <p
+                            className={`text-[11px] leading-snug ${
+                              bookingSecondsLeft === 0 ? 'text-red-700 font-semibold' : 'text-slate-500'
+                            }`}
+                          >
+                            {bookingSecondsLeft === 0
+                              ? 'Tempo estimado de 10 minutos expirado. Caso o gateway recuse o pagamento, atualize o mapa e refaça a pré-reserva.'
+                              : 'A poltrona permanece bloqueada por cerca de 10 minutos aguardando a confirmação do pagamento.'}
+                          </p>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -2991,14 +3066,18 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                               }
                               className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-bold"
                             >
-                              <option value="creditCard">Cartão de Crédito</option>
-                              <option value="pix">PIX</option>
+                              <option value="creditCard">Cartão de Crédito (à vista · 1x)</option>
+                              <option value="pix">PIX (Pagamento instantâneo)</option>
                             </select>
                           </div>
                         </div>
 
-                        {paymentMethod === 'creditCard' && (
+                        {paymentMethod === 'creditCard' ? (
                           <div className="grid grid-cols-3 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <div className="col-span-3 flex items-center justify-between gap-2 pb-1 border-b border-slate-200/80 text-[10px] font-mono text-slate-600">
+                              <span>Parcelamento:</span>
+                              <strong className="text-slate-900">À vista (1x sem parcelamento)</strong>
+                            </div>
                             <div className="col-span-3">
                               <label className="block text-[10px] font-mono text-slate-500">
                                 Número do Cartão
@@ -3044,6 +3123,10 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                               />
                             </div>
                           </div>
+                        ) : (
+                          <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-[11px] text-emerald-900">
+                            Ao clicar em <strong>Finalizar Compra</strong>, seu pedido PIX será gerado para confirmação instantânea dentro da janela de reserva.
+                          </div>
                         )}
 
                         <button
@@ -3074,26 +3157,76 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                     )}
 
                     {/* RESULTADO DO CHECKOUT */}
-                    {completedPurchase && (
-                      <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 space-y-2 text-xs text-emerald-950">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                          <span className="font-bold text-sm flex items-center gap-1.5">
-                            <CheckCircle2 size={17} className="text-emerald-600" />
-                            Pedido Registrado! #{completedPurchase.id}
-                          </span>
-                          <span className="px-2 py-0.5 rounded bg-emerald-700 text-white font-bold uppercase text-[10px]">
-                            {completedPurchase.status === 'paid'
-                              ? 'Confirmado'
-                              : completedPurchase.status === 'in_confirmation_process'
-                                ? 'Em confirmação'
-                                : completedPurchase.status}
-                          </span>
+                    {completedPurchase && (() => {
+                      const pixCopyCode =
+                        completedPurchase?.pix?.qrCode ||
+                        completedPurchase?.pix?.code ||
+                        completedPurchase?.pix?.emv ||
+                        completedPurchase?.qrCode ||
+                        completedPurchase?.pixCode ||
+                        completedPurchase?.payment?.qrCode ||
+                        completedPurchase?.payment?.emv ||
+                        '';
+                      const pixImageUrl =
+                        completedPurchase?.pix?.qrCodeImage ||
+                        completedPurchase?.qrCodeImage ||
+                        '';
+
+                      return (
+                        <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 space-y-2.5 text-xs text-emerald-950">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <span className="font-bold text-sm flex items-center gap-1.5">
+                              <CheckCircle2 size={17} className="text-emerald-600" />
+                              Pedido Registrado! #{completedPurchase.id}
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-emerald-700 text-white font-bold uppercase text-[10px]">
+                              {completedPurchase.status === 'paid'
+                                ? 'Confirmado'
+                                : completedPurchase.status === 'in_confirmation_process'
+                                  ? 'Em confirmação'
+                                  : completedPurchase.status}
+                            </span>
+                          </div>
+
+                          {pixImageUrl && (
+                            <div className="bg-white p-3 rounded-xl border border-emerald-200 flex justify-center">
+                              <img
+                                src={pixImageUrl}
+                                alt="QR Code PIX para pagamento"
+                                className="w-36 h-36 object-contain"
+                              />
+                            </div>
+                          )}
+
+                          {pixCopyCode && (
+                            <div className="bg-white p-2.5 rounded-xl border border-emerald-200 space-y-2">
+                              <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold">
+                                PIX Copia e Cola
+                              </div>
+                              <div className="font-mono text-[11px] text-slate-700 break-all bg-slate-50 p-2 rounded border border-slate-200 max-h-20 overflow-y-auto">
+                                {String(pixCopyCode)}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard?.writeText(String(pixCopyCode));
+                                  setPixCopied(true);
+                                  setTimeout(() => setPixCopied(false), 3000);
+                                }}
+                                className="w-full py-1.5 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[11px] inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                              >
+                                {pixCopied ? <Check size={13} /> : <Copy size={13} />}
+                                <span>{pixCopied ? 'Código PIX copiado!' : 'Copiar código PIX'}</span>
+                              </button>
+                            </div>
+                          )}
+
+                          <p className="text-xs text-emerald-900">
+                            Os detalhes da sua viagem e a emissão do bilhete serão enviados para <strong>{buyerEmail}</strong>.
+                          </p>
                         </div>
-                        <p className="text-xs text-emerald-900">
-                          Os detalhes da sua viagem e a emissão do bilhete serão enviados para <strong>{buyerEmail}</strong>.
-                        </p>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* TRUST & CREDIBILITY BLOCK (CADASTRO E PAGAMENTO) */}
                     <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 space-y-3 shadow-2xs">
