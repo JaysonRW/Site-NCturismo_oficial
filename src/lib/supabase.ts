@@ -1501,5 +1501,68 @@ export const deletePropostaComercial = async (id: string): Promise<boolean> => {
   return true;
 };
 
+// ============================================================================
+// MÓDULO RODOVIÁRIO — REGISTRO NÃO-SIGILOSO DE VENDAS PARA O PAINEL ADM
+// ============================================================================
+
+export interface RodoviarioOrderSeat {
+  leg: 'ida' | 'volta';
+  segmentIndex: number;
+  seatNumber: string;
+  companyName?: string;
+}
+
+export interface RodoviarioOrder {
+  id: string;
+  qp_purchase_id: number | null;
+  qp_booking_id: string | null;
+  external_id: string | null;
+  status: string;
+  qp_env: string;
+  travel_type: string;
+  origin_name: string;
+  destination_name: string;
+  departure_date: string | null;
+  departure_time: string | null;
+  arrival_time: string | null;
+  return_date: string | null;
+  company_name: string | null;
+  seat_class: string | null;
+  passengers_count: number;
+  passengers_names: string[];
+  seats: RodoviarioOrderSeat[];
+  payment_method: string | null;
+  seat_price: number;
+  tax_price: number;
+  insurance_price: number;
+  total_price: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Busca pedidos rodoviários registrados no Supabase (somente para sessão Admin autenticada via RLS).
+ */
+export const getRodoviarioOrders = async (): Promise<RodoviarioOrder[]> => {
+  const { data, error } = await supabase
+    .from('rodoviario_orders')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(error.message || 'Erro ao carregar vendas rodoviárias no Supabase.');
+  }
+
+  return (data || []).map((row: any) => ({
+    ...row,
+    passengers_names: Array.isArray(row.passengers_names) ? row.passengers_names : [],
+    seats: Array.isArray(row.seats) ? row.seats : [],
+    seat_price: Number(row.seat_price || 0),
+    tax_price: Number(row.tax_price || 0),
+    insurance_price: Number(row.insurance_price || 0),
+    total_price: Number(row.total_price || 0),
+  }));
+};
+
 
 

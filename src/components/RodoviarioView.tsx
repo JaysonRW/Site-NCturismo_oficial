@@ -759,6 +759,41 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
     setCompletedPurchase(null);
 
     try {
+      const isRoundTripOrder = Boolean(returnDate && stagedOutboundLeg);
+      const primaryLegOption =
+        isRoundTripOrder && stagedOutboundLeg ? stagedOutboundLeg.option : selectedOptionForSeats;
+      const insuranceCount = Array.from({ length: passengersCount }).filter(
+        (_, idx) => (passengersForm[idx] || createEmptyPassenger()).includeInsurance
+      ).length;
+
+      const allLegSeats = [
+        ...(isRoundTripOrder && stagedOutboundLeg
+          ? stagedOutboundLeg.seats.map((s) => ({
+              leg: 'ida' as const,
+              segmentIndex: s.segmentIndex,
+              seatNumber: s.seatNumber,
+              companyName: stagedOutboundLeg.option.company.name,
+            }))
+          : []),
+        ...selectedSeats.map((s) => ({
+          leg: (isRoundTripOrder ? 'volta' : 'ida') as 'ida' | 'volta',
+          segmentIndex: s.segmentIndex,
+          seatNumber: s.seatNumber,
+          companyName:
+            seatMapData?.segments.find((seg) => seg.segmentIndex === s.segmentIndex)?.companyName ||
+            selectedOptionForSeats?.company.name,
+        })),
+      ];
+
+      const seatsSum = [
+        ...(isRoundTripOrder && stagedOutboundLeg ? stagedOutboundLeg.seats : []),
+        ...selectedSeats,
+      ];
+      const seatPriceSum = seatsSum.reduce((acc, s) => acc + Number(s.seatPrice || 0), 0);
+      const taxPriceSum = seatsSum.reduce((acc, s) => acc + Number(s.taxPrice || 0), 0);
+      const insurancePriceUnit = Number(primaryLegOption?.insurancePrice || 0);
+      const insurancePriceSum = insuranceCount * insurancePriceUnit;
+
       const res = await executeRodoviarioCheckout({
         bookingId: createdBooking.id,
         email: buyerEmail.trim(),
@@ -781,6 +816,33 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
         },
         includeCallbackUrl: Boolean(selectedOptionForSeats?.manualConfirmation),
         externalId: `NCT-${Date.now()}`,
+        orderSummary: primaryLegOption
+          ? {
+              travelType: isRoundTripOrder ? 'roundtrip' : primaryLegOption.travelType,
+              originName: primaryLegOption.from.name,
+              destinationName: primaryLegOption.to.name,
+              departureDate: primaryLegOption.departure.date,
+              departureTime: primaryLegOption.departure.time.slice(0, 5),
+              arrivalTime: primaryLegOption.arrival.time.slice(0, 5),
+              returnDate: isRoundTripOrder ? returnDate : undefined,
+              companyName:
+                isRoundTripOrder &&
+                selectedOptionForSeats &&
+                stagedOutboundLeg?.option.company.name !== selectedOptionForSeats.company.name
+                  ? `${stagedOutboundLeg?.option.company.name} / ${selectedOptionForSeats.company.name}`
+                  : primaryLegOption.company.name,
+              seatClass: primaryLegOption.seatClass,
+              passengersCount,
+              passengersNames: Array.from({ length: passengersCount }).map((_, idx) =>
+                (passengersForm[idx]?.name || `Passageiro ${idx + 1}`).trim()
+              ),
+              seats: allLegSeats,
+              seatPrice: seatPriceSum,
+              taxPrice: taxPriceSum,
+              insurancePrice: insurancePriceSum,
+              totalPrice: seatPriceSum + taxPriceSum + insurancePriceSum,
+            }
+          : undefined,
       });
 
       setCompletedPurchase(res.purchase);

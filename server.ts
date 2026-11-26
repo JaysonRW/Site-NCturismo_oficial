@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { SEO_ROUTES, resolveTokenToRoute } from './src/lib/seoRoutes.ts';
 
 dotenv.config();
@@ -472,6 +473,136 @@ const homologationLogs: HomologationLogEntry[] = (() => {
 })();
 // Mapa auxiliar purchaseId -> buyerEmail para sincronização proativa quando o callback chegar
 const purchaseEmailMap = new Map<number | string, { email: string; externalId?: string }>();
+
+let cachedSupabaseAdmin: SupabaseClient | null | undefined;
+
+/**
+ * Inicializa sob demanda o cliente Supabase server-side usando SUPABASE_SERVICE_ROLE_KEY.
+ * Retorna null quando não configurado para manter o fluxo rodoviário 100% resiliente.
+ */
+function getSupabaseAdminClient(): SupabaseClient | null {
+  if (cachedSupabaseAdmin !== undefined) return cachedSupabaseAdmin;
+
+  const url = String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
+  const serviceRoleKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+
+  if (!url || !serviceRoleKey) {
+    cachedSupabaseAdmin = null;
+    return null;
+  }
+
+  cachedSupabaseAdmin = createClient(url, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+  return cachedSupabaseAdmin;
+}
+
+/**
+ * Grava um resumo estritamente não-sigiloso da venda rodoviária no Supabase (fail-safe e assíncrono).
+ * Nunca armazena cartão, CVV, CPF, RG, telefone ou credenciais.
+ */
+async function persistRodoviarioOrderFailSafe(params: {
+  purchaseId?: number | string;
+  bookingId: string;
+  externalId: string;
+  status: string;
+  qpEnv: QpEnv;
+  paymentMethod: string;
+  orderSummary?: Record<string, any>;
+}): Promise<void> {
+  const client = getSupabaseAdminClient();
+  if (!client) return;
+
+  try {
+    const summary = params.orderSummary && typeof params.orderSummary === 'object' ? params.orderSummary : {};
+    const parsedPurchaseId =
+      params.purchaseId !== undefined && params.purchaseId !== null && Number.isFinite(Number(params.purchaseId))
+        ? Number(params.purchaseId)
+        : null;
+
+    const cleanNames = Array.isArray(summary.passengersNames)
+      ? summary.passengersNames
+          .slice(0, 20)
+          .map((n: unknown) => String(n || '').trim())
+          .filter(Boolean)
+      : [];
+
+    const cleanSeats = Array.isArray(summary.seats)
+      ? summary.seats.slice(0, 40).map((s: any) => ({
+          leg: s?.leg === 'volta' ? 'volta' : 'ida',
+          segmentIndex: Number(s?.segmentIndex || 1),
+          seatNumber: String(s?.seatNumber || '').trim(),
+          ...(s?.companyName ? { companyName: String(s.companyName).trim() } : {}),
+        }))
+      : [];
+
+    const record = {
+      qp_purchase_id: parsedPurchaseId,
+      qp_booking_id: String(params.bookingId || '').trim() || null,
+      external_id: String(params.externalId || '').trim() || null,
+      status: String(params.status || 'created').trim(),
+      qp_env: params.qpEnv,
+      travel_type: String(summary.travelType || 'direct').trim(),
+      origin_name: String(summary.originName || 'Origem não informada').trim(),
+      destination_name: String(summary.destinationName || 'Destino não informado').trim(),
+      departure_date: summary.departureDate ? String(summary.departureDate).trim() : null,
+      departure_time: summary.departureTime ? String(summary.departureTime).trim() : null,
+      arrival_time: summary.arrivalTime ? String(summary.arrivalTime).trim() : null,
+      return_date: summary.returnDate ? String(summary.returnDate).trim() : null,
+      company_name: summary.companyName ? String(summary.companyName).trim() : null,
+      seat_class: summary.seatClass ? String(summary.seatClass).trim() : null,
+      passengers_count: Math.max(1, Number(summary.passengersCount || cleanNames.length || 1)),
+      passengers_names: cleanNames,
+      seats: cleanSeats,
+      payment_method: String(params.paymentMethod || '').trim() || null,
+      seat_price: Number(Number(summary.seatPrice || 0).toFixed(2)),
+      tax_price: Number(Number(summary.taxPrice || 0).toFixed(2)),
+      insurance_price: Number(Number(summary.insurancePrice || 0).toFixed(2)),
+      total_price: Number(Number(summary.totalPrice || 0).toFixed(2)),
+    };
+
+    const { error } = parsedPurchaseId
+      ? await client.from('rodoviario_orders').upsert(record, { onConflict: 'qp_purchase_id' })
+      : await client.from('rodoviario_orders').insert(record);
+
+    if (error) {
+      console.error('[Supabase][Rodoviario] Erro ao registrar pedido:', error.message);
+    }
+  } catch (err: any) {
+    console.error('[Supabase][Rodoviario] Falha inesperada ao persistir pedido:', err?.message || err);
+  }
+}
+
+/**
+ * Atualiza o status de uma venda rodoviária existente no Supabase após callback ou consulta /purchase/get.
+ */
+async function updateRodoviarioOrderStatusFailSafe(
+  purchaseId: number | string | undefined,
+  status: string | undefined
+): Promise<void> {
+  if (!purchaseId || !status) return;
+  const parsedPurchaseId = Number(purchaseId);
+  if (!Number.isFinite(parsedPurchaseId)) return;
+
+  const client = getSupabaseAdminClient();
+  if (!client) return;
+
+  try {
+    const { error } = await client
+      .from('rodoviario_orders')
+      .update({ status: String(status).trim() })
+      .eq('qp_purchase_id', parsedPurchaseId);
+
+    if (error) {
+      console.error('[Supabase][Rodoviario] Erro ao atualizar status do pedido:', error.message);
+    }
+  } catch (err: any) {
+    console.error('[Supabase][Rodoviario] Falha ao atualizar status:', err?.message || err);
+  }
+}
 
 function recordHomologationLog(entry: Omit<HomologationLogEntry, 'id' | 'timestamp'>): HomologationLogEntry {
   const fullEntry: HomologationLogEntry = {
@@ -1947,6 +2078,7 @@ async function startServer() {
       callbackURL,
       includeCallbackUrl,
       externalId,
+      orderSummary,
     } = req.body || {};
 
     if (!bookingId || !email) {
@@ -2055,6 +2187,17 @@ async function startServer() {
       });
     }
 
+    // Persistência assíncrona fail-safe no Supabase (sem bloquear o retorno da compra)
+    void persistRodoviarioOrderFailSafe({
+      purchaseId: purchaseObj?.id,
+      bookingId: qpCheckoutPayload.bookingId,
+      externalId: qpCheckoutPayload.externalId,
+      status: String(purchaseObj?.status || 'created'),
+      qpEnv: cfg.qpEnv,
+      paymentMethod,
+      orderSummary,
+    });
+
     res.json({
       ok: true,
       purchase: purchaseObj,
@@ -2082,6 +2225,10 @@ async function startServer() {
     const upstream = await callQueroPassagemUpstream(cfg, 'POST', '/purchase/get', qpPayload);
 
     const purchaseObj = Array.isArray(upstream.data) ? upstream.data[0] : upstream.data;
+    if (upstream.ok && purchaseObj?.id && purchaseObj?.status) {
+      void updateRodoviarioOrderStatusFailSafe(purchaseObj.id, String(purchaseObj.status));
+    }
+
     const logEntry = recordHomologationLog({
       scenarioTag: scenarioTag ? String(scenarioTag) : undefined,
       operation: 'PURCHASE_GET',
@@ -2134,6 +2281,9 @@ async function startServer() {
       callQueroPassagemUpstream(cfg, 'POST', '/purchase/get', getPayload)
         .then((syncRes) => {
           const syncedPurchase = Array.isArray(syncRes.data) ? syncRes.data[0] : syncRes.data;
+          if (syncRes.ok && syncedPurchase?.status) {
+            void updateRodoviarioOrderStatusFailSafe(purchaseId, String(syncedPurchase.status));
+          }
           recordHomologationLog({
             scenarioTag: '3.1',
             operation: 'PURCHASE_GET',

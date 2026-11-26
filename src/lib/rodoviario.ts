@@ -718,6 +718,32 @@ export async function createRodoviarioBooking(params: {
   return data;
 }
 
+export interface RodoviarioOrderSeatSummary {
+  leg: 'ida' | 'volta';
+  segmentIndex: number;
+  seatNumber: string;
+  companyName?: string;
+}
+
+export interface RodoviarioOrderSummary {
+  travelType: 'direct' | 'connection' | 'roundtrip';
+  originName: string;
+  destinationName: string;
+  departureDate?: string;
+  departureTime?: string;
+  arrivalTime?: string;
+  returnDate?: string;
+  companyName?: string;
+  seatClass?: string;
+  passengersCount: number;
+  passengersNames: string[];
+  seats: RodoviarioOrderSeatSummary[];
+  seatPrice: number;
+  taxPrice: number;
+  insurancePrice: number;
+  totalPrice: number;
+}
+
 export async function executeRodoviarioCheckout(params: {
   scenarioTag?: string;
   bookingId: string;
@@ -741,6 +767,7 @@ export async function executeRodoviarioCheckout(params: {
   includeCallbackUrl: boolean;
   callbackURL?: string;
   externalId?: string;
+  orderSummary?: RodoviarioOrderSummary;
 }): Promise<{
   ok: boolean;
   purchase?: any;

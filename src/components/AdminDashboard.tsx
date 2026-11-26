@@ -4,8 +4,10 @@ import { AdminLazerManager } from './AdminLazerManager';
 import { AdminLeadsManager } from './AdminLeadsManager';
 import { AdminEmpresasManager } from './AdminEmpresasManager';
 import { AdminPropostasManager } from './AdminPropostasManager';
+import { AdminRodoviarioOrdersManager } from './AdminRodoviarioOrdersManager';
 import { 
   Building2, 
+  Bus,
   LogOut, 
   Plus, 
   Search, 
@@ -41,7 +43,7 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onBackToHome }) => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'propostas' | 'posts' | 'terms' | 'lazer' | 'leads' | 'empresas'>('propostas');
+  const [activeAdminTab, setActiveAdminTab] = useState<'propostas' | 'rodoviario' | 'posts' | 'terms' | 'lazer' | 'leads' | 'empresas'>('propostas');
   const [termsAcceptances, setTermsAcceptances] = useState<TermsAcceptance[]>([]);
   const [lazerPackages, setLazerPackages] = useState<LazerPackage[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -773,6 +775,18 @@ CREATE POLICY "Admin controle total pacotes lazer" ON public.lazer_packages FOR 
               </button>
 
               <button
+                onClick={() => setActiveAdminTab('rodoviario')}
+                className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeAdminTab === 'rodoviario'
+                    ? 'bg-gradient-to-r from-[#C8102E] to-[#DB8902] text-white shadow-md'
+                    : 'bg-white/5 text-nc-warm/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Bus size={16} />
+                <span>Vendas Rodoviárias</span>
+              </button>
+
+              <button
                 onClick={() => setActiveAdminTab('leads')}
                 className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
                   activeAdminTab === 'leads'
@@ -836,6 +850,9 @@ CREATE POLICY "Admin controle total pacotes lazer" ON public.lazer_packages FOR 
             {activeAdminTab === 'propostas' ? (
               /* TAB: GERADOR DE APRESENTAÇÕES & PROPOSTAS COMERCIAIS */
               <AdminPropostasManager notify={notify} />
+            ) : activeAdminTab === 'rodoviario' ? (
+              /* TAB: REGISTRO DE VENDAS RODOVIÁRIAS (NÃO-SIGILOSO) */
+              <AdminRodoviarioOrdersManager notify={notify} />
             ) : activeAdminTab === 'leads' ? (
               /* TAB: GESTÃO DE LEADS & PARCERIAS */
               <AdminLeadsManager notify={notify} />
