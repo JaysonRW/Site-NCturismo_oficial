@@ -1086,13 +1086,13 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                 <span>Passagens Rodoviárias Oficiais • Sem Filas</span>
               </div>
               <h1 className="text-xl sm:text-3xl lg:text-[32px] font-bold tracking-tight text-slate-900 leading-[1.2]">
-                Compare horários e escolha sua poltrona{' '}
+                Passagens de ônibus{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C8102E] to-[#DB8902]">
-                  em tempo real
+                  para todo o Brasil
                 </span>
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 mt-1.5 max-w-3xl mx-auto lg:mx-0">
-                Consulte tarifas em mais de 300 viações autorizadas, garanta seu bilhete digital na hora e conte com atendimento NC Turismo.
+                Compare preços, horários e viações. Escolha sua poltrona e viaje com a NC Turismo.
               </p>
             </div>
 
