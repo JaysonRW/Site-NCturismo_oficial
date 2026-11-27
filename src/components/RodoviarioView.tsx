@@ -185,6 +185,116 @@ const isFinalPurchaseStatus = (status?: string) =>
     String(status || '').toLowerCase()
   );
 
+/**
+ * Separa o nome específico da parada (ex.: "Passo Liso") do nome completo ("Laranjeiras do Sul, PR - Passo Liso")
+ * para facilitar a leitura rápida por pessoas com vista cansada ou em telas estreitas.
+ */
+const formatSubstopDisplay = (
+  parentStopName: string,
+  subName: string
+): { primary: string; context?: string } => {
+  const dashIndex = subName.indexOf(' - ');
+  if (dashIndex <= 0) {
+    return { primary: subName };
+  }
+
+  const cityPrefix = subName.slice(0, dashIndex).trim();
+  const pointName = subName.slice(dashIndex + 3).trim();
+  const normalizedParent = parentStopName.toLowerCase();
+
+  if (pointName && normalizedParent.startsWith(cityPrefix.toLowerCase())) {
+    return {
+      primary: pointName,
+      context: subName,
+    };
+  }
+
+  return { primary: subName };
+};
+
+interface StopSuggestionsDropdownProps {
+  suggestions: StopItem[];
+  onSelect: (stop: StopItem) => void;
+  ariaLabel: string;
+}
+
+const StopSuggestionsDropdown: React.FC<StopSuggestionsDropdownProps> = ({
+  suggestions,
+  onSelect,
+  ariaLabel,
+}) => (
+  <div
+    role="listbox"
+    aria-label={ariaLabel}
+    className="absolute left-0 right-0 sm:right-auto sm:w-[440px] max-w-[92vw] top-full mt-1.5 max-h-80 overflow-y-auto rounded-2xl bg-white border border-slate-200 shadow-2xl shadow-slate-300/70 z-50 divide-y divide-slate-100"
+  >
+    {suggestions.map((stop) => {
+      const isCityGroup = stop.id.startsWith('CIT_');
+      return (
+        <div key={stop.id}>
+          <button
+            type="button"
+            onClick={() => onSelect(stop)}
+            className="w-full px-4 py-3 text-left hover:bg-red-50/50 active:bg-red-50 flex items-start justify-between gap-2.5 transition-colors cursor-pointer"
+          >
+            <div className="flex items-start gap-2.5 min-w-0">
+              <MapPin
+                size={16}
+                className={`mt-0.5 shrink-0 ${
+                  isCityGroup ? 'text-[#C8102E]' : 'text-[#DB8902]'
+                }`}
+              />
+              <span className="text-sm text-slate-900 font-bold leading-snug whitespace-normal break-words">
+                {stop.name}
+              </span>
+            </div>
+            {stop.stateCode && (
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded shrink-0 mt-0.5">
+                {stop.stateCode}
+              </span>
+            )}
+          </button>
+
+          {stop.substops && stop.substops.length > 0 && (
+            <div className="bg-slate-50/90 pl-4 pr-2 py-1 divide-y divide-slate-200/70 border-t border-slate-100">
+              {stop.substops.map((sub) => {
+                const { primary, context } = formatSubstopDisplay(stop.name, sub.name);
+                return (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() =>
+                      onSelect({
+                        id: sub.id,
+                        name: sub.name,
+                        url: sub.url,
+                        stateCode: sub.stateCode,
+                        isStation: true,
+                      })
+                    }
+                    className="w-full pl-3 pr-2.5 py-2.5 text-left hover:bg-amber-50/80 active:bg-amber-50 border-l-2 border-[#DB8902]/45 flex items-start justify-between gap-2 transition-colors cursor-pointer rounded-r-lg"
+                  >
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="text-sm text-slate-800 font-semibold leading-snug whitespace-normal break-words">
+                        {primary}
+                      </div>
+                      {context && (
+                        <div className="text-xs text-slate-500 leading-snug whitespace-normal break-words">
+                          {context}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+);
+
 interface InstitutionalLogoConfig {
   id: string;
   src: string;
@@ -1383,55 +1493,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
                 {/* Origin Dropdown */}
                 {showOriginDropdown && originSuggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 max-h-72 overflow-y-auto rounded-xl bg-white border border-slate-200 shadow-2xl shadow-slate-300/70 z-50 divide-y divide-slate-100">
-                    {originSuggestions.map((stop) => (
-                      <div key={stop.id}>
-                        <button
-                          type="button"
-                          onClick={() => handleSelectOrigin(stop)}
-                          className="w-full px-3.5 py-2.5 text-left hover:bg-red-50/40 flex items-center justify-between gap-2 transition-colors cursor-pointer"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <MapPin
-                              size={14}
-                              className={stop.id.startsWith('CIT_') ? 'text-[#C8102E] shrink-0' : 'text-[#DB8902] shrink-0'}
-                            />
-                            <span className="text-xs sm:text-sm text-slate-900 font-semibold truncate">
-                              {stop.name}
-                            </span>
-                          </div>
-                          {stop.stateCode && (
-                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 shrink-0">
-                              {stop.stateCode}
-                            </span>
-                          )}
-                        </button>
-
-                        {stop.substops && stop.substops.length > 0 && (
-                          <div className="bg-slate-50/90 pl-6 divide-y divide-slate-100 border-t border-slate-100">
-                            {stop.substops.map((sub) => (
-                              <button
-                                key={sub.id}
-                                type="button"
-                                onClick={() =>
-                                  handleSelectOrigin({
-                                    id: sub.id,
-                                    name: sub.name,
-                                    url: sub.url,
-                                    stateCode: sub.stateCode,
-                                    isStation: true,
-                                  })
-                                }
-                                className="w-full px-3 py-2 text-left hover:bg-amber-50/60 flex items-center justify-between gap-2 transition-colors cursor-pointer"
-                              >
-                                <span className="text-xs text-slate-700 font-medium truncate">↳ {sub.name}</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <StopSuggestionsDropdown
+                    suggestions={originSuggestions}
+                    onSelect={handleSelectOrigin}
+                    ariaLabel="Sugestões de origem"
+                  />
                 )}
               </div>
 
@@ -1491,55 +1557,11 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
 
                 {/* Destination Dropdown */}
                 {showDestinationDropdown && destinationSuggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 max-h-72 overflow-y-auto rounded-xl bg-white border border-slate-200 shadow-2xl shadow-slate-300/70 z-50 divide-y divide-slate-100">
-                    {destinationSuggestions.map((stop) => (
-                      <div key={stop.id}>
-                        <button
-                          type="button"
-                          onClick={() => handleSelectDestination(stop)}
-                          className="w-full px-3.5 py-2.5 text-left hover:bg-red-50/40 flex items-center justify-between gap-2 transition-colors cursor-pointer"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <MapPin
-                              size={14}
-                              className={stop.id.startsWith('CIT_') ? 'text-[#C8102E] shrink-0' : 'text-[#DB8902] shrink-0'}
-                            />
-                            <span className="text-xs sm:text-sm text-slate-900 font-semibold truncate">
-                              {stop.name}
-                            </span>
-                          </div>
-                          {stop.stateCode && (
-                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 shrink-0">
-                              {stop.stateCode}
-                            </span>
-                          )}
-                        </button>
-
-                        {stop.substops && stop.substops.length > 0 && (
-                          <div className="bg-slate-50/90 pl-6 divide-y divide-slate-100 border-t border-slate-100">
-                            {stop.substops.map((sub) => (
-                              <button
-                                key={sub.id}
-                                type="button"
-                                onClick={() =>
-                                  handleSelectDestination({
-                                    id: sub.id,
-                                    name: sub.name,
-                                    url: sub.url,
-                                    stateCode: sub.stateCode,
-                                    isStation: true,
-                                  })
-                                }
-                                className="w-full px-3 py-2 text-left hover:bg-amber-50/60 flex items-center justify-between gap-2 transition-colors cursor-pointer"
-                              >
-                                <span className="text-xs text-slate-700 font-medium truncate">↳ {sub.name}</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <StopSuggestionsDropdown
+                    suggestions={destinationSuggestions}
+                    onSelect={handleSelectDestination}
+                    ariaLabel="Sugestões de destino"
+                  />
                 )}
               </div>
 
@@ -1604,6 +1626,22 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* Conferência visual do trajeto selecionado quando houver nomes longos */}
+            {((originStop?.name.length ?? 0) > 22 || (destinationStop?.name.length ?? 0) > 22) && (
+              <div className="mt-3 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200/90 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-700 leading-snug">
+                <span className="font-mono text-[10px] uppercase tracking-wider font-bold text-slate-500 shrink-0">
+                  Trajeto selecionado:
+                </span>
+                <span className="font-semibold text-slate-900 break-words">
+                  {originStop?.name || originQuery}
+                </span>
+                <ArrowRight size={13} className="text-[#C8102E] shrink-0" />
+                <span className="font-semibold text-slate-900 break-words">
+                  {destinationStop?.name || destinationQuery}
+                </span>
+              </div>
+            )}
 
             {/* Secondary Search Controls Row */}
             <div className="mt-4 pt-3.5 border-t border-slate-200/80 flex flex-col lg:flex-row items-center justify-between gap-3.5 text-xs text-slate-600">
@@ -2311,7 +2349,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                             <div className="text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-900 leading-tight">
                               {option.departure.time.slice(0, 5)}
                             </div>
-                            <div className="text-[11px] sm:text-xs font-medium text-slate-600 line-clamp-2 sm:truncate mt-0.5" title={option.from.name}>
+                            <div className="text-xs font-medium text-slate-700 leading-snug break-words mt-0.5">
                               {option.from.name}
                             </div>
                           </div>
@@ -2344,7 +2382,7 @@ export const RodoviarioView: React.FC<RodoviarioViewProps> = ({
                             <div className="text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-900 leading-tight">
                               {option.arrival.time.slice(0, 5)}
                             </div>
-                            <div className="text-[11px] sm:text-xs font-medium text-slate-600 line-clamp-2 sm:truncate mt-0.5" title={option.to.name}>
+                            <div className="text-xs font-medium text-slate-700 leading-snug break-words mt-0.5">
                               {option.to.name}
                             </div>
                           </div>
